@@ -1,0 +1,32 @@
+<resources>
+    <string name="app_name">Aries Mobile Agent</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+
+    //qr code
+    <string name="qc_code_close">Close</string>
+    <string name="qr_code_open_flash_light">Turn on flash light</string>
+    <string name="qr_code_close_flash_light">Turn off txt_org_detail_download_request_processingflash light</string>
+    <string name="qr_code_auto_scan_notification">Position QR Code</string>
+    <string name="qr_code_notification">Notification</string>
+    <string name="qr_code_camera_not_open">Could not open your camera</string>
+    <string name="qr_code_positive_button_know">OK</string>
+    <string name="qr_code_positive_button_confirm">Confirm</string>
+    <string name="qr_code_could_not_read_qr_code_from_picture">Could not read your image.Try another image~</string>
+    <string name="qr_code_could_not_read_qr_code_from_scanner">Sorry, could not open scan content</string>
+    <string name="qr_code_camera_not_found">Could not detect camera</string>
+
+    <string name="txt_scan">Scan</string>
+    <string name="txt_create">Create</string>
+    <string name="txt_create_wallet">Create Wallet</string>
+    <string name="txt_share">Share</string>
+    <string name="txt_send">Send</string>
+    <string name="txt_recieve">Recieve</string>
+</resources>
