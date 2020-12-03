@@ -1,0 +1,35 @@
+package io.igrant.mobileagent.utils
+
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
+import io.igrant.mobileagent.R
+import io.igrant.mobileagent.fragment.ConnectionListFragment
+import io.igrant.mobileagent.fragment.ConnectionMessagesFragment
+
+object NavigationUtils {
+
+    private fun showFragment(
+        fragment: Fragment,
+        fragmentManager: FragmentManager,
+        addToBackStack: Boolean
+    ) {
+        val transaction =
+            fragmentManager.beginTransaction()
+        transaction.replace(R.id.myContainer, fragment)
+        if (addToBackStack) {
+            transaction.addToBackStack("")
+        }
+        transaction.commit()
+    }
+
+    fun showConnectionListFragment(fragmentManager: FragmentManager?) {
+        val connectionFragment: ConnectionListFragment = ConnectionListFragment.newInstance()
+        showFragment(connectionFragment, fragmentManager!!, true)
+    }
+
+    fun showConnectionMessagesFragment(fragmentManager: FragmentManager?,connection:String) {
+        val connectionFragment: ConnectionMessagesFragment = ConnectionMessagesFragment.newInstance(connection)
+        showFragment(connectionFragment, fragmentManager!!, true)
+    }
+
+}
