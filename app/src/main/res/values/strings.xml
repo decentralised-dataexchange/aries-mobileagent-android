@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Aries Mobile Agent</string>
+    <string name="app_name">IGrant Data Wallet</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
@@ -29,4 +29,20 @@
     <string name="txt_share">Share</string>
     <string name="txt_send">Send</string>
     <string name="txt_recieve">Recieve</string>
+    <string name="txt_certificates">Certificates</string>
+    <string name="txt_connections">Connections</string>
+    <string name="no">No</string>
+    <string name="yes">Yes</string>
+    <string name="txt_certificates_desc">You requested the following certificate to be issued. By choosing confirm you agree to add the certificate to your wallet.</string>
+    <string name="txt_certificates_head">Covid 19 test certificates</string>
+    <string name="txt_reject">Reject</string>
+    <string name="txt_accept">Accept</string>
+    <string name="txt_add_certificate">Add Certificate</string>
+    <string name="txt_Add_certificate_desc">Choose the organisation from which you wish to add the certificate</string>
+    <string name="txt_wallet">Wallet</string>
+    <string name="txt_preferences">Preferences</string>
+    <string name="txt_no_connections_avaialable">No connections available</string>
+    <string name="txt_no_data_avaialable">No data available</string>
+    <string name="err_connection_already_added">Connection already existing</string>
+    <string name="txt_loading_indy_library">Loading Indy Library...</string>
 </resources>
