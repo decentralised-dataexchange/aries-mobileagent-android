@@ -6,6 +6,7 @@
     app:cardBackgroundColor="@color/white"
     app:cardCornerRadius="5dp"
     android:elevation="5dp"
+    android:id="@+id/cvConnection"
     android:layout_margin="5dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
@@ -62,6 +63,7 @@
             android:layout_height="wrap_content"
             android:textSize="14dp"
             android:text="Health"
+            android:textIsSelectable="true"
             android:textColor="#000"
             app:layout_constraintStart_toEndOf="@+id/cvLogo"
             android:layout_marginStart="5dp"

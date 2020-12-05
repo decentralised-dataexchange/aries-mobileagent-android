@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.google.gson.Gson
 import io.igrant.mobileagent.R
@@ -21,6 +22,7 @@ class ConnectionMessageAdapter(
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var tvName: TextView = itemView.findViewById<View>(R.id.tvName) as TextView
         var tvVersion: TextView = itemView.findViewById<View>(R.id.tvVersion) as TextView
+        var cvOffer: CardView = itemView.findViewById<View>(R.id.cvOffer) as CardView
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -51,8 +53,8 @@ class ConnectionMessageAdapter(
 
         holder.tvVersion.text = "Version : ${lst?.get(3) ?: ""}"
 
-        holder.tvName.setOnClickListener {
-            mListener.onConnectionMessageClick(message)
+        holder.cvOffer.setOnClickListener {
+            mListener.onConnectionMessageClick(mList[position])
         }
     }
 }

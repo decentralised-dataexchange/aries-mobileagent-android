@@ -3,16 +3,21 @@ package io.igrant.mobileagent.adapter
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
 import io.igrant.mobileagent.R
-import io.igrant.mobileagent.models.credentialExchange.CredentialExchange
-import io.igrant.mobileagent.models.walletSearch.Record
+import io.igrant.mobileagent.listeners.WalletListener
+import io.igrant.mobileagent.models.certificate.Certificate
 
-class WalletCertificatesAdapter(private val credentialList: ArrayList<Record>) : RecyclerView.Adapter<WalletCertificatesAdapter.ViewHolder>() {
+class WalletCertificatesAdapter(
+    private val credentialList: ArrayList<Certificate>,
+    val listener: WalletListener
+) : RecyclerView.Adapter<WalletCertificatesAdapter.ViewHolder>() {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var tvCertificateName: TextView = itemView.findViewById<View>(R.id.tvCertificateName) as TextView
+        var tvCertificateName: TextView =
+            itemView.findViewById<View>(R.id.tvCertificateName) as TextView
+        var ivDelete: ImageView = itemView.findViewById<View>(R.id.ivDelete) as ImageView
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -27,11 +32,11 @@ class WalletCertificatesAdapter(private val credentialList: ArrayList<Record>) :
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val gson= Gson()
-        val credentialExchange =
-            gson.fromJson(credentialList[position].value, CredentialExchange::class.java)
-
-        var lst = credentialExchange.credentialProposalDict?.schemaId?.split(":")
+        val certificate = credentialList[position]
+        var lst = certificate.schemaId?.split(":")
         holder.tvCertificateName.text = lst?.get(2) ?: ""
+        holder.ivDelete.setOnClickListener {
+            listener.onDelete(certificate.referent?:"")
+        }
     }
 }

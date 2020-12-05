@@ -1,22 +1,36 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:padding="10dp"
-    android:background="@color/bgColor">
+    android:background="@color/bgColor"
+    android:padding="10dp">
 
     <TextView
         android:id="@+id/tvDesc"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="#000"
-        android:textSize="14sp"
         android:padding="5dp"
         android:text="@string/txt_Add_certificate_desc"
+        android:textColor="#000"
+        android:textSize="14sp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <EditText
+        android:id="@+id/etSearch"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="10dp"
+        android:background="@drawable/primary_edittext_background"
+        android:hint="@string/txt_search_connections"
+        android:padding="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/tvDesc" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvConnections"
@@ -26,31 +40,48 @@
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvDesc"
+        app:layout_constraintTop_toBottomOf="@+id/etSearch"
         tools:listitem="@layout/item_connection" />
 
     <LinearLayout
+        android:id="@+id/llErrorMessage"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:id="@+id/llErrorMessage"
-        android:orientation="vertical"
-        android:gravity="center"
         android:background="@color/bgColor"
+        android:gravity="center"
+        android:orientation="vertical"
         android:visibility="gone">
 
         <ImageView
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:src="@drawable/ic_no_data"/>
+            android:layout_width="50dp"
+            android:layout_height="50dp"
+            android:src="@drawable/ic_no_data" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:padding="20dp"
+            android:padding="10dp"
             android:text="@string/txt_no_connections_avaialable"
-            android:textSize="@dimen/text_size_medium"
-            android:layout_marginTop="10dp"/>
+            android:textSize="@dimen/text_size_normal" />
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btAddConnection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/primary_button_background"
+        android:drawableStart="@drawable/ic_add_white"
+        android:drawablePadding="5dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:text="@string/txt_add_connection"
+        android:textAllCaps="false"
+        android:textColor="@color/white"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
