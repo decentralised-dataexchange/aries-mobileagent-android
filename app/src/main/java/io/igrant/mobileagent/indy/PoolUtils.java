@@ -52,15 +52,20 @@ public class PoolUtils {
     }
 
     public static String createPoolLedgerConfig() throws InterruptedException, ExecutionException, IndyException, IOException {
+        Pool.deletePoolLedgerConfig(DEFAULT_POOL_NAME);
         createPoolLedgerConfig(DEFAULT_POOL_NAME);
         return DEFAULT_POOL_NAME;
     }
 
-    private static void createPoolLedgerConfig(String poolName) throws IOException, InterruptedException, java.util.concurrent.ExecutionException, IndyException {
+    private static void createPoolLedgerConfig(String poolName) throws IOException {
         File genesisTxnFile = createGenesisTxnFile("temp.txt");
         PoolJSONParameters.CreatePoolLedgerConfigJSONParameter createPoolLedgerConfigJSONParameter
                 = new PoolJSONParameters.CreatePoolLedgerConfigJSONParameter(genesisTxnFile.getAbsolutePath());
-        Pool.createPoolLedgerConfig(poolName, createPoolLedgerConfigJSONParameter.toJson()).get();
+        try {
+            Pool.createPoolLedgerConfig(poolName, createPoolLedgerConfigJSONParameter.toJson()).get();
+        } catch (ExecutionException | InterruptedException | IndyException e) {
+            e.printStackTrace();
+        }
     }
 
     public static Pool createAndOpenPoolLedger() throws IndyException, InterruptedException, ExecutionException, IOException {

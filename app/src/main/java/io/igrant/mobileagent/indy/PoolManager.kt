@@ -11,9 +11,14 @@ object PoolManager {
 
     val getPool: Pool?
         get() {
-            if (pool == null) {
+//            if (pool == null) {
 //
-            }
+//            }
             return pool
         }
+
+    val removePool:Int get() {
+        pool=null
+        return 0
+    }
 }

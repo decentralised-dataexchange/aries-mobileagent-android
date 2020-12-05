@@ -18,6 +18,7 @@ import io.igrant.mobileagent.listeners.WalletListener
 import io.igrant.mobileagent.models.certificate.Certificate
 import io.igrant.mobileagent.utils.NavigationUtils
 import io.igrant.mobileagent.utils.WalletRecordType
+import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.anoncreds.CredentialsSearch
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
 import org.hyperledger.indy.sdk.non_secrets.WalletSearch
@@ -83,12 +84,22 @@ class WalletFragment : BaseFragment() {
         )
         walletCertificateAdapter =
             WalletCertificatesAdapter(certificateList, object : WalletListener {
-                override fun onDelete(id: String) {
-                    WalletRecord.delete(
-                        WalletManager.getWallet,
-                        WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-                        id
-                    ).get()
+                override fun onDelete(id: String,position:Int) {
+                    Anoncreds.proverDeleteCredential(WalletManager.getWallet,id).get()
+                    walletCertificateAdapter.notifyItemRemoved(position)
+                    val credSearch = CredentialsSearch.open(WalletManager.getWallet, "{}").get()
+
+                    val data = credSearch.fetchNextCredentials(100).get()
+
+                    certificateList.clear()
+                    certificateList.addAll(WalletManager.getGson.fromJson(data, Array<Certificate>::class.java))
+                    certificateListCopy.clear()
+                    certificateListCopy.addAll(
+                        WalletManager.getGson.fromJson(
+                            data,
+                            Array<Certificate>::class.java
+                        )
+                    )
                 }
             })
         rvCertificates.adapter = walletCertificateAdapter
@@ -124,9 +135,9 @@ class WalletFragment : BaseFragment() {
     }
 
     private fun filterList(s: CharSequence?) {
-        var tempList: ArrayList<Certificate> = ArrayList()
+        val tempList: ArrayList<Certificate> = ArrayList()
         for (certificate in certificateListCopy) {
-            var lst = certificate.schemaId?.split(":")
+            val lst = certificate.schemaId?.split(":")
             val text = lst?.get(2) ?: ""
             if (text.contains(s ?: "", ignoreCase = true)) {
                 tempList.add(certificate)

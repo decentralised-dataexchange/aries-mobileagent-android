@@ -49,4 +49,7 @@
     <string name="txt_add_connection">Add Connection</string>
     <string name="txt_search_wallet">Search Wallet...</string>
     <string name="txt_search_connections">Search Connections...</string>
+    <string name="txt_creating_pool">Creating Pool...</string>
+    <string name="txt_finishing">Finishing...</string>
+    <string name="txt_creating_wallet">Creating Wallet...</string>
 </resources>
