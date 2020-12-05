@@ -88,6 +88,7 @@ object WalletManager {
             if (wallet != null) {
                 try {
                     wallet!!.closeWallet().get()
+                    wallet = null
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

@@ -33,10 +33,10 @@ class WalletCertificatesAdapter(
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val certificate = credentialList[position]
-        var lst = certificate.schemaId?.split(":")
+        val lst = certificate.schemaId?.split(":")
         holder.tvCertificateName.text = lst?.get(2) ?: ""
         holder.ivDelete.setOnClickListener {
-            listener.onDelete(certificate.referent?:"")
+            listener.onDelete(certificate.referent?:"",position)
         }
     }
 }
