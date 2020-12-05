@@ -2,6 +2,7 @@ package io.igrant.mobileagent.models.credentialExchange
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
+import org.json.JSONObject
 
 class RawCredential {
 
@@ -19,7 +20,7 @@ class RawCredential {
 
     @SerializedName("values")
     @Expose
-    var values: ValueScore? = ValueScore()
+    var values: Map<String, Score>? = null
 
     @SerializedName("signature")
     @Expose

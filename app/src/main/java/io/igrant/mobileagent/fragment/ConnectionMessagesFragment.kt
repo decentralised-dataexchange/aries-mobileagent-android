@@ -2,22 +2,22 @@ package io.igrant.mobileagent.fragment
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.activty.OfferCertificateActivity
 import io.igrant.mobileagent.adapter.ConnectionMessageAdapter
-import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionMessageListener
-import io.igrant.mobileagent.models.certificateOffer.CertificateOffer
 import io.igrant.mobileagent.models.walletSearch.Record
-import io.igrant.mobileagent.models.walletSearch.SearchResponse
+import io.igrant.mobileagent.utils.MessageStates
+import io.igrant.mobileagent.utils.NavigationUtils
+import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
-import org.hyperledger.indy.sdk.non_secrets.WalletSearch
 
 class ConnectionMessagesFragment : BaseFragment() {
 
@@ -57,17 +57,21 @@ class ConnectionMessagesFragment : BaseFragment() {
     private fun setUpAdapter() {
         connectionMessageAdapter =
             ConnectionMessageAdapter(connectionMessageList, object : ConnectionMessageListener {
-                override fun onConnectionMessageClick(certificateOffer: CertificateOffer) {
+                override fun onConnectionMessageClick(record: Record) {
                     val intent: Intent = Intent(context, OfferCertificateActivity::class.java)
                     intent.putExtra(
                         OfferCertificateActivity.EXTRA_CERTIFICATE_PREVIEW,
-                        certificateOffer
+                        record
                     )
                     intent.putExtra(
                         OfferCertificateActivity.EXTRA_CONNECTION_ID,
                         mConnectionId
                     )
                     startActivity(intent)
+                    Handler(Looper.getMainLooper()).postDelayed({
+                        NavigationUtils.popBack(parentFragmentManager)
+                    }, 500)
+
                 }
 
             })
@@ -84,30 +88,17 @@ class ConnectionMessagesFragment : BaseFragment() {
     }
 
     private fun setUpConnectionMessagesList() {
-
-        val connectionMessageSearch = WalletSearch.open(
-            WalletManager.getWallet,
-            WalletRecordType.MESSAGE_RECORDS,
-            "{\"connectionId\": \"${mConnectionId}\"}",
-            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-        ).get()
-
-        val connectionMessages = WalletSearch.searchFetchNextRecords(
-            WalletManager.getWallet,
-            connectionMessageSearch,
-            100
-        )
-            .get()
-
-        val gson = Gson()
         val connectionMessageResponse =
-            gson.fromJson(connectionMessages, SearchResponse::class.java)
+            SearchUtils.searchWallet(
+                WalletRecordType.MESSAGE_RECORDS,
+                "{\"connectionId\": \"${mConnectionId}\"}"
+            )
         if (connectionMessageResponse.totalCount ?: 0 > 0) {
             llErrorMessage.visibility = View.GONE
             connectionMessageList.clear()
             connectionMessageList.addAll(connectionMessageResponse.records ?: ArrayList())
             connectionMessageAdapter.notifyDataSetChanged()
-        }else{
+        } else {
             llErrorMessage.visibility = View.VISIBLE
         }
     }

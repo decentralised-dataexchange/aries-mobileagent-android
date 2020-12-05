@@ -20,49 +20,49 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toolbar">
 
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent">
+<!--        <androidx.constraintlayout.widget.ConstraintLayout-->
+<!--            android:layout_width="match_parent"-->
+<!--            android:layout_height="match_parent">-->
 
-            <TextView
-                android:id="@+id/tvCertificates"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:gravity="center"
-                android:text="@string/txt_wallet"
-                android:textStyle="bold"
-                android:textColor="@drawable/txt_color_selector"
-                android:textSize="18dp"
-                app:layout_constraintEnd_toStartOf="@+id/tvConnections"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent" />
+<!--            <TextView-->
+<!--                android:id="@+id/tvCertificates"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:paddingTop="10dp"-->
+<!--                android:paddingBottom="10dp"-->
+<!--                android:gravity="center"-->
+<!--                android:text="@string/txt_wallet"-->
+<!--                android:textStyle="bold"-->
+<!--                android:textColor="@drawable/txt_color_selector"-->
+<!--                android:textSize="18dp"-->
+<!--                app:layout_constraintEnd_toStartOf="@+id/tvConnections"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                app:layout_constraintTop_toTopOf="parent" />-->
 
-            <TextView
-                android:id="@+id/tvConnections"
-                android:layout_width="0dp"
-                android:background="@color/primaryBlue"
-                android:layout_height="wrap_content"
-                android:gravity="center"
-                android:paddingTop="10dp"
-                android:paddingBottom="10dp"
-                android:textStyle="bold"
-                android:text="@string/txt_preferences"
-                android:textColor="@color/white"
-                android:textSize="18dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@+id/tvCertificates"
-                app:layout_constraintTop_toTopOf="@+id/tvCertificates" />
+<!--            <TextView-->
+<!--                android:id="@+id/tvConnections"-->
+<!--                android:layout_width="0dp"-->
+<!--                android:background="@color/primaryBlue"-->
+<!--                android:layout_height="wrap_content"-->
+<!--                android:gravity="center"-->
+<!--                android:paddingTop="10dp"-->
+<!--                android:paddingBottom="10dp"-->
+<!--                android:textStyle="bold"-->
+<!--                android:text="@string/txt_preferences"-->
+<!--                android:textColor="@color/white"-->
+<!--                android:textSize="18dp"-->
+<!--                app:layout_constraintEnd_toEndOf="parent"-->
+<!--                app:layout_constraintStart_toEndOf="@+id/tvCertificates"-->
+<!--                app:layout_constraintTop_toTopOf="@+id/tvCertificates" />-->
 
-            <androidx.viewpager.widget.ViewPager
-                android:id="@+id/vpPager"
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvCertificates"></androidx.viewpager.widget.ViewPager>
-        </androidx.constraintlayout.widget.ConstraintLayout>
+<!--            <androidx.viewpager.widget.ViewPager-->
+<!--                android:id="@+id/vpPager"-->
+<!--                android:layout_width="match_parent"-->
+<!--                android:layout_height="0dp"-->
+<!--                app:layout_constraintBottom_toBottomOf="parent"-->
+<!--                app:layout_constraintStart_toStartOf="parent"-->
+<!--                app:layout_constraintTop_toBottomOf="@+id/tvCertificates"></androidx.viewpager.widget.ViewPager>-->
+<!--        </androidx.constraintlayout.widget.ConstraintLayout>-->
     </FrameLayout>
 
     <LinearLayout

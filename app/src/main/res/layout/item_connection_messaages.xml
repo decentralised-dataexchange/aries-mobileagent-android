@@ -5,6 +5,7 @@
     android:layout_height="wrap_content"
     app:cardBackgroundColor="@color/white"
     app:cardCornerRadius="10dp"
+    android:id="@+id/cvOffer"
     android:layout_margin="5dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout

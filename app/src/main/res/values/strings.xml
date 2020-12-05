@@ -37,7 +37,7 @@
     <string name="txt_certificates_head">Covid 19 test certificates</string>
     <string name="txt_reject">Reject</string>
     <string name="txt_accept">Accept</string>
-    <string name="txt_add_certificate">Add Certificate</string>
+    <string name="txt_add_certificate">Add Certificates</string>
     <string name="txt_Add_certificate_desc">Choose the organisation from which you wish to add the certificate</string>
     <string name="txt_wallet">Wallet</string>
     <string name="txt_preferences">Preferences</string>
@@ -45,4 +45,8 @@
     <string name="txt_no_data_avaialable">No data available</string>
     <string name="err_connection_already_added">Connection already existing</string>
     <string name="txt_loading_indy_library">Loading Indy Library...</string>
+    <string name="txt_exchange_data">Exchange Data</string>
+    <string name="txt_add_connection">Add Connection</string>
+    <string name="txt_search_wallet">Search Wallet...</string>
+    <string name="txt_search_connections">Search Connections...</string>
 </resources>

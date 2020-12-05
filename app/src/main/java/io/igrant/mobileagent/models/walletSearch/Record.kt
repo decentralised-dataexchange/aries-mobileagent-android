@@ -2,8 +2,9 @@ package io.igrant.mobileagent.models.walletSearch
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
-class Record {
+class Record :Serializable{
     @SerializedName("type")
     @Expose
     var type: String? = null
@@ -18,5 +19,5 @@ class Record {
 
     @SerializedName("tags")
     @Expose
-    var tags: Any? = null
+    var tags: Map<String,String>? = null
 }
