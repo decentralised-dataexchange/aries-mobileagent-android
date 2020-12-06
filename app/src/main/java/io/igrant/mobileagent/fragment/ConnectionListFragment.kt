@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
+import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.ConnectionListAdapter
@@ -80,6 +81,7 @@ class ConnectionListFragment : BaseFragment() {
                     )
                 }
             })
+        rvConnections.layoutManager = GridLayoutManager(context, 3)
         rvConnections.adapter = walletCertificateAdapter
     }
 
@@ -102,7 +104,7 @@ class ConnectionListFragment : BaseFragment() {
     }
 
     private fun filterList(s: CharSequence?) {
-        var tempList: ArrayList<JSONObject> = ArrayList()
+        val tempList: ArrayList<JSONObject> = ArrayList()
 
         for (i in 0 until connectionRecordsCopy.length()) {
             try {
@@ -116,7 +118,7 @@ class ConnectionListFragment : BaseFragment() {
             }
         }
 
-        connectionRecords = JSONArray(tempList);
+        connectionRecords = JSONArray(tempList)
 
         walletCertificateAdapter.setList(connectionRecords)
 

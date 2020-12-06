@@ -23,7 +23,6 @@ import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.handlers.PoolHandler
 import io.igrant.mobileagent.handlers.SearchHandler
 import io.igrant.mobileagent.indy.PoolManager
-import io.igrant.mobileagent.indy.PoolUtils
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.agentConfig.ConfigResponse
@@ -39,6 +38,7 @@ import io.igrant.mobileagent.models.did.DidResult
 import io.igrant.mobileagent.models.tagJsons.ConnectionId
 import io.igrant.mobileagent.models.tagJsons.ConnectionTags
 import io.igrant.mobileagent.models.tagJsons.UpdateInvitationKey
+import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.models.walletSearch.SearchResponse
 import io.igrant.mobileagent.qrcode.QrCodeActivity
 import io.igrant.mobileagent.tasks.LoadLibIndyTask
@@ -56,6 +56,7 @@ import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_CONNECTION_RESPON
 import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_ISSUE_CREDENTIAL
 import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_OFFER_CREDENTIAL
 import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_PING_RESPONSE
+import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_REQUEST_PRESENTATION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CREDENTIAL_EXCHANGE_V10
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.DID_DOC
@@ -519,13 +520,6 @@ class InitializeActivity : BaseActivity() {
                         Snackbar.LENGTH_LONG
                     )
                     snackbar.show()
-
-//                    Snackbar.make(findViewById(android.R.id.content), "Connection is now active", Snackbar.LENGTH_LONG)
-//                        .setAction("Show") {
-//                            NavigationUtils.showConnectionListFragment(supportFragmentManager)
-//                        }
-//                        .setActionTextColor(resources.getColor(R.color.primaryBlue))
-//                        .show()
                 }
                 TYPE_OFFER_CREDENTIAL -> {
                     unPackOfferCredential(JSONObject(String(unpack)))
@@ -533,8 +527,17 @@ class InitializeActivity : BaseActivity() {
                 TYPE_ISSUE_CREDENTIAL -> {
                     unPackIssueCredential(JSONObject(String(unpack)))
                 }
+                TYPE_REQUEST_PRESENTATION -> {
+                    unPackRequestPresentation(JSONObject(String(unpack)))
+                }
             }
         }
+    }
+
+    private fun unPackRequestPresentation(jsonObject: JSONObject) {
+        val connectionObject = ConnectionUtils.getConnection(jsonObject.getString("sender_verkey"))
+
+
     }
 
     private fun unPackIssueCredential(body: JSONObject) {
@@ -921,65 +924,44 @@ class InitializeActivity : BaseActivity() {
         val didData = JSONObject(didResponse).getJSONArray("records").get(0).toString()
         val didResult = WalletManager.getGson.fromJson(didData, DidResult::class.java)
 
-        val searchConnection = WalletSearch.open(
-            WalletManager.getWallet,
+        val connectionResult = SearchUtils.searchWallet(
             CONNECTION,
-            "{\"their_did\": \"${didResult.tags!!.did}\"}",
-            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-        ).get()
-
-        val connectionResponse =
-            WalletSearch.searchFetchNextRecords(WalletManager.getWallet, searchConnection, 100)
-                .get()
-
-        Log.d(TAG, "connectionResult: $connectionResponse")
-
-        val connecction = WalletManager.getGson.fromJson(
-            JSONObject(
-                JSONObject(connectionResponse).getJSONArray("records").get(0).toString()
-            ).getString("value"), MediatorConnectionObject::class.java
+            "{\"their_did\": \"${didResult.tags!!.did}\"}"
         )
-        WalletManager.closeSearchHandle(searchConnection)
 
-        val credentialExchangeSearch = WalletSearch.open(
-            WalletManager.getWallet,
-            CREDENTIAL_EXCHANGE_V10,
-            "{\"thread_id\": \"${certificateOffer.id}\"}",
-            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-        ).get()
+        if (connectionResult.totalCount ?: 0 > 0) {
+            val connecction = WalletManager.getGson.fromJson(
+                connectionResult.records?.get(0)?.value, MediatorConnectionObject::class.java
+            )
 
-        val credentialExchangeResponse =
-            WalletSearch.searchFetchNextRecords(
+            val credentialExchangeSearch = SearchUtils.searchWallet(
+                CREDENTIAL_EXCHANGE_V10,
+                "{\"thread_id\": \"${certificateOffer.id}\"}"
+            )
+
+            if (credentialExchangeSearch.totalCount == 0) {
+                saveCredentialExchange(
+                    certificateOffer,
+                    connectionResult.records?.get(0)
+                )
+            }
+
+            WalletRecord.add(
                 WalletManager.getWallet,
-                credentialExchangeSearch,
-                100
-            ).get()
-
-        Log.d(TAG, "credentialExchangeResult: $credentialExchangeResponse")
-        WalletManager.closeSearchHandle(searchConnection)
-
-        if (JSONObject(credentialExchangeResponse).getInt("totalCount") == 0) {
-            saveCredentialExchange(
-                certificateOffer,
-                JSONObject(JSONObject(connectionResponse).getJSONArray("records").get(0).toString())
+                MESSAGE_RECORDS,
+                certificateOffer.id,
+                WalletManager.getGson.toJson(certificateOffer),
+                "{\n" +
+                        "  \"type\":\"${certificateOffer.type}\",\n" +
+                        "  \"connectionId\":\"${connecction.requestId}\"\n" +
+                        "}"
             )
         }
-
-        WalletRecord.add(
-            WalletManager.getWallet,
-            MESSAGE_RECORDS,
-            certificateOffer.id,
-            WalletManager.getGson.toJson(certificateOffer),
-            "{\n" +
-                    "  \"type\":\"${certificateOffer.type}\",\n" +
-                    "  \"connectionId\":\"${connecction.requestId}\"\n" +
-                    "}"
-        )
     }
 
     private fun saveCredentialExchange(
         certificateOffer: CertificateOffer,
-        connectionRecord: JSONObject
+        connectionRecord: Record?
     ) {
         val base64Sting =
             Base64.decode(certificateOffer.offersAttach!![0].data!!.base64, Base64.URL_SAFE)
@@ -1001,12 +983,15 @@ class InitializeActivity : BaseActivity() {
         credentialExchange.createdAt = "2020-11-18 16:08:03.923715Z"
         credentialExchange.updatedAt = "2020-11-18 16:08:03.923715Z"
         credentialExchange.connectionId =
-            connectionRecord.getJSONObject("tags").getString("request_id")
+            connectionRecord?.tags?.get("request_id")
         credentialExchange.state = CredentialExchangeStates.CREDENTIAL_OFFER_RECEIVED
         credentialExchange.credentialProposalDict = credentialProposalDict
         credentialExchange.credentialOffer = credentialProposal
 
-        Log.d(TAG, "saveCredentialExchange: ${WalletManager.getGson.toJson(credentialExchange)}")
+        Log.d(
+            TAG,
+            "saveCredentialExchange: ${WalletManager.getGson.toJson(credentialExchange)}"
+        )
         val uudi = UUID.randomUUID().toString()
         WalletRecord.add(
             WalletManager.getWallet,
@@ -1040,7 +1025,8 @@ class InitializeActivity : BaseActivity() {
             .toString(charset("UTF-8")).indexOf("{")
         Log.d(TAG, "unPackMessage: positon : $postion")
         val data =
-            Base64.decode(sigData, Base64.URL_SAFE).toString(charset("UTF-8")).substring(postion)
+            Base64.decode(sigData, Base64.URL_SAFE).toString(charset("UTF-8"))
+                .substring(postion)
 
         saveDidDoc(data, isMediator)
     }
@@ -1270,7 +1256,8 @@ class InitializeActivity : BaseActivity() {
                         Log.d(TAG, "onResponse: $str")
 
                         val unpacked =
-                            Crypto.unpackMessage(WalletManager.getWallet, str.toByteArray()).get()
+                            Crypto.unpackMessage(WalletManager.getWallet, str.toByteArray())
+                                .get()
                         Log.d(TAG, "packConnectionRequestMessage: ${String(unpacked)}")
 
                         val message = JSONObject(String(unpacked)).getString("message")
@@ -1462,7 +1449,8 @@ class InitializeActivity : BaseActivity() {
             JSONObject(connectionRecords.getJSONObject(0).getString("value"))
         val connectionDid = connectionRecord.getString("my_did")
 
-        val connectionMetaString = Did.getDidWithMeta(WalletManager.getWallet, connectionDid).get()
+        val connectionMetaString =
+            Did.getDidWithMeta(WalletManager.getWallet, connectionDid).get()
         val connectionMetaObject = JSONObject(connectionMetaString)
         val connectedKey = connectionMetaObject.getString("verkey")
 
@@ -1471,7 +1459,7 @@ class InitializeActivity : BaseActivity() {
                 val didDoc = searchResponse.records?.get(0)?.value
                 val didDocObj = WalletManager.getGson.fromJson(didDoc, DidDoc::class.java)
 
-                var packedMessage = Crypto.packMessage(
+                val packedMessage = Crypto.packMessage(
                     WalletManager.getWallet,
                     "[\"${didDocObj.publicKey!![0].publicKeyBase58}\"]",
                     connectedKey,
