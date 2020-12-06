@@ -6,6 +6,7 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import io.igrant.mobileagent.R
@@ -20,10 +21,10 @@ class ConnectionListAdapter(
     RecyclerView.Adapter<ConnectionListAdapter.ViewHolder>() {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var tvConnectionName: TextView = itemView.findViewById<View>(R.id.tvConnection) as TextView
-        var tvConnectionType: TextView =
-            itemView.findViewById<View>(R.id.tvConnectionType) as TextView
+//        var tvConnectionType: TextView =
+//            itemView.findViewById<View>(R.id.tvConnectionType) as TextView
         var ivLogo: ImageView = itemView.findViewById(R.id.ivLogo)
-        var cvConnection: CardView = itemView.findViewById(R.id.cvConnection)
+        var clItem: ConstraintLayout = itemView.findViewById(R.id.clItem)
 
     }
 
@@ -45,7 +46,7 @@ class ConnectionListAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val data = JSONObject(connectionRecords.getJSONObject(position).getString("value"))
 
-        holder.cvConnection.setOnClickListener {
+        holder.clItem.setOnClickListener {
             listener.onConnectionClick(data.getString("request_id"))
         }
         try {
@@ -60,8 +61,8 @@ class ConnectionListAdapter(
         if (data.getString("their_label") != "")
             holder.tvConnectionName.text = data.getString("their_label")
 
-        if (data.getString("my_did") != "")
-            holder.tvConnectionType.text = "Health (${data.getString("my_did")})"
+//        if (data.getString("my_did") != "")
+//            holder.tvConnectionType.text = "Health (${data.getString("my_did")})"
     }
 
     fun setList(connectionRecords: JSONArray) {
