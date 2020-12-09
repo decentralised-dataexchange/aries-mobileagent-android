@@ -3,7 +3,6 @@ package io.igrant.mobileagent.utils
 import com.google.gson.Gson
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
-import io.igrant.mobileagent.models.did.DidResult
 import io.igrant.mobileagent.models.walletSearch.SearchResponse
 import org.hyperledger.indy.sdk.non_secrets.WalletSearch
 
@@ -34,11 +33,18 @@ object ConnectionUtils {
             "{\"key\": \"$senderVk\"}"
         )
 
-        val didResult= WalletManager.getGson.fromJson(
-            connectionSearchResult.records?.get(0)?.value,
-            DidResult::class.java
-        )
+        val did = connectionSearchResult.records?.get(0)?.tags?.get("did")
 
-        return null
+
+        val connection =
+            SearchUtils.searchWallet(WalletRecordType.CONNECTION, "{\"their_did\":\"$did\"}")
+
+        return if (connection.totalCount ?: 0 > 0)
+            WalletManager.getGson.fromJson(
+                connection.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
+            )
+        else
+            null
     }
 }

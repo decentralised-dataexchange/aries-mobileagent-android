@@ -10,14 +10,12 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
+import io.igrant.mobileagent.activty.InitializeActivity
 import io.igrant.mobileagent.activty.OfferCertificateActivity
 import io.igrant.mobileagent.adapter.ConnectionMessageAdapter
 import io.igrant.mobileagent.listeners.ConnectionMessageListener
 import io.igrant.mobileagent.models.walletSearch.Record
-import io.igrant.mobileagent.utils.MessageStates
-import io.igrant.mobileagent.utils.NavigationUtils
-import io.igrant.mobileagent.utils.SearchUtils
-import io.igrant.mobileagent.utils.WalletRecordType
+import io.igrant.mobileagent.utils.*
 
 class ConnectionMessagesFragment : BaseFragment() {
 
@@ -29,6 +27,19 @@ class ConnectionMessagesFragment : BaseFragment() {
     //views
     private lateinit var rvConnectionMessages: RecyclerView
     private lateinit var llErrorMessage: LinearLayout
+
+    private var toolbarTitle: String? = ""
+
+    override fun onResume() {
+        toolbarTitle = (activity as InitializeActivity?)?.getActionBarTitle()
+        (activity as InitializeActivity?)?.setActionBarTitle(getString(R.string.title_offer_list))
+        super.onResume()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        (activity as InitializeActivity?)?.setActionBarTitle(toolbarTitle)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -91,7 +102,9 @@ class ConnectionMessagesFragment : BaseFragment() {
         val connectionMessageResponse =
             SearchUtils.searchWallet(
                 WalletRecordType.MESSAGE_RECORDS,
-                "{\"connectionId\": \"${mConnectionId}\"}"
+                "{\"connectionId\": \"${mConnectionId}\"," +
+                        "\"type\":\"${MessageTypes.TYPE_OFFER_CREDENTIAL}\""+
+                        "}"
             )
         if (connectionMessageResponse.totalCount ?: 0 > 0) {
             llErrorMessage.visibility = View.GONE

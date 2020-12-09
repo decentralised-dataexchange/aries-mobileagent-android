@@ -24,6 +24,7 @@ import io.igrant.mobileagent.handlers.PoolHandler
 import io.igrant.mobileagent.handlers.SearchHandler
 import io.igrant.mobileagent.indy.PoolManager
 import io.igrant.mobileagent.indy.WalletManager
+import io.igrant.mobileagent.listeners.InitialActivityFunctions
 import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.agentConfig.ConfigResponse
 import io.igrant.mobileagent.models.agentConfig.Invitation
@@ -35,6 +36,8 @@ import io.igrant.mobileagent.models.credentialExchange.CredentialProposalDict
 import io.igrant.mobileagent.models.credentialExchange.IssueCredential
 import io.igrant.mobileagent.models.credentialExchange.RawCredential
 import io.igrant.mobileagent.models.did.DidResult
+import io.igrant.mobileagent.models.presentationExchange.PresentationExchange
+import io.igrant.mobileagent.models.presentationExchange.PresentationRequest
 import io.igrant.mobileagent.models.tagJsons.ConnectionId
 import io.igrant.mobileagent.models.tagJsons.ConnectionTags
 import io.igrant.mobileagent.models.tagJsons.UpdateInvitationKey
@@ -57,6 +60,7 @@ import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_ISSUE_CREDENTIAL
 import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_OFFER_CREDENTIAL
 import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_PING_RESPONSE
 import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_REQUEST_PRESENTATION
+import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_REQUEST_PRESENTATION_ACK
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CREDENTIAL_EXCHANGE_V10
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.DID_DOC
@@ -88,7 +92,7 @@ import java.io.IOException
 import java.util.*
 import kotlin.collections.ArrayList
 
-class InitializeActivity : BaseActivity() {
+class InitializeActivity : BaseActivity(),InitialActivityFunctions {
 
     companion object {
         private const val TAG = "InitializeActivity"
@@ -530,14 +534,66 @@ class InitializeActivity : BaseActivity() {
                 TYPE_REQUEST_PRESENTATION -> {
                     unPackRequestPresentation(JSONObject(String(unpack)))
                 }
+                TYPE_REQUEST_PRESENTATION_ACK -> {
+                    updatePresentProofToAck(JSONObject(String(unpack)))
+                }
             }
         }
+    }
+
+    private fun updatePresentProofToAck(jsonObject: JSONObject) {
+
     }
 
     private fun unPackRequestPresentation(jsonObject: JSONObject) {
         val connectionObject = ConnectionUtils.getConnection(jsonObject.getString("sender_verkey"))
 
+        val p = SearchUtils.searchWallet(
+            WalletRecordType.PRESENTATION_EXCHANGE_V10,
+            "{\"thread_id\":\"${JSONObject(jsonObject.getString("message")).getString("@id")}\"}"
+        )
 
+        val presentationRequestBase64 =
+            JSONObject(JSONObject(jsonObject.getString("message")).getJSONArray("request_presentations~attach").get(0).toString())
+                .getJSONObject("data").getString("base64")
+        val presentationRequest = WalletManager.getGson.fromJson(
+            Base64.decode(presentationRequestBase64, Base64.URL_SAFE)
+                .toString(charset("UTF-8")), PresentationRequest::class.java
+        )
+        if (p.totalCount ?: 0 == 0) {
+            val presentationExchange = PresentationExchange()
+            presentationExchange.threadId = JSONObject(jsonObject.getString("message")).getString("@id")
+            presentationExchange.createdAt = "2020-11-25 12:17:53.491756Z"
+            presentationExchange.updatedAt = "2020-11-25 12:17:53.491756Z"
+            presentationExchange.connectionId = connectionObject?.requestId
+            presentationExchange.initiator = "external"
+            presentationExchange.presentationProposalDict = null
+            presentationExchange.presentationRequest = presentationRequest
+            presentationExchange.role = "prover"
+            presentationExchange.state = PresentationExchangeStates.REQUEST_RECEIVED
+            presentationExchange.comment = JSONObject(jsonObject.getString("message")).getString("comment")
+
+            val id = UUID.randomUUID().toString()
+            val tag = "{\"thread_id\": \"${JSONObject(jsonObject.getString("message")).getString("@id")}\"}"
+            WalletRecord.add(
+                WalletManager.getWallet,
+                WalletRecordType.PRESENTATION_EXCHANGE_V10,
+                id,
+                WalletManager.getGson.toJson(presentationExchange),
+                tag
+            )
+
+            WalletRecord.add(
+                WalletManager.getWallet,
+                MESSAGE_RECORDS,
+                JSONObject(jsonObject.getString("message")).getString("@id"),
+                WalletManager.getGson.toJson(presentationExchange),
+                "{\n" +
+                        "  \"type\":\"$TYPE_REQUEST_PRESENTATION\",\n" +
+                        "  \"connectionId\":\"${connectionObject?.requestId}\"\n" +
+                        "}"
+            )
+        }
     }
 
     private fun unPackIssueCredential(body: JSONObject) {
@@ -952,7 +1008,7 @@ class InitializeActivity : BaseActivity() {
                 certificateOffer.id,
                 WalletManager.getGson.toJson(certificateOffer),
                 "{\n" +
-                        "  \"type\":\"${certificateOffer.type}\",\n" +
+                        "  \"type\":\"$TYPE_OFFER_CREDENTIAL\",\n" +
                         "  \"connectionId\":\"${connecction.requestId}\"\n" +
                         "}"
             )
@@ -1041,11 +1097,6 @@ class InitializeActivity : BaseActivity() {
 
         val tagJson = "{\"did\": \"$did\"}"
 
-        Log.d(TAG, "saveDidDoc: wallet handle : " + WalletManager.getWallet!!.walletHandle)
-        Log.d(TAG, "saveDidDoc: wallet tags json : $tagJson")
-        Log.d(TAG, "saveDidDoc: wallet value : $didData")
-        Log.d(TAG, "saveDidDoc: wallet UUID : $didDocUuid")
-
         WalletRecord.add(
             WalletManager.getWallet,
             if (isMediator) MEDIATOR_DID_DOC else DID_DOC,
@@ -1064,10 +1115,6 @@ class InitializeActivity : BaseActivity() {
         val didKeyUuid = UUID.randomUUID().toString()
 
         val tagJson = "{\"did\": \"$did\", \"key\": \"$publicKey\"}"
-
-        Log.d(TAG, "addDidKey: wallet handle : " + WalletManager.getWallet!!.walletHandle)
-        Log.d(TAG, "addDidKey: wallet tags json : $tagJson")
-        Log.d(TAG, "addDidKey: wallet UUID : $didKeyUuid")
 
         WalletRecord.add(
             WalletManager.getWallet,
@@ -1644,5 +1691,26 @@ class InitializeActivity : BaseActivity() {
         WalletManager.closeWallet
         PoolManager.getPool?.close()
         PoolManager.removePool
+    }
+
+    override fun onTitleChange(title: String) {
+        supportActionBar?.title = title
+    }
+
+    fun setActionBarTitle(title: String?) {
+        try {
+            supportActionBar!!.title = title
+        } catch (e: Exception) {
+//            e.printStackTrace();
+        }
+    }
+
+    fun getActionBarTitle(): String? {
+        try {
+            return supportActionBar!!.title.toString()
+        } catch (e: Exception) {
+//            e.printStackTrace();
+        }
+        return ""
     }
 }

@@ -18,6 +18,7 @@ import io.igrant.mobileagent.listeners.WalletListener
 import io.igrant.mobileagent.models.certificate.Certificate
 import io.igrant.mobileagent.utils.NavigationUtils
 import io.igrant.mobileagent.utils.WalletRecordType
+import kotlinx.android.synthetic.main.fragment_wallet.*
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.anoncreds.CredentialsSearch
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
@@ -85,21 +86,24 @@ class WalletFragment : BaseFragment() {
         walletCertificateAdapter =
             WalletCertificatesAdapter(certificateList, object : WalletListener {
                 override fun onDelete(id: String,position:Int) {
-                    Anoncreds.proverDeleteCredential(WalletManager.getWallet,id).get()
-                    walletCertificateAdapter.notifyItemRemoved(position)
-                    val credSearch = CredentialsSearch.open(WalletManager.getWallet, "{}").get()
+                    try {
+                        Anoncreds.proverDeleteCredential(WalletManager.getWallet,id).get()
+                        walletCertificateAdapter.notifyItemRemoved(position)
+                        val credSearch = CredentialsSearch.open(WalletManager.getWallet, "{}").get()
 
-                    val data = credSearch.fetchNextCredentials(100).get()
+                        val data = credSearch.fetchNextCredentials(100).get()
 
-                    certificateList.clear()
-                    certificateList.addAll(WalletManager.getGson.fromJson(data, Array<Certificate>::class.java))
-                    certificateListCopy.clear()
-                    certificateListCopy.addAll(
-                        WalletManager.getGson.fromJson(
-                            data,
-                            Array<Certificate>::class.java
+                        certificateList.clear()
+                        certificateList.addAll(WalletManager.getGson.fromJson(data, Array<Certificate>::class.java))
+                        certificateListCopy.clear()
+                        certificateListCopy.addAll(
+                            WalletManager.getGson.fromJson(
+                                data,
+                                Array<Certificate>::class.java
+                            )
                         )
-                    )
+                    } catch (e: Exception) {
+                    }
                 }
             })
         rvCertificates.adapter = walletCertificateAdapter
@@ -118,6 +122,10 @@ class WalletFragment : BaseFragment() {
     private fun initListener() {
         tvAddCertificate.setOnClickListener {
             NavigationUtils.showConnectionListFragment(fragmentManager = parentFragmentManager)
+        }
+
+        tvExchangeData.setOnClickListener {
+            NavigationUtils.showRequestsFragment(parentFragmentManager)
         }
 
         etSearchWallet.addTextChangedListener(object : TextWatcher {

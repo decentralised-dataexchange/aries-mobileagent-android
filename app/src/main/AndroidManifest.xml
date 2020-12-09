@@ -31,6 +31,9 @@
 
         <activity android:name=".activty.OfferCertificateActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.ExchangeDataActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
     </application>
 
 </manifest>

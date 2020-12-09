@@ -68,7 +68,7 @@
         android:layout_height="wrap_content"
         android:background="@drawable/primary_button_background"
         android:enabled="true"
-        android:text="@string/txt_accept"
+        android:text="@string/txt_exchange"
         android:textColor="@color/white"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/btReject"
