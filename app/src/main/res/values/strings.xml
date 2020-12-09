@@ -59,4 +59,5 @@
     <string name="title_offer_list">Add Certificates</string>
     <string name="title_offer_detail">Data Agreement</string>
     <string name="title_exchange_data_detail">Exchange Data</string>
+    <string name="err_insufficient_data">Insufficient data requested</string>
 </resources>
