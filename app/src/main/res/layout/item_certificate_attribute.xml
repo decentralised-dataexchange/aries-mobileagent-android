@@ -10,7 +10,7 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:textAlignment="viewStart"
-        android:textColor="#000"
+        android:textColor="@color/textColor"
         app:layout_constraintEnd_toStartOf="@+id/tvAttributeValue"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -19,8 +19,8 @@
         android:id="@+id/tvAttributeValue"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:textAlignment="viewEnd"
-        android:textColor="#000"
+        android:textAlignment="viewStart"
+        android:textColor="@color/textColor"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/tvAttributeName"
         app:layout_constraintTop_toTopOf="parent" />

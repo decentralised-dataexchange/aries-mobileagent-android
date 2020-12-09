@@ -160,12 +160,6 @@ class OfferCertificateActivity : BaseActivity() {
         rvAttributes.adapter = adapter
     }
 
-    //    WalletRecord.updateTags(
-//    WalletManager.getWallet,
-//    if (isMediator) MEDIATOR_CONNECTION else CONNECTION,
-//    connectionUuid,
-//    tagJson
-//    )
     private fun initViews() {
         toolbar = findViewById(R.id.toolbar)
         btAccept = findViewById(R.id.btAccept)
@@ -176,7 +170,7 @@ class OfferCertificateActivity : BaseActivity() {
 
     private fun setUpToolbar() {
         setSupportActionBar(toolbar);
-        supportActionBar!!.title = ""
+        supportActionBar!!.title = resources.getString(R.string.title_offer_detail)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 

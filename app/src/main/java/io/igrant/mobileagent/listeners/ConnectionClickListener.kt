@@ -1,5 +1,5 @@
 package io.igrant.mobileagent.listeners
 
 interface ConnectionClickListener {
-    fun onConnectionClick(connection:String)
+    fun onConnectionClick(connection: String, did: String)
 }

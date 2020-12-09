@@ -7,5 +7,6 @@ class MessageTypes {
         const val TYPE_OFFER_CREDENTIAL = "offer-credential"
         const val TYPE_ISSUE_CREDENTIAL = "issue-credential"
         const val TYPE_REQUEST_PRESENTATION = "request-presentation"
+        const val TYPE_REQUEST_PRESENTATION_ACK = "ack"
     }
 }

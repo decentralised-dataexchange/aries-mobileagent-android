@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">IGrant Data Wallet</string>
+    <string name="app_name">Data Wallet</string>
     <string name="action_settings">Settings</string>
     <!-- Strings used for fragments for navigation -->
     <string name="first_fragment_label">First Fragment</string>
@@ -54,4 +54,9 @@
     <string name="txt_creating_wallet">Creating Wallet...</string>
     <string name="txt_organisations">Organisations</string>
     <string name="txt_logo">Logo</string>
+    <string name="txt_exchange">Exchange</string>
+    <string name="title_connection_list">Choose Organisation</string>
+    <string name="title_offer_list">Add Certificates</string>
+    <string name="title_offer_detail">Data Agreement</string>
+    <string name="title_exchange_data_detail">Exchange Data</string>
 </resources>

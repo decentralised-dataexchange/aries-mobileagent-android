@@ -1,5 +1,8 @@
 package io.igrant.mobileagent.fragment
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -12,6 +15,7 @@ import android.widget.LinearLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
+import io.igrant.mobileagent.activty.InitializeActivity
 import io.igrant.mobileagent.adapter.ConnectionListAdapter
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionClickListener
@@ -31,6 +35,20 @@ class ConnectionListFragment : BaseFragment() {
     private lateinit var llErrorMessage: LinearLayout
     private lateinit var btAddConnection: Button
     private lateinit var etSearch: EditText
+
+    private var toolbarTitle: String? = ""
+
+    override fun onResume() {
+        toolbarTitle = (activity as InitializeActivity?)?.getActionBarTitle()
+        (activity as InitializeActivity?)?.setActionBarTitle(getString(R.string.title_connection_list))
+        super.onResume()
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        (activity as InitializeActivity?)?.setActionBarTitle(toolbarTitle)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -74,7 +92,11 @@ class ConnectionListFragment : BaseFragment() {
         walletCertificateAdapter =
             ConnectionListAdapter(connectionRecords, object :
                 ConnectionClickListener {
-                override fun onConnectionClick(connection: String) {
+                override fun onConnectionClick(connection: String, did: String) {
+                    val clipboard: ClipboardManager? =
+                        requireActivity().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
+                    val clip = ClipData.newPlainText("DID", did)
+                    clipboard?.setPrimaryClip(clip)
                     NavigationUtils.showConnectionMessagesFragment(
                         parentFragmentManager,
                         connection
