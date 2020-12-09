@@ -26,6 +26,7 @@ import io.igrant.mobileagent.indy.PoolManager
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.InitialActivityFunctions
 import io.igrant.mobileagent.models.MediatorConnectionObject
+import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.agentConfig.ConfigResponse
 import io.igrant.mobileagent.models.agentConfig.Invitation
 import io.igrant.mobileagent.models.certificateOffer.Base64Extracted
@@ -92,7 +93,7 @@ import java.io.IOException
 import java.util.*
 import kotlin.collections.ArrayList
 
-class InitializeActivity : BaseActivity(),InitialActivityFunctions {
+class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
     companion object {
         private const val TAG = "InitializeActivity"
@@ -268,7 +269,7 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
                         })
                 } else {
                     val connectionData =
-                        JSONObject(searchResponse.records?.get(0)?.value)
+                        JSONObject(searchResponse.records?.get(0)?.value?:"")
 
                     when (connectionData.getString("state")) {
                         CONNECTION_REQUEST, CONNECTION_INVITATION -> {
@@ -554,7 +555,10 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
         )
 
         val presentationRequestBase64 =
-            JSONObject(JSONObject(jsonObject.getString("message")).getJSONArray("request_presentations~attach").get(0).toString())
+            JSONObject(
+                JSONObject(jsonObject.getString("message")).getJSONArray("request_presentations~attach")
+                    .get(0).toString()
+            )
                 .getJSONObject("data").getString("base64")
         val presentationRequest = WalletManager.getGson.fromJson(
             Base64.decode(presentationRequestBase64, Base64.URL_SAFE)
@@ -562,7 +566,8 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
         )
         if (p.totalCount ?: 0 == 0) {
             val presentationExchange = PresentationExchange()
-            presentationExchange.threadId = JSONObject(jsonObject.getString("message")).getString("@id")
+            presentationExchange.threadId =
+                JSONObject(jsonObject.getString("message")).getString("@id")
             presentationExchange.createdAt = "2020-11-25 12:17:53.491756Z"
             presentationExchange.updatedAt = "2020-11-25 12:17:53.491756Z"
             presentationExchange.connectionId = connectionObject?.requestId
@@ -571,10 +576,12 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
             presentationExchange.presentationRequest = presentationRequest
             presentationExchange.role = "prover"
             presentationExchange.state = PresentationExchangeStates.REQUEST_RECEIVED
-            presentationExchange.comment = JSONObject(jsonObject.getString("message")).getString("comment")
+            presentationExchange.comment =
+                JSONObject(jsonObject.getString("message")).getString("comment")
 
             val id = UUID.randomUUID().toString()
-            val tag = "{\"thread_id\": \"${JSONObject(jsonObject.getString("message")).getString("@id")}\"}"
+            val tag =
+                "{\"thread_id\": \"${JSONObject(jsonObject.getString("message")).getString("@id")}\"}"
             WalletRecord.add(
                 WalletManager.getWallet,
                 WalletRecordType.PRESENTATION_EXCHANGE_V10,
@@ -721,7 +728,7 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
         }
 //
         ApiManager.api.getService()
-            ?.postData(didDoc.service?.get(0)?.serviceEndpoint ?: "", typedBytes)
+            ?.postDataWithoutData(didDoc.service?.get(0)?.serviceEndpoint ?: "", typedBytes)
             ?.enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     llProgressBar.visibility = View.GONE
@@ -1091,11 +1098,11 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
         Log.d(TAG, "saveDidDoc: $data")
         val didData = JSONObject(data)
         val didDoc = didData.getString("DIDDoc")
-        val did = didData.getString("DID")
+        val theirDid = didData.getString("DID")
 
         val didDocUuid = UUID.randomUUID().toString()
 
-        val tagJson = "{\"did\": \"$did\"}"
+        val tagJson = "{\"did\": \"$theirDid\"}"
 
         WalletRecord.add(
             WalletManager.getWallet,
@@ -1107,14 +1114,14 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
 
         val publicKey = JSONObject(didDoc).getJSONArray("publicKey").getJSONObject(0)
             .getString("publicKeyBase58")
-        addDidKey(publicKey, did, isMediator)
+        addDidKey(publicKey, theirDid, isMediator)
     }
 
-    private fun addDidKey(publicKey: String, did: String, isMediator: Boolean) {
+    private fun addDidKey(publicKey: String, theirDid: String, isMediator: Boolean) {
 
         val didKeyUuid = UUID.randomUUID().toString()
 
-        val tagJson = "{\"did\": \"$did\", \"key\": \"$publicKey\"}"
+        val tagJson = "{\"did\": \"$theirDid\", \"key\": \"$publicKey\"}"
 
         WalletRecord.add(
             WalletManager.getWallet,
@@ -1123,10 +1130,10 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
             publicKey,
             tagJson
         )
-        updateRecord(publicKey, did, isMediator)
+        updateRecord(publicKey, theirDid, isMediator)
     }
 
-    private fun updateRecord(publicKey: String, did: String, isMediator: Boolean) {
+    private fun updateRecord(publicKey: String, theirDid: String, isMediator: Boolean) {
 
         val search = WalletSearch.open(
             WalletManager.getWallet,
@@ -1150,7 +1157,7 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
                 connectionRecords.getJSONObject(0).getString("value"),
                 MediatorConnectionObject::class.java
             )
-        mediatorConnectionObject.theirDid = did
+        mediatorConnectionObject.theirDid = theirDid
         mediatorConnectionObject.state = CONNECTION_RESPONSE
 
         val connectionUuid =
@@ -1168,7 +1175,7 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
         val requestId = mediatorConnectionObject.requestId
         val myDid = mediatorConnectionObject.myDid
         val invitationKey = mediatorConnectionObject.invitationKey
-        updateTag(requestId, myDid, invitationKey, connectionUuid, did, publicKey, isMediator)
+        updateTag(requestId, myDid, invitationKey, connectionUuid, theirDid, publicKey, isMediator)
     }
 
     private fun updateTag(
@@ -1197,13 +1204,33 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
         if (isMediator)
             createInbox(myDid, publicKey)
         else
-            trustPing(recipient, myDid)
+            trustPing(theirDid,myDid)
     }
 
-    private fun trustPing(recipient: String?, myDid: String?) {
+    private fun trustPing(
+        theirDid: String?,
+        myDid: String?
+    ) {
         val metaString = Did.getDidWithMeta(WalletManager.getWallet, myDid).get()
         val metaObject = JSONObject(metaString)
         val publicKey = metaObject.getString("verkey")
+
+        val didDocSearch = SearchUtils.searchWallet(
+            DID_DOC,
+            "{\"did\":\"$theirDid\"}"
+        )
+
+        var serviceEndPoint = ""
+        var recipient = ""
+        if (didDocSearch.totalCount ?: 0 > 0) {
+            val didDoc = WalletManager.getGson.fromJson(
+                didDocSearch.records?.get(0)?.value,
+                DidDoc::class.java
+            )
+
+            serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
+            recipient = didDoc.publicKey?.get(0)?.publicKeyBase58?:""
+        }
 
         val data = "{\n" +
                 "  \"@type\": \"https://didcomm.org/trust_ping/1.0/ping\",\n" +
@@ -1233,7 +1260,7 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
         }
 
         ApiManager.api.getService()
-            ?.postData("https://demo-aries-agent.igrant.io/", typedBytes)
+            ?.postDataWithoutData(serviceEndPoint, typedBytes)
             ?.enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                     llProgressBar.visibility = View.GONE
@@ -1610,8 +1637,8 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
         did.didDoc = didDoc
 
 //         transport
-//        val transport: Transport = Transport()
-//        transport.returnRoute = "all"
+        val transport = Transport()
+        transport.returnRoute = "all"
 
         //connection request
         val connectionRequest = ConnectionRequest()
@@ -1619,7 +1646,7 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
         connectionRequest.id = UUID.randomUUID().toString()
         connectionRequest.label = "Mobile agent 0018"
         connectionRequest.connection = did
-//        connectionRequest.transport = transport
+        connectionRequest.transport = transport
 
         val data = WalletManager.getGson.toJson(connectionRequest)
 
@@ -1644,16 +1671,18 @@ class InitializeActivity : BaseActivity(),InitialActivityFunctions {
         }
 
         ApiManager.api.getService()?.postData(serviceEndpoint ?: "", typedBytes)
-            ?.enqueue(object : Callback<ResponseBody> {
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+            ?.enqueue(object : Callback<ConfigPostResponse> {
+                override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
                     llProgressBar.visibility = View.GONE
                 }
 
                 override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>
+                    call: Call<ConfigPostResponse>,
+                    response: Response<ConfigPostResponse>
                 ) {
-
+                    if (response.code() == 200 && response.body() != null) {
+                        unPackSigMessage(WalletManager.getGson.toJson(response.body()), false)
+                    }
                 }
             })
     }

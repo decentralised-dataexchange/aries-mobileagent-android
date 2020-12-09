@@ -16,6 +16,7 @@ import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.indy.PoolManager
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
+import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.certificateOffer.CertificateOffer
 import io.igrant.mobileagent.models.certificateOffer.OfferAttach
 import io.igrant.mobileagent.models.certificateOffer.OfferData
@@ -83,7 +84,7 @@ class OfferCertificateActivity : BaseActivity() {
             WalletRecord.delete(
                 WalletManager.getWallet,
                 WalletRecordType.MESSAGE_RECORDS,
-                "${mCertificateOffer?.id ?: ""}"
+                mCertificateOffer?.id ?: ""
             ).get()
 
             val credentialExchangeResponse =
@@ -122,7 +123,7 @@ class OfferCertificateActivity : BaseActivity() {
 //                    )
 
                     ApiManager.api.getService()
-                        ?.postData(endPoint, requestBody)
+                        ?.postDataWithoutData(endPoint, requestBody)
                         ?.enqueue(object : Callback<ResponseBody> {
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                                 llProgressBar.visibility = View.GONE
@@ -138,9 +139,9 @@ class OfferCertificateActivity : BaseActivity() {
                                 btAccept.isEnabled = false
                                 btReject.isEnabled = true
                                 onBackPressed()
-                                if (response.code() == 200 && response.body() != null) {
-
-                                }
+//                                if (response.code() == 200 && response.body() != null) {
+//
+//                                }
                             }
                         })
                 }
@@ -169,7 +170,7 @@ class OfferCertificateActivity : BaseActivity() {
     }
 
     private fun setUpToolbar() {
-        setSupportActionBar(toolbar);
+        setSupportActionBar(toolbar)
         supportActionBar!!.title = resources.getString(R.string.title_offer_detail)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
@@ -210,7 +211,7 @@ class OfferCertificateActivity : BaseActivity() {
                     "{\"thread_id\": \"${mCertificateOffer?.id}\"}"
                 )
 
-            var credentialExchangeData: CredentialExchange = CredentialExchange()
+            var credentialExchangeData = CredentialExchange()
             if (credentialExchangeResponse.totalCount ?: 0 > 0) {
                 credentialExchangeData = WalletManager.getGson.fromJson(
                     credentialExchangeResponse.records?.get(0)?.value,
@@ -246,7 +247,7 @@ class OfferCertificateActivity : BaseActivity() {
             //get cred offer json:
             //offer credential base64 parameter value decoded value
             val credOfferJson = Base64.decode(
-                mCertificateOffer?.offersAttach?.get(0)?.data?.base64,
+                mCertificateOffer.offersAttach?.get(0)?.data?.base64,
                 Base64.URL_SAFE
             ).toString(charset("UTF-8"))
 
@@ -281,7 +282,7 @@ class OfferCertificateActivity : BaseActivity() {
 
             //creating model for sending
             val thread = Thread()
-            thread.thid = mCertificateOffer?.id ?: ""
+            thread.thid = mCertificateOffer.id ?: ""
 
             val v = Base64.encodeToString(
                 proverResponse.credentialRequestJson.toByteArray(),
@@ -295,7 +296,7 @@ class OfferCertificateActivity : BaseActivity() {
             requestAttach.id = "libindy-cred-request-0"
             requestAttach.mimeType = "application/json"
             requestAttach.data = offerData
-            thread.thid = mCertificateOffer?.id ?: ""
+            thread.thid = mCertificateOffer.id ?: ""
 
             val requestAttachList = ArrayList<OfferAttach>()
             requestAttachList.add(requestAttach)
@@ -320,7 +321,7 @@ class OfferCertificateActivity : BaseActivity() {
                         "}"
             )
 
-            var packedMessage = Crypto.packMessage(
+            val packedMessage = Crypto.packMessage(
                 WalletManager.getWallet,
                 "[\"${searchResponse.records?.get(0)?.value ?: ""}\"]",
                 publicKey,
@@ -347,7 +348,7 @@ class OfferCertificateActivity : BaseActivity() {
                 )
 
             serviceEndPoint =
-                JSONObject(connectionInvitaitonObject.records?.get(0)?.value).getString("serviceEndpoint")
+                JSONObject(connectionInvitaitonObject.records?.get(0)?.value?:"").getString("serviceEndpoint")
 
             return null
         }
