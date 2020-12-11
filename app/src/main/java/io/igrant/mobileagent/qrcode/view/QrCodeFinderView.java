@@ -51,9 +51,9 @@ public final class QrCodeFinderView extends RelativeLayout {
 
 
         Resources resources = getResources();
-        mMaskColor = resources.getColor(R.color.colorPrimaryDark);
+        mMaskColor = resources.getColor(R.color.bgColor);
         mFrameColor = resources.getColor(R.color.white);
-        mLaserColor = resources.getColor(R.color.colorPrimary);
+        mLaserColor = resources.getColor(R.color.bgColor);
         mTextColor = resources.getColor(R.color.white);
 
         mFocusThick = 1;

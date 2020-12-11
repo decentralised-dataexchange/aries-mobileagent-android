@@ -5,7 +5,7 @@ import androidx.fragment.app.FragmentManager
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.fragment.ConnectionListFragment
 import io.igrant.mobileagent.fragment.ConnectionMessagesFragment
-import io.igrant.mobileagent.fragment.RequestFragment
+import io.igrant.mobileagent.activty.RequestActivity
 import io.igrant.mobileagent.fragment.WalletFragment
 
 object NavigationUtils {
@@ -36,11 +36,6 @@ object NavigationUtils {
 
     fun showConnectionMessagesFragment(fragmentManager: FragmentManager?,connection:String) {
         val connectionFragment: ConnectionMessagesFragment = ConnectionMessagesFragment.newInstance(connection)
-        showFragment(connectionFragment, fragmentManager!!, true)
-    }
-
-    fun showRequestsFragment(fragmentManager: FragmentManager?) {
-        val connectionFragment: RequestFragment = RequestFragment.newInstance()
         showFragment(connectionFragment, fragmentManager!!, true)
     }
 

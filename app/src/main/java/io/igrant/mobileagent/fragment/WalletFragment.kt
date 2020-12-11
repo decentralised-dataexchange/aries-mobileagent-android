@@ -1,5 +1,6 @@
 package io.igrant.mobileagent.fragment
 
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -12,6 +13,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
+import io.igrant.mobileagent.activty.RequestActivity
 import io.igrant.mobileagent.adapter.WalletCertificatesAdapter
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.WalletListener
@@ -21,7 +23,6 @@ import io.igrant.mobileagent.utils.WalletRecordType
 import kotlinx.android.synthetic.main.fragment_wallet.*
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.anoncreds.CredentialsSearch
-import org.hyperledger.indy.sdk.non_secrets.WalletRecord
 import org.hyperledger.indy.sdk.non_secrets.WalletSearch
 
 class WalletFragment : BaseFragment() {
@@ -52,23 +53,23 @@ class WalletFragment : BaseFragment() {
     }
 
     private fun setUpCertificateList() {
+//
+//        val credentialExchangeSearch = WalletSearch.open(
+//            WalletManager.getWallet,
+//            WalletRecordType.CREDENTIAL_EXCHANGE_V10,
+//            "{}",
+//            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
+//        ).get()
+//
+//        val credentialExchangeResponse =
+//            WalletSearch.searchFetchNextRecords(
+//                WalletManager.getWallet,
+//                credentialExchangeSearch,
+//                100
+//            ).get()
 
-        val credentialExchangeSearch = WalletSearch.open(
-            WalletManager.getWallet,
-            WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-            "{}",
-            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-        ).get()
-
-        val credentialExchangeResponse =
-            WalletSearch.searchFetchNextRecords(
-                WalletManager.getWallet,
-                credentialExchangeSearch,
-                100
-            ).get()
-
-        Log.d(TAG, "credentialExchangeResult: $credentialExchangeResponse")
-        WalletManager.closeSearchHandle(credentialExchangeSearch)
+//        Log.d(TAG, "credentialExchangeResult: $credentialExchangeResponse")
+//        WalletManager.closeSearchHandle(credentialExchangeSearch)
 
         val credSearch = CredentialsSearch.open(WalletManager.getWallet, "{}").get()
 
@@ -125,7 +126,8 @@ class WalletFragment : BaseFragment() {
         }
 
         tvExchangeData.setOnClickListener {
-            NavigationUtils.showRequestsFragment(parentFragmentManager)
+           startActivity(Intent(context,
+               RequestActivity::class.java))
         }
 
         etSearchWallet.addTextChangedListener(object : TextWatcher {

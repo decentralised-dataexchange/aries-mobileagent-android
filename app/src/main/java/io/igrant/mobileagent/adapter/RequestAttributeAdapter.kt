@@ -9,7 +9,7 @@ import io.igrant.mobileagent.R
 import io.igrant.mobileagent.models.certificateOffer.Attributes
 import io.igrant.mobileagent.models.presentationExchange.ExchangeAttributes
 
-class CertificateAttributeAdapter(var itemList:ArrayList<Attributes>): RecyclerView.Adapter<CertificateAttributeAdapter.ViewHolder>() {
+class RequestAttributeAdapter(var itemList:ArrayList<ExchangeAttributes>): RecyclerView.Adapter<RequestAttributeAdapter.ViewHolder>() {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var tvAttributeName: TextView = itemView.findViewById<View>(R.id.tvAttributeName) as TextView
         var tvAttributeValue: TextView = itemView.findViewById<View>(R.id.tvAttributeValue) as TextView
