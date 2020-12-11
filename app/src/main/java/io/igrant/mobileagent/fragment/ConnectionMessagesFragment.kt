@@ -81,7 +81,7 @@ class ConnectionMessagesFragment : BaseFragment() {
                     startActivity(intent)
                     Handler(Looper.getMainLooper()).postDelayed({
                         NavigationUtils.popBack(parentFragmentManager)
-                    }, 500)
+                    }, 100)
 
                 }
 

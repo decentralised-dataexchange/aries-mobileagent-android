@@ -54,7 +54,6 @@ import io.igrant.mobileagent.utils.ConnectionStates.Companion.CONNECTION_ACTIVE
 import io.igrant.mobileagent.utils.ConnectionStates.Companion.CONNECTION_INVITATION
 import io.igrant.mobileagent.utils.ConnectionStates.Companion.CONNECTION_REQUEST
 import io.igrant.mobileagent.utils.ConnectionStates.Companion.CONNECTION_RESPONSE
-import io.igrant.mobileagent.utils.CredentialExchangeStates.Companion.CREDENTIAL_CREDENTIAL_ACK
 import io.igrant.mobileagent.utils.CredentialExchangeStates.Companion.CREDENTIAL_CREDENTIAL_RECEIVED
 import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_CONNECTION_RESPONSE
 import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_ISSUE_CREDENTIAL
@@ -77,7 +76,6 @@ import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import okio.BufferedSink
 import org.apache.commons.io.IOUtils
-import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.crypto.Crypto
 import org.hyperledger.indy.sdk.did.Did
 import org.hyperledger.indy.sdk.ledger.Ledger
@@ -269,7 +267,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                         })
                 } else {
                     val connectionData =
-                        JSONObject(searchResponse.records?.get(0)?.value?:"")
+                        JSONObject(searchResponse.records?.get(0)?.value ?: "")
 
                     when (connectionData.getString("state")) {
                         CONNECTION_REQUEST, CONNECTION_INVITATION -> {
@@ -544,6 +542,23 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
     private fun updatePresentProofToAck(jsonObject: JSONObject) {
 
+
+        WalletRecord.delete(
+            WalletManager.getWallet,
+            MESSAGE_RECORDS,
+            JSONObject(jsonObject.getString("message")).getJSONObject("~thread").getString("thid")
+        ).get()
+
+        val presentationExchange = SearchUtils.searchWallet(
+            WalletRecordType.PRESENTATION_EXCHANGE_V10,
+            "{\"thread_id\":\"${JSONObject(jsonObject.getString("message")).getJSONObject("~thread").getString("thid")}\"}"
+        )
+//
+        WalletRecord.delete(
+            WalletManager.getWallet,
+            WalletRecordType.PRESENTATION_EXCHANGE_V10,
+            "${presentationExchange.records?.get(0)?.id}"
+        ).get()
     }
 
     private fun unPackRequestPresentation(jsonObject: JSONObject) {
@@ -781,34 +796,34 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         val searchResponse = gson.fromJson(credentialExchangeResponse, SearchResponse::class.java)
         if (searchResponse.totalCount ?: 0 > 0) {
-            val credentialExchange =
-                gson.fromJson(searchResponse.records?.get(0)?.value, CredentialExchange::class.java)
+//            val credentialExchange =
+//                gson.fromJson(searchResponse.records?.get(0)?.value, CredentialExchange::class.java)
+//
+//            Log.d(
+//                TAG,
+//                "storeCredential: \n credentialRequestMetadata: \n ${gson.toJson(credentialExchange.credentialRequestMetadata)} \n rawCredential: \n ${gson.toJson(
+//                    credentialExchange.rawCredential
+//                )} \n parsedCredDefResponse.objectJson: \n ${parsedCredDefResponse.objectJson}"
+//            )
+//            val uuid = UUID.randomUUID().toString()
+//            val credentialId = Anoncreds.proverStoreCredential(
+//                WalletManager.getWallet,
+//                uuid,
+//                gson.toJson(credentialExchange.credentialRequestMetadata),
+//                gson.toJson(credentialExchange.rawCredential),
+//                parsedCredDefResponse.objectJson,
+//                null
+//            ).get()
+//
+//            Log.d(TAG, "storeCredential: $uuid \n $credentialId")
+//            credentialExchange.state = CREDENTIAL_CREDENTIAL_ACK
 
-            Log.d(
-                TAG,
-                "storeCredential: \n credentialRequestMetadata: \n ${gson.toJson(credentialExchange.credentialRequestMetadata)} \n rawCredential: \n ${gson.toJson(
-                    credentialExchange.rawCredential
-                )} \n parsedCredDefResponse.objectJson: \n ${parsedCredDefResponse.objectJson}"
-            )
-            val uuid = UUID.randomUUID().toString()
-            val credentialId = Anoncreds.proverStoreCredential(
-                WalletManager.getWallet,
-                uuid,
-                gson.toJson(credentialExchange.credentialRequestMetadata),
-                gson.toJson(credentialExchange.rawCredential),
-                parsedCredDefResponse.objectJson,
-                null
-            ).get()
-
-            Log.d(TAG, "storeCredential: $uuid \n $credentialId")
-            credentialExchange.state = CREDENTIAL_CREDENTIAL_ACK
-
-            WalletRecord.updateValue(
-                WalletManager.getWallet,
-                CREDENTIAL_EXCHANGE_V10,
-                "${searchResponse.records?.get(0)?.id}",
-                gson.toJson(credentialExchange)
-            )
+//            WalletRecord.updateValue(
+//                WalletManager.getWallet,
+//                CREDENTIAL_EXCHANGE_V10,
+//                "${searchResponse.records?.get(0)?.id}",
+//                gson.toJson(credentialExchange)
+//            )
 
             WalletRecord.delete(
                 WalletManager.getWallet,
@@ -1204,7 +1219,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         if (isMediator)
             createInbox(myDid, publicKey)
         else
-            trustPing(theirDid,myDid)
+            trustPing(theirDid, myDid)
     }
 
     private fun trustPing(
@@ -1229,7 +1244,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             )
 
             serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
-            recipient = didDoc.publicKey?.get(0)?.publicKeyBase58?:""
+            recipient = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
         }
 
         val data = "{\n" +

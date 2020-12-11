@@ -12,12 +12,12 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.CertificateAttributeAdapter
+import io.igrant.mobileagent.adapter.RequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
-import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
-import io.igrant.mobileagent.models.certificateOffer.Attributes
 import io.igrant.mobileagent.models.presentationExchange.CredentialValue
+import io.igrant.mobileagent.models.presentationExchange.ExchangeAttributes
 import io.igrant.mobileagent.models.presentationExchange.PresentationExchange
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.tasks.ExchangeDataTask
@@ -32,8 +32,6 @@ import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 class ExchangeDataActivity : BaseActivity() {
 
@@ -50,13 +48,14 @@ class ExchangeDataActivity : BaseActivity() {
     private lateinit var rvAttributes: RecyclerView
     private lateinit var llProgressBar: LinearLayout
 
-    private lateinit var adapter: CertificateAttributeAdapter
+    private lateinit var adapter: RequestAttributeAdapter
 
-    private var attributelist: ArrayList<Attributes> = ArrayList()
+    private var attributelist: ArrayList<ExchangeAttributes> = ArrayList()
 
     private var requestedAttributes: HashMap<String, CredentialValue> = HashMap()
 
     private var isInsufficientData = false
+
     companion object {
         private const val TAG = "ExchangeDataActivity"
         const val EXTRA_PRESENTATION_RECORD =
@@ -90,7 +89,7 @@ class ExchangeDataActivity : BaseActivity() {
 
             val searchResult = searchHandle.fetchNextCredentials(key, 100).get()
 
-            if (JSONArray(searchResult).length()>0) {
+            if (JSONArray(searchResult).length() > 0) {
                 val referent =
                     JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
                         .getString("referent")
@@ -103,21 +102,27 @@ class ExchangeDataActivity : BaseActivity() {
 
                 val data =
                     JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-                        .getJSONObject("attrs").getString(value.name?:"")
+                        .getJSONObject("attrs").getString(value.name ?: "")
 
-                val attributes = Attributes()
+                val attributes = ExchangeAttributes()
                 attributes.name = value.name
                 attributes.value = data
+                attributes.credDefId =
+                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                        .getString("cred_def_id")
+                attributes.referent =
+                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                        .getString("referent")
 
                 attributelist.add(attributes)
-            }else{
-              isInsufficientData = true
+            } else {
+                isInsufficientData = true
             }
         }
 
         searchHandle.closeSearch()
 
-        adapter = CertificateAttributeAdapter(
+        adapter = RequestAttributeAdapter(
             attributelist
         )
         rvAttributes.layoutManager = LinearLayoutManager(this)
@@ -222,13 +227,19 @@ class ExchangeDataActivity : BaseActivity() {
                                         llProgressBar.visibility = View.GONE
                                         btAccept.isEnabled = true
                                         btReject.isEnabled = true
+
+                                        onBackPressed()
                                     }
                                 }
                             })
                     }
                 }, mPresentationExchange, requestedAttributes).execute(record?.id, mConnectionId)
-            }else{
-                Toast.makeText(this,resources.getString(R.string.err_insufficient_data),Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(
+                    this,
+                    resources.getString(R.string.err_insufficient_data),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
     }

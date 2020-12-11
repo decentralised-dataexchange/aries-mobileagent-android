@@ -26,6 +26,32 @@ object ConnectionUtils {
         return result.totalCount ?: 0 > 0
     }
 
+    fun getConnectionWithInvitationKey(invitationKey: String): MediatorConnectionObject? {
+        val gson = Gson()
+        val search = WalletSearch.open(
+            WalletManager.getWallet,
+            WalletRecordType.CONNECTION,
+            "{\n" +
+                    "  \"invitation_key\":\"$invitationKey\"\n" +
+                    "}",
+            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
+        ).get()
+
+        val connection =
+            WalletSearch.searchFetchNextRecords(WalletManager.getWallet, search, 100).get()
+
+        WalletManager.closeSearchHandle(search)
+        val result = gson.fromJson(connection, SearchResponse::class.java)
+        if (result.totalCount ?: 0 > 0) {
+            return WalletManager.getGson.fromJson(
+                result.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
+            )
+        } else {
+            return null
+        }
+    }
+
     fun getConnection(senderVk: String): MediatorConnectionObject? {
 
         val connectionSearchResult = SearchUtils.searchWallet(
