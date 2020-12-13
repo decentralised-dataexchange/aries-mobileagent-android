@@ -102,6 +102,16 @@ class ExchangeDataTask(
         credDef = credDef.substring(0, credDef.length - 2)
         credDef += "}"
 
+        val pr = WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest)
+        val te = WalletManager.getGson.toJson(
+            requestCredential
+        )
+        Log.d(
+            TAG,
+            "doInBackground: \n ${WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest)} \n ${WalletManager.getGson.toJson(
+                requestCredential
+            )} \n $schema \n $credDef"
+        )
         val proverProofResponse = Anoncreds.proverCreateProof(
             WalletManager.getWallet,
             WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest),
@@ -120,10 +130,11 @@ class ExchangeDataTask(
             "initListener: ${WalletManager.getGson.toJson(mPresentationExchange)}"
         )
 
-        WalletRecord.updateValue(
-            WalletManager.getWallet, WalletRecordType.PRESENTATION_EXCHANGE_V10,
-            recordId, WalletManager.getGson.toJson(mPresentationExchange)
-        )
+        if (recordId != "")
+            WalletRecord.updateValue(
+                WalletManager.getWallet, WalletRecordType.PRESENTATION_EXCHANGE_V10,
+                recordId, WalletManager.getGson.toJson(mPresentationExchange)
+            )
 
         val connectionObjectRecord =
             SearchUtils.searchWallet(

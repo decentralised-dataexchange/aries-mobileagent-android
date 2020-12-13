@@ -1,17 +1,14 @@
 package io.igrant.mobileagent.tasks
 
-import android.content.Context
 import android.os.AsyncTask
 import android.util.Base64
 import android.util.Log
-import io.igrant.mobileagent.activty.InitializeActivity
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.utils.ConnectionStates
 import io.igrant.mobileagent.utils.SearchUtils
-import io.igrant.mobileagent.utils.WalletRecordType
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.DID_DOC
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.DID_KEY
@@ -22,8 +19,6 @@ import okio.BufferedSink
 import org.hyperledger.indy.sdk.crypto.Crypto
 import org.hyperledger.indy.sdk.did.Did
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
-import org.hyperledger.indy.sdk.non_secrets.WalletSearch
-import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.util.*
@@ -36,19 +31,23 @@ class SaveDidDocTask(private val commonHandler: CommonHandler,private val body:S
     private val TAG = "SaveDidDocTask"
 
     override fun doInBackground(vararg p0: Void?): Void? {
+
+        //todo add a new tag in the connection with invitaion key and extra my var key then update my key not invitation key
         val unpacked = Crypto.unpackMessage(WalletManager.getWallet, body.toByteArray()).get()
 
         val response = JSONObject(String(unpacked))
 
         val message = JSONObject(response.get("message").toString())
 
+        val recipientKey = response.getString("sender_verkey")
+
         val connectionSig = JSONObject(message.get("connection~sig").toString())
         val sigData = connectionSig.get("sig_data").toString()
-        val postion = Base64.decode(sigData, Base64.URL_SAFE)
+        val position = Base64.decode(sigData, Base64.URL_SAFE)
             .toString(charset("UTF-8")).indexOf("{")
         val data =
             Base64.decode(sigData, Base64.URL_SAFE).toString(charset("UTF-8"))
-                .substring(postion)
+                .substring(position)
 
         val didData = JSONObject(data)
         val didDoc = didData.getString("DIDDoc")
@@ -81,32 +80,19 @@ class SaveDidDocTask(private val commonHandler: CommonHandler,private val body:S
             didKeyTagJson
         )
 
-        val search = WalletSearch.open(
-            WalletManager.getWallet,
-            CONNECTION,
-            "{}",
-            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-        ).get()
-
-        val connection =
-            WalletSearch.searchFetchNextRecords(WalletManager.getWallet, search, 100).get()
-
-        WalletManager.closeSearchHandle(search)
-
-        val connectionData = JSONObject(connection)
-
-        val connectionRecords = JSONArray(connectionData.get("records").toString())
+        val connectionSearch = SearchUtils.searchWallet(CONNECTION,
+            "{\"invitation_key\":\"$recipientKey\"}")
 
         val mediatorConnectionObject: MediatorConnectionObject =
             WalletManager.getGson.fromJson(
-                connectionRecords.getJSONObject(0).getString("value"),
+                connectionSearch.records?.get(0)?.value,
                 MediatorConnectionObject::class.java
             )
         mediatorConnectionObject.theirDid = theirDid
         mediatorConnectionObject.state = ConnectionStates.CONNECTION_RESPONSE
 
         val connectionUuid =
-            connectionRecords.getJSONObject(0).getString("id")
+            connectionSearch.records?.get(0)?.id
 
         val value = WalletManager.getGson.toJson(mediatorConnectionObject)
 
@@ -119,20 +105,7 @@ class SaveDidDocTask(private val commonHandler: CommonHandler,private val body:S
 
         val requestId = mediatorConnectionObject.requestId
         val myDid = mediatorConnectionObject.myDid
-        val invitationKey = mediatorConnectionObject.invitationKey
 
-        val connectionTagJson = "{\n" +
-                "  \"their_did\": \"$theirDid\",\n" +
-                "  \"request_id\": \"$requestId\",\n" +
-                "  \"my_did\": \"$myDid\",\n" +
-                "  \"invitation_key\": \"$invitationKey\"\n" +
-                "}"
-        WalletRecord.updateTags(
-            WalletManager.getWallet,
-            CONNECTION,
-            connectionUuid,
-            connectionTagJson
-        )
 
         val metaString = Did.getDidWithMeta(WalletManager.getWallet, myDid).get()
         val metaObject = JSONObject(metaString)
@@ -154,6 +127,21 @@ class SaveDidDocTask(private val commonHandler: CommonHandler,private val body:S
             serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
             recipient = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
         }
+
+        val connectionTagJson = "{\n" +
+                "  \"their_did\": \"$theirDid\",\n" +
+                "  \"request_id\": \"$requestId\",\n" +
+                "  \"my_did\": \"$myDid\",\n" +
+                "  \"invitation_key\": \"$recipientKey\",\n" +
+                "  \"recipient_key\": \"$recipient\"\n" +
+                "}"
+
+        WalletRecord.updateTags(
+            WalletManager.getWallet,
+            CONNECTION,
+            connectionUuid,
+            connectionTagJson
+        )
 
         val trustPingData = "{\n" +
                 "  \"@type\": \"https://didcomm.org/trust_ping/1.0/ping\",\n" +
