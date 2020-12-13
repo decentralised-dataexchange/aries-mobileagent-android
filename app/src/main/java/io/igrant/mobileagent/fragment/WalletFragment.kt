@@ -53,24 +53,6 @@ class WalletFragment : BaseFragment() {
     }
 
     private fun setUpCertificateList() {
-//
-//        val credentialExchangeSearch = WalletSearch.open(
-//            WalletManager.getWallet,
-//            WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-//            "{}",
-//            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-//        ).get()
-//
-//        val credentialExchangeResponse =
-//            WalletSearch.searchFetchNextRecords(
-//                WalletManager.getWallet,
-//                credentialExchangeSearch,
-//                100
-//            ).get()
-
-//        Log.d(TAG, "credentialExchangeResult: $credentialExchangeResponse")
-//        WalletManager.closeSearchHandle(credentialExchangeSearch)
-
         val credSearch = CredentialsSearch.open(WalletManager.getWallet, "{}").get()
 
         val data = credSearch.fetchNextCredentials(100).get()
