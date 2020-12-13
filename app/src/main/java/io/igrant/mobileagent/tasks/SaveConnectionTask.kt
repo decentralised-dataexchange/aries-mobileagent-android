@@ -45,7 +45,7 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
         val connectionUuid = UUID.randomUUID().toString()
 
         val connectionTag = ConnectionTags()
-        connectionTag.invitationKey = invitation?.recipientKeys!![0]
+        connectionTag.invitationKey = invitation.recipientKeys!![0]
         connectionTag.state = ConnectionStates.CONNECTION_INVITATION
 
         val connectionTagJson =
@@ -61,9 +61,6 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
 
         val connectionInvitationTagJson = WalletManager.getGson.toJson(ConnectionId(connectionUuid))
         val connectionInvitationUuid = UUID.randomUUID().toString()
-
-        Log.d(TAG, "saveRecord2: wallet value : $connectionTagJson")
-        Log.d(TAG, "saveRecord2: wallet UUID : $connectionInvitationUuid")
 
         WalletRecord.add(
             WalletManager.getWallet,
@@ -93,8 +90,12 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
             value
         )
 
+        val metaString = Did.getDidWithMeta(WalletManager.getWallet, myDid).get()
+        val metaObject = JSONObject(metaString)
+        val key = metaObject.getString("verkey")
+
         val tagJson =
-            WalletManager.getGson.toJson(UpdateInvitationKey(requestId, myDid, invitation?.recipientKeys?.get(0), null))
+            WalletManager.getGson.toJson(UpdateInvitationKey(requestId, myDid, invitation.recipientKeys!![0], null,null))
         WalletRecord.updateTags(
             WalletManager.getWallet,
             CONNECTION,
@@ -103,10 +104,6 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
         )
 
         val messageUuid = UUID.randomUUID().toString()
-
-        val metaString = Did.getDidWithMeta(WalletManager.getWallet, myDid).get()
-        val metaObject = JSONObject(metaString)
-        val key = metaObject.getString("verkey")
 
         val data = "{\n" +
                 "    \"@id\": \"$messageUuid\",\n" +
@@ -117,25 +114,11 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
                 "    }\n" +
                 "}\n"
 
-        val search = WalletSearch.open(
-            WalletManager.getWallet,
-            WalletRecordType.MEDIATOR_CONNECTION,
-            "{}",
-            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-        ).get()
+        val mediatorConnection = SearchUtils.searchWallet(WalletRecordType.MEDIATOR_CONNECTION,
+            "{}")
 
-        val connection =
-            WalletSearch.searchFetchNextRecords(WalletManager.getWallet, search, 100).get()
-
-        WalletManager.closeSearchHandle(search)
-
-        val connectionData = JSONObject(connection)
-        Log.d(TAG, "getMediatorConfig: $connection")
-
-        val connectionRecords = JSONArray(connectionData.get("records").toString())
-        val connectionRecord =
-            JSONObject(connectionRecords.getJSONObject(0).getString("value"))
-        val connectionDid = connectionRecord.getString("my_did")
+        val mediatorConnectionObject = WalletManager.getGson.fromJson(mediatorConnection.records?.get(0)?.value,MediatorConnectionObject::class.java)
+        val connectionDid = mediatorConnectionObject.myDid
 
         val connectionMetaString =
             Did.getDidWithMeta(WalletManager.getWallet, connectionDid).get()
@@ -230,7 +213,7 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
 
         val connectionRequestPackedMessage = Crypto.packMessage(
             WalletManager.getWallet,
-            "[\"${invitation?.recipientKeys?.get(0)}\"]",
+            "[\"${invitation.recipientKeys?.get(0)}\"]",
             key,
             connectionRequestData.toByteArray()
         ).get()

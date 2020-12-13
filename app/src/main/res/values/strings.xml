@@ -61,4 +61,8 @@
     <string name="title_exchange_data_detail">Exchange Data</string>
     <string name="err_insufficient_data">Insufficient data requested</string>
     <string name="txt_requests">Requests</string>
+    <string name="txt_connection_success_message">Connection Success</string>
+    <string name="notification_channel_success_messages">Success Messages</string>
+    <string name="notification_channel_success">success_messages</string>
+    <string name="default_notification_channel_id">NotificationChannel</string>
 </resources>

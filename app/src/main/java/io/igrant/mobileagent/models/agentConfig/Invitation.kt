@@ -2,8 +2,9 @@ package io.igrant.mobileagent.models.agentConfig
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
-class Invitation {
+class Invitation:Serializable {
 
     @SerializedName("label")
     @Expose

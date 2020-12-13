@@ -47,13 +47,13 @@ object WalletManager {
                         .toString()
                     try {
                         Wallet.createWallet(walletConfig, walletCredentials).get()
-                    } catch (e: ExecutionException) {
-                        Log.d(TAG, "${e.message}")
-                        if (e.message!!.indexOf("WalletExistsException") >= 0) {
-                            // ignore
-                        } else {
-                            throw RuntimeException(e)
-                        }
+                    } catch (e: Exception) {
+//                        Log.d(TAG, "${e.message}")
+//                        if (e.message!!.indexOf("WalletExistsException") >= 0) {
+//                            // ignore
+//                        } else {
+//                            throw RuntimeException(e)
+//                        }
                     }
                     wallet = Wallet.openWallet(walletConfig, walletCredentials).get()
 
