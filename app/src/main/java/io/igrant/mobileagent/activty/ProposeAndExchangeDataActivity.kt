@@ -182,29 +182,9 @@ class ProposeAndExchangeDataActivity : BaseActivity() {
     }
 
     private fun initListener() {
-//        btReject.setOnClickListener {
-//            WalletRecord.delete(
-//                WalletManager.getWallet,
-//                WalletRecordType.MESSAGE_RECORDS,
-//                mPresentationExchange?.threadId ?: ""
-//            ).get()
-//
-//            val credentialExchangeResponse =
-//                SearchUtils.searchWallet(
-//                    WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-//                    "{\"thread_id\": \"${mPresentationExchange?.threadId}\"}"
-//                )
-//
-//            if (credentialExchangeResponse.totalCount ?: 0 > 0) {
-//                WalletRecord.delete(
-//                    WalletManager.getWallet,
-//                    WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-//                    "${credentialExchangeResponse.records?.get(0)?.id}"
-//                ).get()
-//            }
-//
-//            onBackPressed()
-//        }
+        btReject.setOnClickListener {
+            onBackPressed()
+        }
 
         btAccept.setOnClickListener {
             if (!isInsufficientData) {
