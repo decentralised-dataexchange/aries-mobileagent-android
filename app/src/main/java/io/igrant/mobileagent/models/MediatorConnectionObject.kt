@@ -17,6 +17,10 @@ class MediatorConnectionObject {
     @Expose
     var theirDid: String? = ""
 
+    @SerializedName("is_igrant_enabled")
+    @Expose
+    var isIGrantEnabled: Boolean? = false
+
     @SerializedName("request_id")
     @Expose
     var requestId: String? = ""

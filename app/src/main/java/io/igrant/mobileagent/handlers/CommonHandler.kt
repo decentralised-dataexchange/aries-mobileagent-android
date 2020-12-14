@@ -5,7 +5,11 @@ import okhttp3.RequestBody
 interface CommonHandler {
     fun taskCompleted(){}
     fun onExchangeDataComplete(serviceEndPoint: String, typedBytes: RequestBody) {}
-    fun onSaveConnection(typedBytes:RequestBody,connectionRequest:RequestBody){
+    fun onSaveConnection(
+        typedBytes: RequestBody,
+        connectionRequest: RequestBody,
+        queryFeaturePackedBytes: RequestBody
+    ){
     }
     fun onSaveDidComplete(typedBytes:RequestBody,serviceEndPoint:String){
     }

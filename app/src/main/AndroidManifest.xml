@@ -41,6 +41,9 @@
 
         <activity android:name=".activty.ProposeAndExchangeDataActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.ConnectionDetailActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
     </application>
 
 </manifest>
