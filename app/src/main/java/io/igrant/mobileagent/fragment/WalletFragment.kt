@@ -56,7 +56,7 @@ class WalletFragment : BaseFragment() {
         val credSearch = CredentialsSearch.open(WalletManager.getWallet, "{}").get()
 
         val data = credSearch.fetchNextCredentials(100).get()
-
+//credSearch.closeSearch()
         certificateList.clear()
         certificateList.addAll(WalletManager.getGson.fromJson(data, Array<Certificate>::class.java))
         certificateListCopy.clear()
@@ -75,7 +75,7 @@ class WalletFragment : BaseFragment() {
                         val credSearch = CredentialsSearch.open(WalletManager.getWallet, "{}").get()
 
                         val data = credSearch.fetchNextCredentials(100).get()
-
+//                        credSearch.closeSearch()
                         certificateList.clear()
                         certificateList.addAll(WalletManager.getGson.fromJson(data, Array<Certificate>::class.java))
                         certificateListCopy.clear()

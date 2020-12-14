@@ -23,7 +23,11 @@ import org.json.JSONObject
 import java.io.IOException
 import java.util.*
 
-class SaveDidDocTask(private val commonHandler: CommonHandler,private val body:String) :
+class SaveDidDocTask(
+    private val commonHandler: CommonHandler,
+    private val body: String,
+    private val iGrantEnabled: Boolean
+) :
     AsyncTask<Void, Void, Void>() {
 
     private lateinit var serviceEndPoint: String
@@ -90,6 +94,7 @@ class SaveDidDocTask(private val commonHandler: CommonHandler,private val body:S
             )
         mediatorConnectionObject.theirDid = theirDid
         mediatorConnectionObject.state = ConnectionStates.CONNECTION_RESPONSE
+        mediatorConnectionObject.isIGrantEnabled = iGrantEnabled
 
         val connectionUuid =
             connectionSearch.records?.get(0)?.id

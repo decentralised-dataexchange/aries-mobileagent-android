@@ -9,7 +9,6 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
-import android.widget.Toast
 import com.bumptech.glide.Glide
 import com.kusu.loadingbutton.LoadingButton
 import io.igrant.mobileagent.R
@@ -26,6 +25,8 @@ import okhttp3.ResponseBody
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
+import org.hyperledger.indy.sdk.crypto.Crypto
+import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -33,7 +34,7 @@ import retrofit2.Response
 class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
     private lateinit var invitation: Invitation
-    private lateinit var proposal:String
+    private lateinit var proposal: String
     lateinit var btnConnect: LoadingButton
     lateinit var btnDecline: LoadingButton
     lateinit var tvDesc: TextView
@@ -50,7 +51,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
         super.onViewCreated(view, savedInstanceState)
         val title = requireArguments().getString("title", "")
         invitation = requireArguments().getSerializable("invitation") as Invitation
-        proposal = requireArguments().getString("proposal","")
+        proposal = requireArguments().getString("proposal", "")
 //        dialog!!.setTitle(title)
 
         initViews(view)
@@ -72,11 +73,6 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
         btnConnect.setOnClickListener {
 
             btnConnect.showLoading()
-            Toast.makeText(
-                context,
-                "Connecting to connection. Will update when the connection is active...",
-                Toast.LENGTH_SHORT
-            ).show()
 
             SaveConnectionTask(object : CommonHandler {
                 override fun taskStarted() {
@@ -85,78 +81,125 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
                 override fun onSaveConnection(
                     typedBytes: RequestBody,
-                    connectionRequest: RequestBody
+                    connectionRequest: RequestBody,
+                    queryFeaturePackedBytes: RequestBody
                 ) {
-                    ApiManager.api.getService()?.cloudConnection(typedBytes)
-                        ?.enqueue(object : Callback<ResponseBody> {
-                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                    ApiManager.api.getService()
+                        ?.postData(invitation.serviceEndpoint ?: "", queryFeaturePackedBytes)
+                        ?.enqueue(object : Callback<ConfigPostResponse> {
+                            override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
 
                             }
 
                             override fun onResponse(
-                                call: Call<ResponseBody>,
-                                response: Response<ResponseBody>
+                                call: Call<ConfigPostResponse>,
+                                response: Response<ConfigPostResponse>
                             ) {
                                 if (response.code() == 200 && response.body() != null) {
-                                    ApiManager.api.getService()
-                                        ?.postData(
-                                            invitation.serviceEndpoint ?: "",
-                                            connectionRequest
+                                    var isIGrantEnabled = false
+                                    val unpack =
+                                        Crypto.unpackMessage(
+                                            WalletManager.getWallet,
+                                            WalletManager.getGson.toJson(response.body()).toString()
+                                                .toByteArray()
+                                        ).get()
+
+                                    val dataArray =
+                                        JSONObject(JSONObject(String(unpack)).getString("message")).getJSONArray(
+                                            "protocols"
                                         )
-                                        ?.enqueue(object : Callback<ConfigPostResponse> {
+
+                                    for (n in 0 until dataArray.length()) {
+                                        val obj = dataArray.getJSONObject(n)
+                                        if (obj.getString("pid").contains(
+                                                "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator",
+                                                ignoreCase = true
+                                            )
+                                        ) {
+                                            isIGrantEnabled = true
+                                        }
+                                    }
+                                    ApiManager.api.getService()?.cloudConnection(typedBytes)
+                                        ?.enqueue(object : Callback<ResponseBody> {
                                             override fun onFailure(
-                                                call: Call<ConfigPostResponse>,
+                                                call: Call<ResponseBody>,
                                                 t: Throwable
                                             ) {
 
                                             }
 
                                             override fun onResponse(
-                                                call: Call<ConfigPostResponse>,
-                                                response: Response<ConfigPostResponse>
+                                                call: Call<ResponseBody>,
+                                                response: Response<ResponseBody>
                                             ) {
                                                 if (response.code() == 200 && response.body() != null) {
-                                                    SaveDidDocTask(
-                                                        object : CommonHandler {
-                                                            override fun taskStarted() {
-
-
-                                                            }
-
-                                                            override fun onSaveDidComplete(
-                                                                typedBytes: RequestBody,
-                                                                serviceEndPoint: String
+                                                    ApiManager.api.getService()
+                                                        ?.postData(
+                                                            invitation.serviceEndpoint ?: "",
+                                                            connectionRequest
+                                                        )
+                                                        ?.enqueue(object :
+                                                            Callback<ConfigPostResponse> {
+                                                            override fun onFailure(
+                                                                call: Call<ConfigPostResponse>,
+                                                                t: Throwable
                                                             ) {
-                                                                ApiManager.api.getService()
-                                                                    ?.postDataWithoutData(
-                                                                        serviceEndPoint,
-                                                                        typedBytes
-                                                                    )
-                                                                    ?.enqueue(object :
-                                                                        Callback<ResponseBody> {
-                                                                        override fun onFailure(
-                                                                            call: Call<ResponseBody>,
-                                                                            t: Throwable
-                                                                        ) {
 
-                                                                        }
-
-                                                                        override fun onResponse(
-                                                                            call: Call<ResponseBody>,
-                                                                            response: Response<ResponseBody>
-                                                                        ) {
-
-                                                                        }
-                                                                    })
                                                             }
-                                                        },
-                                                        WalletManager.getGson.toJson(response.body())
-                                                    ).execute()
+
+                                                            override fun onResponse(
+                                                                call: Call<ConfigPostResponse>,
+                                                                response: Response<ConfigPostResponse>
+                                                            ) {
+                                                                if (response.code() == 200 && response.body() != null) {
+                                                                    SaveDidDocTask(
+                                                                        object : CommonHandler {
+                                                                            override fun taskStarted() {
+
+
+                                                                            }
+
+                                                                            override fun onSaveDidComplete(
+                                                                                typedBytes: RequestBody,
+                                                                                serviceEndPoint: String
+                                                                            ) {
+                                                                                ApiManager.api.getService()
+                                                                                    ?.postDataWithoutData(
+                                                                                        serviceEndPoint,
+                                                                                        typedBytes
+                                                                                    )
+                                                                                    ?.enqueue(object :
+                                                                                        Callback<ResponseBody> {
+                                                                                        override fun onFailure(
+                                                                                            call: Call<ResponseBody>,
+                                                                                            t: Throwable
+                                                                                        ) {
+
+                                                                                        }
+
+                                                                                        override fun onResponse(
+                                                                                            call: Call<ResponseBody>,
+                                                                                            response: Response<ResponseBody>
+                                                                                        ) {
+
+                                                                                        }
+                                                                                    })
+                                                                            }
+                                                                        },
+                                                                        WalletManager.getGson.toJson(
+                                                                            response.body()
+                                                                        ), isIGrantEnabled
+                                                                    ).execute()
+                                                                }
+                                                            }
+                                                        })
                                                 }
                                             }
                                         })
                                 }
+
                             }
+
                         })
                 }
             }, invitation).execute()
@@ -166,14 +209,18 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
     @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
     fun onConnectionSuccessEvent(event: ConnectionSuccessEvent) {
         btnConnect.hideLoading()
-        btnDecline.visibility = View.INVISIBLE
-        btnConnect.visibility = View.INVISIBLE
-        ivLogo.visibility = View.INVISIBLE
+//        btnDecline.visibility = View.INVISIBLE
+//        btnConnect.visibility = View.INVISIBLE
+//        ivLogo.visibility = View.INVISIBLE
         tvDesc.text = resources.getString(R.string.txt_connection_success_message)
+        ivLogo.setImageResource(R.drawable.ic_success)
+        btnDecline.visibility = View.GONE
+        btnConnect.visibility = View.GONE
+        tvDesc.visibility = View.GONE
         Handler(Looper.getMainLooper()).postDelayed({
-            onSuccessListener.onSuccess(proposal,event.connectionId?:"")
+            onSuccessListener.onSuccess(proposal, event.connectionId ?: "")
             dialog?.dismiss()
-        }, 1000)
+        }, 3000)
 
     }
 
@@ -186,7 +233,6 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
     }
 
     override fun onStop() {
-
         try {
             EventBus.getDefault().unregister(this)
         } catch (e: Exception) {
@@ -211,7 +257,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
             val args = Bundle()
             args.putString("title", title)
             args.putSerializable("invitation", invitation)
-            args.putString("proposal",proposal)
+            args.putString("proposal", proposal)
             fragment.arguments = args
             return fragment
         }

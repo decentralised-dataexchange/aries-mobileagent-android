@@ -3,6 +3,7 @@ package io.igrant.mobileagent.fragment
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
@@ -15,6 +16,7 @@ import android.widget.LinearLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
+import io.igrant.mobileagent.activty.ConnectionDetailActivity
 import io.igrant.mobileagent.activty.InitializeActivity
 import io.igrant.mobileagent.adapter.ConnectionListAdapter
 import io.igrant.mobileagent.indy.WalletManager
@@ -97,10 +99,13 @@ class ConnectionListFragment : BaseFragment() {
                         requireActivity().getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
                     val clip = ClipData.newPlainText("DID", did)
                     clipboard?.setPrimaryClip(clip)
-                    NavigationUtils.showConnectionMessagesFragment(
-                        parentFragmentManager,
-                        connection
-                    )
+                    val intent = Intent(requireContext(),ConnectionDetailActivity::class.java)
+                    intent.putExtra(ConnectionDetailActivity.EXTRA_CONNECTION_DATA,connection)
+                    startActivity(intent)
+//                    NavigationUtils.showConnectionMessagesFragment(
+//                        parentFragmentManager,
+//                        connection
+//                    )
                 }
             })
         rvConnections.layoutManager = GridLayoutManager(context, 3)

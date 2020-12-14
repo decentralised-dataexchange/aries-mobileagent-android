@@ -1,9 +1,7 @@
 package io.igrant.mobileagent.tasks
 
-import android.content.Context
 import android.os.AsyncTask
 import android.util.Log
-import io.igrant.mobileagent.activty.InitializeActivity
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
@@ -12,7 +10,6 @@ import io.igrant.mobileagent.models.connectionRequest.*
 import io.igrant.mobileagent.models.tagJsons.ConnectionId
 import io.igrant.mobileagent.models.tagJsons.ConnectionTags
 import io.igrant.mobileagent.models.tagJsons.UpdateInvitationKey
-import io.igrant.mobileagent.models.walletSearch.SearchResponse
 import io.igrant.mobileagent.utils.ConnectionStates
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
@@ -26,8 +23,6 @@ import okio.BufferedSink
 import org.hyperledger.indy.sdk.crypto.Crypto
 import org.hyperledger.indy.sdk.did.Did
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
-import org.hyperledger.indy.sdk.non_secrets.WalletSearch
-import org.json.JSONArray
 import org.json.JSONObject
 import java.io.IOException
 import java.util.*
@@ -35,6 +30,7 @@ import java.util.*
 class SaveConnectionTask(private val commonHandler: CommonHandler,private val invitation :Invitation) :
     AsyncTask<Void, Void, Void>() {
 
+    private lateinit var queryFeaturePackedBytes: RequestBody
     private lateinit var connectionRequestTypedBytes: RequestBody
     private lateinit var typedBytes: RequestBody
     private val TAG = "SaveConnectionTask"
@@ -93,6 +89,34 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
         val metaString = Did.getDidWithMeta(WalletManager.getWallet, myDid).get()
         val metaObject = JSONObject(metaString)
         val key = metaObject.getString("verkey")
+
+        val queryFeatureData = "{\n" +
+                "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/discover-features/1.0/query\",\n" +
+                "    \"@id\": \"${UUID.randomUUID()}\",\n" +
+                "    \"query\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/*\",\n" +
+                "    \"comment\": \"Querying features available.\",\n" +
+                "    \"~transport\": {\n" +
+                "        \"return_route\": \"all\"\n" +
+                "    }\n" +
+                "}"
+
+        val queryFeaturePacked =  Crypto.packMessage(
+            WalletManager.getWallet,
+            "[\"${invitation.recipientKeys?.get(0) ?:""}\"]",
+            key,
+            queryFeatureData.toByteArray()
+        ).get()
+
+        queryFeaturePackedBytes = object : RequestBody() {
+            override fun contentType(): MediaType? {
+                return "application/ssi-agent-wire".toMediaTypeOrNull()
+            }
+
+            @Throws(IOException::class)
+            override fun writeTo(sink: BufferedSink) {
+                sink.write(queryFeaturePacked)
+            }
+        }
 
         val tagJson =
             WalletManager.getGson.toJson(UpdateInvitationKey(requestId, myDid, invitation.recipientKeys!![0], null,null))
@@ -240,7 +264,7 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
 
     override fun onPostExecute(result: Void?) {
         super.onPostExecute(result)
-        commonHandler.onSaveConnection(typedBytes,connectionRequestTypedBytes)
+        commonHandler.onSaveConnection(typedBytes,connectionRequestTypedBytes,queryFeaturePackedBytes)
     }
 
     private fun setUpMediatorConnectionObject(

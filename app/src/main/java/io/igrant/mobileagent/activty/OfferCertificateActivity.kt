@@ -139,9 +139,7 @@ class OfferCertificateActivity : BaseActivity() {
                                 btAccept.isEnabled = false
                                 btReject.isEnabled = true
                                 onBackPressed()
-//                                if (response.code() == 200 && response.body() != null) {
-//
-//                                }
+
                             }
                         })
                 }
