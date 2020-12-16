@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Base64
 import android.util.Log
 import android.view.MenuItem
@@ -17,38 +15,20 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import com.google.gson.Gson
 import io.igrant.mobileagent.R
+import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_INVITATION
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_PROPOSAL
 import io.igrant.mobileagent.adapter.RequestListAdapter
-import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
-import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionMessageListener
 import io.igrant.mobileagent.models.agentConfig.Invitation
-import io.igrant.mobileagent.models.connectionRequest.DidDoc
-import io.igrant.mobileagent.models.presentationExchange.*
+import io.igrant.mobileagent.models.presentationExchange.CredentialValue
+import io.igrant.mobileagent.models.presentationExchange.ExchangeAttributes
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.qrcode.QrCodeActivity
 import io.igrant.mobileagent.utils.*
-import io.igrant.mobileagent.utils.WalletRecordType.Companion.DID_DOC
-import okhttp3.MediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody
-import okhttp3.ResponseBody
-import okio.BufferedSink
-import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq
-import org.hyperledger.indy.sdk.crypto.Crypto
-import org.hyperledger.indy.sdk.did.Did
-import org.json.JSONArray
 import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import java.io.IOException
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
-class RequestActivity : BaseActivity(),ConnectionProgressDailogFragment.OnConnectionSuccess {
+class RequestActivity : BaseActivity() {
 
     private lateinit var rvRequests: RecyclerView
     private lateinit var llErrorMessage: LinearLayout
@@ -57,12 +37,6 @@ class RequestActivity : BaseActivity(),ConnectionProgressDailogFragment.OnConnec
 
     private lateinit var adapter: RequestListAdapter
     private var connectionMessageList: ArrayList<Record> = ArrayList()
-
-    private var attributelist: ArrayList<ExchangeAttributes> = ArrayList()
-
-    private var requestedAttributes: HashMap<String, CredentialValue> = HashMap()
-
-    private var isInsufficientData = false
 
     override fun onCreate(
         savedInstanceState: Bundle?
@@ -155,161 +129,18 @@ class RequestActivity : BaseActivity(),ConnectionProgressDailogFragment.OnConnec
 
         val gson = Gson()
         val invitation: Invitation = gson.fromJson(json, Invitation::class.java)
-        val connection =
-            ConnectionUtils.getConnectionWithInvitationKey(invitation.recipientKeys!![0])
-        if (connection != null) {
-            sendProposal(proofRequest, connection.requestId ?: "")
-        } else {
-            saveConnection(invitation,proofRequest.toString())
-        }
+        sendProposal(proofRequest, invitation)
     }
 
     private fun sendProposal(
         proofRequest: JSONObject,
-        connectioId: String
+        invitation: Invitation
     ) {
 
-        val intent = Intent(this,ProposeAndExchangeDataActivity::class.java)
-        intent.putExtra(EXTRA_PRESENTATION_PROPOSAL,proofRequest.toString())
-        intent.putExtra(ProposeAndExchangeDataActivity.EXTRA_CONNECTION_ID,connectioId)
+        val intent = Intent(this, ProposeAndExchangeDataActivity::class.java)
+        intent.putExtra(EXTRA_PRESENTATION_PROPOSAL, proofRequest.toString())
+        intent.putExtra(EXTRA_PRESENTATION_INVITATION, invitation)
         startActivity(intent)
-
-//        val presentationRequest =
-//            WalletManager.getGson.fromJson(proofRequest.toString(), PresentationRequest::class.java)
-//
-//        Log.d(
-//            TAG,
-//            "sendProposal: \n ${proofRequest.toString()} \n ${WalletManager.getGson.toJson(
-//                presentationRequest
-//            )}"
-//        )
-//        val searchHandle = CredentialsSearchForProofReq.open(
-//            WalletManager.getWallet,
-//            proofRequest.toString(),
-//            "{}"
-//        ).get()
-//
-//        requestedAttributes = HashMap()
-//        attributelist.clear()
-//        var credentialValue: CredentialValue
-//
-//        presentationRequest?.requestedAttributes?.forEach { (key, value) ->
-//
-//            val searchResult = searchHandle.fetchNextCredentials(key, 100).get()
-//
-//            if (JSONArray(searchResult).length() > 0) {
-//                val referent =
-//                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-//                        .getString("referent")
-//
-//                credentialValue = CredentialValue()
-//                credentialValue.credId = referent
-//                credentialValue.revealed = true
-//
-//                requestedAttributes[key] = credentialValue
-//
-//                val data =
-//                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-//                        .getJSONObject("attrs").getString(value.name ?: "")
-//
-//                val attributes = ExchangeAttributes()
-//                attributes.name = value.name
-//                attributes.value = data
-//                attributes.credDefId =
-//                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-//                        .getString("cred_def_id")
-//                attributes.referent =
-//                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-//                        .getString("referent")
-//
-//                attributelist.add(attributes)
-//            } else {
-//                isInsufficientData = true
-//            }
-//        }
-//
-//        val presentationProposal = PresentationProposal()
-//        presentationProposal.type =
-//            "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview"
-//        presentationProposal.attributes = attributelist
-//        presentationProposal.predicates = ArrayList()
-//
-//        var presentationProposalData = PresentationProposalData()
-//        presentationProposalData.type =
-//            "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/propose-presentation"
-//        presentationProposalData.id = UUID.randomUUID().toString()
-//        presentationProposalData.comment = "Proposing credentials"
-//        presentationProposalData.presentationProposal = presentationProposal
-//
-//        var recipientKey = ""
-//        var serviceEndPoint = ""
-//        val didDocSearch = SearchUtils.searchWallet(DID_DOC, "{\"did\":\"$theirDid\"}")
-//        if (didDocSearch.totalCount ?: 0 > 0) {
-//            val didDoc = WalletManager.getGson.fromJson(
-//                didDocSearch.records?.get(0)?.value,
-//                DidDoc::class.java
-//            )
-//            recipientKey = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
-//            serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
-//        }
-//
-//        val metaString = Did.getDidWithMeta(WalletManager.getWallet, myDid).get()
-//        val metaObject = JSONObject(metaString)
-//        val senderKey = metaObject.getString("verkey")
-//        val packed = Crypto.packMessage(
-//            WalletManager.getWallet,
-//            "[\"$recipientKey\"]",
-//            senderKey,
-//            WalletManager.getGson.toJson(presentationProposalData).toByteArray()
-//        ).get()
-//        val typedBytes = object : RequestBody() {
-//            override fun contentType(): MediaType? {
-//                return "application/ssi-agent-wire".toMediaTypeOrNull()
-//            }
-//
-//            @Throws(IOException::class)
-//            override fun writeTo(sink: BufferedSink) {
-//                sink.write(packed)
-//            }
-//        }
-//
-//        ApiManager.api.getService()?.postDataWithoutData(serviceEndPoint, typedBytes)
-//            ?.enqueue(object : Callback<ResponseBody> {
-//                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-//
-//                }
-//
-//                override fun onResponse(
-//                    call: Call<ResponseBody>,
-//                    response: Response<ResponseBody>
-//                ) {
-//
-//                }
-//            })
-
-    }
-
-    private fun saveConnection(
-        invitation: Invitation,
-        proposal: String
-    ) {
-        if (ConnectionUtils.checkIfConnectionAvailable(invitation.recipientKeys!![0])) {
-            Toast.makeText(
-                this,
-                resources.getString(R.string.err_connection_already_added),
-                Toast.LENGTH_SHORT
-            ).show()
-        } else {
-            Handler(Looper.getMainLooper()).postDelayed({
-                val connectionSuccessDialogFragment: ConnectionProgressDailogFragment =
-                    ConnectionProgressDailogFragment.newInstance(
-                        "You are not connected to ${invitation.label}. Please connect before sharing data.",
-                        invitation,
-                        proposal
-                    )
-                connectionSuccessDialogFragment.show(supportFragmentManager, "fragment_edit_name")
-            }, 200)
-        }
     }
 
     private fun setUpAdapter() {
@@ -356,13 +187,5 @@ class RequestActivity : BaseActivity(),ConnectionProgressDailogFragment.OnConnec
         private const val REQUEST_CODE_SCAN_INVITATION = 202
 
         var deviceId = ""
-    }
-
-    override fun onSuccess(proposal: String, connectionId: String) {
-        Log.d(TAG, "onSuccess: ")
-        val intent = Intent(this,ProposeAndExchangeDataActivity::class.java)
-        intent.putExtra(EXTRA_PRESENTATION_PROPOSAL,proposal)
-        intent.putExtra(ProposeAndExchangeDataActivity.EXTRA_CONNECTION_ID,connectionId)
-        startActivity(intent)
     }
 }
