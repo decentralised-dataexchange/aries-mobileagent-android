@@ -3,8 +3,9 @@ package io.igrant.mobileagent.models.credentialExchange
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 import io.igrant.mobileagent.models.certificateOffer.CredentialPreview
+import java.io.Serializable
 
-class CredentialProposalDict {
+class CredentialProposalDict :Serializable{
 
     @SerializedName("@type")
     @Expose

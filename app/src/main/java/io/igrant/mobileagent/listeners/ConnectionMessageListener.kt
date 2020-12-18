@@ -4,5 +4,5 @@ import io.igrant.mobileagent.models.certificateOffer.CertificateOffer
 import io.igrant.mobileagent.models.walletSearch.Record
 
 interface ConnectionMessageListener {
-    fun onConnectionMessageClick(record: Record)
+    fun onConnectionMessageClick(record: Record,name:String)
 }

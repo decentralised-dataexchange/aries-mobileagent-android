@@ -2,8 +2,9 @@ package io.igrant.mobileagent.models.credentialExchange
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
-class Signature {
+class Signature:Serializable {
 
     @SerializedName("p_credential")
     @Expose

@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.text.Editable
 import android.text.TextWatcher
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,17 +12,25 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
+import io.igrant.mobileagent.activty.CertificateDetailActivity
+import io.igrant.mobileagent.activty.CertificateDetailActivity.Companion.EXTRA_WALLET_DETAIL
 import io.igrant.mobileagent.activty.RequestActivity
 import io.igrant.mobileagent.adapter.WalletCertificatesAdapter
+import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.WalletListener
-import io.igrant.mobileagent.models.certificate.Certificate
+import io.igrant.mobileagent.models.wallet.WalletModel
+import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.utils.NavigationUtils
+import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
+import io.igrant.mobileagent.utils.WalletRecordType.Companion.WALLET
 import kotlinx.android.synthetic.main.fragment_wallet.*
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
-import org.hyperledger.indy.sdk.anoncreds.CredentialsSearch
-import org.hyperledger.indy.sdk.non_secrets.WalletSearch
+import org.hyperledger.indy.sdk.non_secrets.WalletRecord
 
 class WalletFragment : BaseFragment() {
 
@@ -34,8 +41,8 @@ class WalletFragment : BaseFragment() {
 
     lateinit var walletCertificateAdapter: WalletCertificatesAdapter
 
-    private var certificateList: ArrayList<Certificate> = ArrayList()
-    private var certificateListCopy: ArrayList<Certificate> = ArrayList()
+    private var certificateList: ArrayList<Record> = ArrayList()
+    private var certificateListCopy: ArrayList<Record> = ArrayList()
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -52,41 +59,55 @@ class WalletFragment : BaseFragment() {
         setUpCertificateList()
     }
 
-    private fun setUpCertificateList() {
-        val credSearch = CredentialsSearch.open(WalletManager.getWallet, "{}").get()
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onConnectionSuccessEvent(event: ReceiveOfferEvent) {
+        setUpCertificateList()
+    }
 
-        val data = credSearch.fetchNextCredentials(100).get()
-//credSearch.closeSearch()
+    override fun onStart() {
+        try {
+            EventBus.getDefault().register(this)
+        } catch (e: Exception) {
+        }
+        super.onStart()
+    }
+
+    override fun onStop() {
+        try {
+            EventBus.getDefault().unregister(this)
+        } catch (e: Exception) {
+        }
+        super.onStop()
+    }
+
+    private fun setUpCertificateList() {
+        val walletSearch = SearchUtils.searchWallet(WALLET, "{}")
+
         certificateList.clear()
-        certificateList.addAll(WalletManager.getGson.fromJson(data, Array<Certificate>::class.java))
+        certificateList.addAll(walletSearch.records ?: ArrayList())
         certificateListCopy.clear()
-        certificateListCopy.addAll(
-            WalletManager.getGson.fromJson(
-                data,
-                Array<Certificate>::class.java
-            )
-        )
+        certificateListCopy.addAll(walletSearch.records ?: ArrayList())
         walletCertificateAdapter =
             WalletCertificatesAdapter(certificateList, object : WalletListener {
-                override fun onDelete(id: String,position:Int) {
+                override fun onDelete(id: String, position: Int) {
                     try {
-                        Anoncreds.proverDeleteCredential(WalletManager.getWallet,id).get()
+                        Anoncreds.proverDeleteCredential(WalletManager.getWallet, id).get()
+                        WalletRecord.delete(WalletManager.getWallet, WALLET, id)
                         walletCertificateAdapter.notifyItemRemoved(position)
-                        val credSearch = CredentialsSearch.open(WalletManager.getWallet, "{}").get()
-
-                        val data = credSearch.fetchNextCredentials(100).get()
-//                        credSearch.closeSearch()
+                        val walletSearch = SearchUtils.searchWallet(WALLET, "{}")
                         certificateList.clear()
-                        certificateList.addAll(WalletManager.getGson.fromJson(data, Array<Certificate>::class.java))
+                        certificateList.addAll(walletSearch.records ?: ArrayList())
                         certificateListCopy.clear()
-                        certificateListCopy.addAll(
-                            WalletManager.getGson.fromJson(
-                                data,
-                                Array<Certificate>::class.java
-                            )
-                        )
+                        certificateListCopy.addAll(walletSearch.records ?: ArrayList())
                     } catch (e: Exception) {
                     }
+                }
+
+                override fun onItemClick(wallet: WalletModel) {
+                    val intent = Intent(context, CertificateDetailActivity::class.java)
+                    val wal = WalletManager.getGson.toJson(wallet)
+                    intent.putExtra(EXTRA_WALLET_DETAIL, wal)
+                    startActivity(intent)
                 }
             })
         rvCertificates.adapter = walletCertificateAdapter
@@ -108,8 +129,12 @@ class WalletFragment : BaseFragment() {
         }
 
         tvExchangeData.setOnClickListener {
-           startActivity(Intent(context,
-               RequestActivity::class.java))
+            startActivity(
+                Intent(
+                    context,
+                    RequestActivity::class.java
+                )
+            )
         }
 
         etSearchWallet.addTextChangedListener(object : TextWatcher {
@@ -127,9 +152,11 @@ class WalletFragment : BaseFragment() {
     }
 
     private fun filterList(s: CharSequence?) {
-        val tempList: ArrayList<Certificate> = ArrayList()
+        val tempList: ArrayList<Record> = ArrayList()
         for (certificate in certificateListCopy) {
-            val lst = certificate.schemaId?.split(":")
+            val walletModel =
+                WalletManager.getGson.fromJson(certificate.value, WalletModel::class.java)
+            val lst = walletModel.rawCredential?.schemaId?.split(":")
             val text = lst?.get(2) ?: ""
             if (text.contains(s ?: "", ignoreCase = true)) {
                 tempList.add(certificate)

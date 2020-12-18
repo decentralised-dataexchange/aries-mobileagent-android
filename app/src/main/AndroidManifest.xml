@@ -44,6 +44,9 @@
 
         <activity android:name=".activty.ConnectionDetailActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.CertificateDetailActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
     </application>
 
 </manifest>

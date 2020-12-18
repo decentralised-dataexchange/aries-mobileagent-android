@@ -41,13 +41,13 @@ class ConnectionMessageAdapter(
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         holder.tvName.text = mList[position].schemaName
 
-        holder.tvVersion.text = "Version : ${mList[position].schemaVersion}"
+        holder.tvVersion.text = holder.tvVersion.context.resources.getString(R.string.txt_version_detail,mList[position].schemaVersion)
 
         holder.ivAdd.visibility = if (mList[position].record != null) View.VISIBLE else View.GONE
 
         holder.cvOffer.setOnClickListener {
             if (mList[position].record != null)
-                mListener.onConnectionMessageClick(mList[position].record!!)
+                mListener.onConnectionMessageClick(mList[position].record!!,mList[position].schemaName?:"")
         }
     }
 }

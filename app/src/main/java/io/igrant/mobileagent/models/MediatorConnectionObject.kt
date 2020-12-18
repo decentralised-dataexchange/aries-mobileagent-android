@@ -2,8 +2,9 @@ package io.igrant.mobileagent.models
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
+import java.io.Serializable
 
-class MediatorConnectionObject {
+class MediatorConnectionObject :Serializable{
 
     @SerializedName("inbox_id")
     @Expose
