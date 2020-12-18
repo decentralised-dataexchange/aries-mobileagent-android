@@ -145,7 +145,7 @@ class RequestActivity : BaseActivity() {
 
     private fun setUpAdapter() {
         adapter = RequestListAdapter(connectionMessageList, object : ConnectionMessageListener {
-            override fun onConnectionMessageClick(record: Record) {
+            override fun onConnectionMessageClick(record: Record,name:String) {
                 val intent: Intent = Intent(this@RequestActivity, ExchangeDataActivity::class.java)
                 intent.putExtra(
                     ExchangeDataActivity.EXTRA_PRESENTATION_RECORD,
