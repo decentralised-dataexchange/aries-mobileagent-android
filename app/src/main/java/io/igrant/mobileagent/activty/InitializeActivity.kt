@@ -16,13 +16,14 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
-import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
 import io.igrant.mobileagent.events.ConnectionSuccessEvent
+import io.igrant.mobileagent.events.ReceiveCertificateEvent
+import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.handlers.PoolHandler
 import io.igrant.mobileagent.handlers.SearchHandler
@@ -46,6 +47,7 @@ import io.igrant.mobileagent.models.presentationExchange.PresentationRequest
 import io.igrant.mobileagent.models.tagJsons.ConnectionId
 import io.igrant.mobileagent.models.tagJsons.ConnectionTags
 import io.igrant.mobileagent.models.tagJsons.UpdateInvitationKey
+import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.models.walletSearch.SearchResponse
 import io.igrant.mobileagent.qrcode.QrCodeActivity
@@ -98,7 +100,8 @@ import java.io.IOException
 import java.util.*
 import kotlin.collections.ArrayList
 
-class InitializeActivity : BaseActivity(), InitialActivityFunctions,ConnectionProgressDailogFragment.OnConnectionSuccess {
+class InitializeActivity : BaseActivity(), InitialActivityFunctions,
+    ConnectionProgressDailogFragment.OnConnectionSuccess {
 
     companion object {
         private const val TAG = "InitializeActivity"
@@ -487,7 +490,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,ConnectionPr
                     unPackSigMessage(o, false)
                 }
                 TYPE_PING_RESPONSE -> {
-                   processPingResponse(JSONObject(String(unpack)))
+                    processPingResponse(JSONObject(String(unpack)))
                 }
                 TYPE_OFFER_CREDENTIAL -> {
                     unPackOfferCredential(JSONObject(String(unpack)))
@@ -505,10 +508,12 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,ConnectionPr
         }
     }
 
-    private fun processPingResponse(jsonObject: JSONObject){
+    private fun processPingResponse(jsonObject: JSONObject) {
         val recipientVerKey = jsonObject.getString("sender_verkey")
-        val connectionSearch = SearchUtils.searchWallet(CONNECTION,
-            "{\"recipient_key\":\"$recipientVerKey\"}")
+        val connectionSearch = SearchUtils.searchWallet(
+            CONNECTION,
+            "{\"recipient_key\":\"$recipientVerKey\"}"
+        )
 
         val mediatorConnectionObject: MediatorConnectionObject =
             WalletManager.getGson.fromJson(
@@ -530,7 +535,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,ConnectionPr
             value
         )
 
-        EventBus.getDefault().postSticky(ConnectionSuccessEvent(connectionUuid))
+        EventBus.getDefault().postSticky(ConnectionSuccessEvent(connectionUuid?:""))
     }
 
     private fun updatePresentProofToAck(jsonObject: JSONObject) {
@@ -620,7 +625,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,ConnectionPr
             Base64.decode(issueCredential.credentialsAttach[0].data?.base64, Base64.URL_SAFE)
                 .toString(charset("UTF-8")), RawCredential::class.java
         )
-
 
         val string = body.getString("sender_verkey")
         val searchDid = WalletSearch.open(
@@ -748,14 +752,30 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,ConnectionPr
                     response: Response<ResponseBody>
                 ) {
                     if (response.code() == 200 && response.body() != null) {
-                        storeCredential(thid, credDefId)
+                        storeCredential(thid, credDefId, recipientVerKey)
                     }
                 }
             })
     }
 
-    private fun storeCredential(thid: String, credDefId: String?) {
+    private fun storeCredential(
+        thid: String,
+        credDefId: String?,
+        recipientVerKey: String
+    ) {
 
+
+        val connectionSearch = SearchUtils.searchWallet(
+            CONNECTION,
+            "{\"recipient_key\":\"$recipientVerKey\"}"
+        )
+        var connection: MediatorConnectionObject? = null
+        if (connectionSearch.totalCount ?: 0 > 0) {
+            connection = WalletManager.getGson.fromJson(
+                connectionSearch.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
+            )
+        }
         val builder = GsonBuilder()
         builder.serializeNulls()
         val gson: Gson = builder.setPrettyPrinting().create()
@@ -831,7 +851,33 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,ConnectionPr
                 "${searchResponse.records?.get(0)?.id}"
             ).get()
 
-            NotificationUtils.showNotification(this, TYPE_ISSUE_CREDENTIAL,"Success","Certificate successfully added to your wallet")
+            val walletModel = WalletModel()
+            walletModel.connection = connection
+            walletModel.credentialId = credentialId
+            walletModel.rawCredential = credentialExchange.rawCredential
+            walletModel.credentialProposalDict = credentialExchange.credentialProposalDict
+
+            val walletModelTag = "{" +
+                    "\"connection_id\":\"${connection?.requestId ?: ""}\"," +
+                    "\"credential_id\":\"$credentialId\"," +
+                    "\"schema_id\":\"${credentialExchange.rawCredential?.schemaId ?: ""}\"" +
+                    "}"
+
+            WalletRecord.add(
+                WalletManager.getWallet,
+                WalletRecordType.WALLET,
+                credentialId,
+                WalletManager.getGson.toJson(walletModel),
+                walletModelTag
+            ).get()
+
+            NotificationUtils.showNotification(
+                this,
+                TYPE_ISSUE_CREDENTIAL,
+                "Success",
+                "Certificate successfully added to your wallet"
+            )
+            EventBus.getDefault().postSticky(ReceiveCertificateEvent())
         }
 
     }
@@ -862,10 +908,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,ConnectionPr
             JSONArray(connectionInvitationData.get("records").toString())
         val connectionInvitationRecord = connectionInvitationRecords.getJSONObject(0)
         val connectionInvitationValue = JSONObject(connectionInvitationRecord.getString("value"))
-
-//        val recipientKeys =
-//            JSONArray(connectionInvitationValue.getString("recipientKeys"))
-//        val recipientKey: String = recipientKeys[0].toString()
 
         //public keys
         val publicKey = PublicKey()
@@ -926,19 +968,12 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,ConnectionPr
 
         val str = WalletManager.getGson.toJson(connectionRequest)
 
-        Log.d(TAG, "packConnectionRequestMessage1: $str")
-        Log.d(
-            TAG,
-            "packConnectionRequestMessage2: ${connectionInvitationValue.getString("recipientKeys")} - $key \n ${str.toByteArray()}"
-        )
         val packedMessage = Crypto.packMessage(
             WalletManager.getWallet,
             connectionInvitationValue.getString("recipientKeys"),
             key,
             str.toByteArray()
         ).get()
-
-        Log.d(TAG, "packed message: ${String(packedMessage)}")
 
         val typedBytes: RequestBody = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -1030,6 +1065,18 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,ConnectionPr
                         "  \"connectionId\":\"${connecction.requestId}\"\n" +
                         "}"
             )
+
+            try {
+                NotificationUtils.showNotification(
+                    this,
+                    TYPE_ISSUE_CREDENTIAL,
+                    "${connecction.theirLabel} - Offer Credential",
+                    "Received a new offer credential of the organisation ${connecction.theirLabel}"
+                )
+
+                EventBus.getDefault().postSticky(ReceiveOfferEvent(connecction.requestId?:""))
+            } catch (e: Exception) {
+            }
         }
     }
 
@@ -1481,7 +1528,15 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,ConnectionPr
         serviceEndpoint: String?
     ) {
         val tagJson =
-            WalletManager.getGson.toJson(UpdateInvitationKey(requestId, myDid, recipient, null,null))
+            WalletManager.getGson.toJson(
+                UpdateInvitationKey(
+                    requestId,
+                    myDid,
+                    recipient,
+                    null,
+                    null
+                )
+            )
         WalletRecord.updateTags(
             WalletManager.getWallet,
             if (isMediator) MEDIATOR_CONNECTION else CONNECTION,

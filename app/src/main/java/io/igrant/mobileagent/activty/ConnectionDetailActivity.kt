@@ -18,6 +18,8 @@ import com.google.gson.Gson
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.ConnectionMessageAdapter
 import io.igrant.mobileagent.communication.ApiManager
+import io.igrant.mobileagent.events.ConnectionSuccessEvent
+import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionMessageListener
 import io.igrant.mobileagent.models.MediatorConnectionObject
@@ -38,6 +40,9 @@ import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okio.BufferedSink
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import org.hyperledger.indy.sdk.crypto.Crypto
 import org.hyperledger.indy.sdk.did.Did
 import org.json.JSONObject
@@ -48,11 +53,13 @@ import java.io.IOException
 
 class ConnectionDetailActivity : BaseActivity() {
 
+    private var connectionCertList: ConnectionCerListResponse? = null
     private var mConnectionId: String = ""
 
     private lateinit var connectionMessageAdapter: ConnectionMessageAdapter
     private var connectionMessageList: ArrayList<Record> = ArrayList()
     private var dataCertificateTypes: ArrayList<Certificate> = ArrayList()
+
     //views
     private lateinit var rvConnectionMessages: RecyclerView
     private lateinit var llErrorMessage: LinearLayout
@@ -79,8 +86,9 @@ class ConnectionDetailActivity : BaseActivity() {
             "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
                     "\"return_route\": \"all\"}\n}"
 
-        val cerData = "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/list-data-certificate-types\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
-                "\"return_route\": \"all\"}\n}"
+        val cerData =
+            "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/list-data-certificate-types\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
+                    "\"return_route\": \"all\"}\n}"
 
         val connection = SearchUtils.searchWallet(CONNECTION, "{\"request_id\":\"$mConnectionId\"}")
 
@@ -124,35 +132,39 @@ class ConnectionDetailActivity : BaseActivity() {
                         sink.write(orgDetailPacked)
                     }
                 }
-                ApiManager.api.getService()?.postData(serviceEndPoint, orgDetailTypedArray)?.enqueue(object :
-                    Callback<ConfigPostResponse> {
-                    override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
+                ApiManager.api.getService()?.postData(serviceEndPoint, orgDetailTypedArray)
+                    ?.enqueue(object :
+                        Callback<ConfigPostResponse> {
+                        override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
 
-                    }
-
-                    override fun onResponse(
-                        call: Call<ConfigPostResponse>,
-                        response: Response<ConfigPostResponse>
-                    ) {
-                        if (response.code() == 200 && response.body() != null) {
-                            val unpack =
-                                Crypto.unpackMessage(
-                                    WalletManager.getWallet,
-                                    WalletManager.getGson.toJson(response.body()).toString()
-                                        .toByteArray()
-                                ).get()
-
-                            Log.d("milan", "onResponse: ${JSONObject(String(unpack)).getString("message")}")
-                            val connectionData = WalletManager.getGson.fromJson(
-                                JSONObject(String(unpack)).getString("message"),
-                                Connection::class.java
-                            )
-                            initDataValues(connectionData)
                         }
 
-                    }
+                        override fun onResponse(
+                            call: Call<ConfigPostResponse>,
+                            response: Response<ConfigPostResponse>
+                        ) {
+                            if (response.code() == 200 && response.body() != null) {
+                                val unpack =
+                                    Crypto.unpackMessage(
+                                        WalletManager.getWallet,
+                                        WalletManager.getGson.toJson(response.body()).toString()
+                                            .toByteArray()
+                                    ).get()
 
-                })
+                                Log.d(
+                                    "milan",
+                                    "onResponse: ${JSONObject(String(unpack)).getString("message")}"
+                                )
+                                val connectionData = WalletManager.getGson.fromJson(
+                                    JSONObject(String(unpack)).getString("message"),
+                                    Connection::class.java
+                                )
+                                initDataValues(connectionData)
+                            }
+
+                        }
+
+                    })
 
                 val orgCerListPacked = Crypto.packMessage(
                     WalletManager.getWallet,
@@ -171,61 +183,65 @@ class ConnectionDetailActivity : BaseActivity() {
                         sink.write(orgCerListPacked)
                     }
                 }
-                ApiManager.api.getService()?.postData(serviceEndPoint, orgCerListTypedArray)?.enqueue(object :
-                    Callback<ConfigPostResponse> {
-                    override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
+                ApiManager.api.getService()?.postData(serviceEndPoint, orgCerListTypedArray)
+                    ?.enqueue(object :
+                        Callback<ConfigPostResponse> {
+                        override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
 
-                    }
-
-                    override fun onResponse(
-                        call: Call<ConfigPostResponse>,
-                        response: Response<ConfigPostResponse>
-                    ) {
-                        if (response.code() == 200 && response.body() != null) {
-                            val unpack =
-                                Crypto.unpackMessage(
-                                    WalletManager.getWallet,
-                                    WalletManager.getGson.toJson(response.body()).toString()
-                                        .toByteArray()
-                                ).get()
-
-                            Log.d("milan", "onResponse: ${JSONObject(String(unpack)).getString("message")}")
-                            val certificateList = WalletManager.getGson.fromJson(
-                                JSONObject(String(unpack)).getString("message"),
-                                ConnectionCerListResponse::class.java
-                            )
-                            initList(certificateList)
                         }
 
-                    }
+                        override fun onResponse(
+                            call: Call<ConfigPostResponse>,
+                            response: Response<ConfigPostResponse>
+                        ) {
+                            if (response.code() == 200 && response.body() != null) {
+                                val unpack =
+                                    Crypto.unpackMessage(
+                                        WalletManager.getWallet,
+                                        WalletManager.getGson.toJson(response.body()).toString()
+                                            .toByteArray()
+                                    ).get()
 
-                })
+                                Log.d(
+                                    "milan",
+                                    "onResponse: ${JSONObject(String(unpack)).getString("message")}"
+                                )
+                                val certificateList = WalletManager.getGson.fromJson(
+                                    JSONObject(String(unpack)).getString("message"),
+                                    ConnectionCerListResponse::class.java
+                                )
+                                connectionCertList = certificateList
+                                initList()
+                            }
+                        }
+                    })
             }
         }
     }
 
-    private fun initList(certificateList: ConnectionCerListResponse?) {
-        var tempList:ArrayList<Certificate> = ArrayList()
-        var tempCer:Certificate = Certificate()
-        for (certificate in certificateList?.dataCertificateTypes?:ArrayList()){
+    private fun initList() {
+        val tempList: ArrayList<Certificate> = ArrayList()
+        var tempCer: Certificate
+        for (certificate in connectionCertList?.dataCertificateTypes ?: ArrayList()) {
             tempCer = certificate
-            for (cer in connectionMessageList){
+            for (cer in connectionMessageList) {
                 val gson = Gson()
                 val message = gson.fromJson(cer.value, CertificateOffer::class.java)
 
-                var schema = gson.fromJson(
+                val schema = gson.fromJson(
                     Base64.decode(message.offersAttach?.get(0)?.data?.base64, Base64.URL_SAFE)
                         .toString(charset("UTF-8")), RawCredential::class.java
                 ).schemaId
 
-                if (certificate.schemaId == schema?:""){
+                if (certificate.schemaId == schema ?: "") {
                     tempCer.record = cer
                 }
-                tempList.add(tempCer)
             }
+            tempList.add(tempCer)
         }
         dataCertificateTypes.clear()
         dataCertificateTypes.addAll(tempList)
+        llErrorMessage.visibility = if (dataCertificateTypes.size > 0) View.GONE else View.VISIBLE
         connectionMessageAdapter.notifyDataSetChanged()
     }
 
@@ -291,12 +307,16 @@ class ConnectionDetailActivity : BaseActivity() {
     private fun setUpAdapter() {
         connectionMessageAdapter =
             ConnectionMessageAdapter(dataCertificateTypes, object : ConnectionMessageListener {
-                override fun onConnectionMessageClick(record: Record) {
-                    val intent: Intent =
+                override fun onConnectionMessageClick(record: Record,name:String) {
+                    val intent =
                         Intent(this@ConnectionDetailActivity, OfferCertificateActivity::class.java)
                     intent.putExtra(
                         OfferCertificateActivity.EXTRA_CERTIFICATE_PREVIEW,
                         record
+                    )
+                    intent.putExtra(
+                        OfferCertificateActivity.EXTRA_CERTIFICATE_NAME,
+                        name
                     )
                     intent.putExtra(
                         OfferCertificateActivity.EXTRA_CONNECTION_ID,
@@ -322,14 +342,34 @@ class ConnectionDetailActivity : BaseActivity() {
                         "}"
             )
         if (connectionMessageResponse.totalCount ?: 0 > 0) {
-            llErrorMessage.visibility = View.GONE
             connectionMessageList.clear()
             connectionMessageList.addAll(connectionMessageResponse.records ?: ArrayList())
-//            connectionMessageAdapter.notifyDataSetChanged()
-        } else {
-            llErrorMessage.visibility = View.VISIBLE
         }
     }
+
+    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    fun onConnectionSuccessEvent(event: ReceiveOfferEvent) {
+        setUpConnectionMessagesList()
+        if (connectionCertList!=null)
+            initList()
+    }
+
+    override fun onStart() {
+        try {
+            EventBus.getDefault().register(this)
+        } catch (e: Exception) {
+        }
+        super.onStart()
+    }
+
+    override fun onStop() {
+        try {
+            EventBus.getDefault().unregister(this)
+        } catch (e: Exception) {
+        }
+        super.onStop()
+    }
+
 
     companion object {
         const val EXTRA_CONNECTION_DATA =

@@ -66,4 +66,6 @@
     <string name="notification_channel_success">success_messages</string>
     <string name="default_notification_channel_id">NotificationChannel</string>
     <string name="txt_org_overview">Overview</string>
+    <string name="txt_delete">Delete</string>
+    <string name="txt_version_detail">"Version : %1$s"</string>
 </resources>

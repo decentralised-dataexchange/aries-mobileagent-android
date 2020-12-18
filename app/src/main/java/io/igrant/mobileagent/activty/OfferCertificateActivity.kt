@@ -7,6 +7,7 @@ import android.view.MenuItem
 import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,7 +17,6 @@ import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.indy.PoolManager
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
-import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.certificateOffer.CertificateOffer
 import io.igrant.mobileagent.models.certificateOffer.OfferAttach
 import io.igrant.mobileagent.models.certificateOffer.OfferData
@@ -50,6 +50,7 @@ import kotlin.collections.ArrayList
 
 class OfferCertificateActivity : BaseActivity() {
 
+    private var name: String = ""
     private lateinit var mConnectionId: String
     private var mCertificateOffer: CertificateOffer? = null
     private var record: Record? = null
@@ -57,6 +58,7 @@ class OfferCertificateActivity : BaseActivity() {
     private lateinit var toolbar: Toolbar
     private lateinit var btReject: Button
     private lateinit var btAccept: Button
+    private lateinit var tvHead: TextView
     private lateinit var rvAttributes: RecyclerView
     private lateinit var llProgressBar: LinearLayout
 
@@ -65,6 +67,8 @@ class OfferCertificateActivity : BaseActivity() {
     companion object {
         const val EXTRA_CERTIFICATE_PREVIEW =
             "io.igrant.mobileagent.activty.OfferCertificateActivity.certificate"
+        const val EXTRA_CERTIFICATE_NAME =
+            "io.igrant.mobileagent.activty.OfferCertificateActivity.name"
         const val EXTRA_CONNECTION_ID =
             "io.igrant.mobileagent.activty.OfferCertificateActivity.connectionId"
     }
@@ -75,8 +79,13 @@ class OfferCertificateActivity : BaseActivity() {
         initViews()
         initListener()
         getIntentData()
+        initValues()
         setUpToolbar()
         setUpAdapter()
+    }
+
+    private fun initValues() {
+        tvHead.text = name
     }
 
     private fun initListener() {
@@ -110,17 +119,6 @@ class OfferCertificateActivity : BaseActivity() {
             btReject.isEnabled = false
             RequestCertificateTask(object : RequestCertificateHandler {
                 override fun taskCompleted(requestBody: RequestBody, endPoint: String) {
-
-//                    val tagJson = "{\n" +
-//                            "  \"type\":\"${record?.tags?.get("type")}\",\n" +
-//                            "  \"connectionId\":\"${record?.tags?.get("connectionId")}\",\n" +
-//                            "}"
-//                    WalletRecord.updateTags(
-//                        WalletManager.getWallet,
-//                        WalletRecordType.MESSAGE_RECORDS,
-//                        record!!.id,
-//                        tagJson
-//                    )
 
                     ApiManager.api.getService()
                         ?.postDataWithoutData(endPoint, requestBody)
@@ -163,6 +161,7 @@ class OfferCertificateActivity : BaseActivity() {
         toolbar = findViewById(R.id.toolbar)
         btAccept = findViewById(R.id.btAccept)
         btReject = findViewById(R.id.btReject)
+        tvHead = findViewById(R.id.tvHead)
         rvAttributes = findViewById(R.id.rvAttributes)
         llProgressBar = findViewById(R.id.llProgressBar)
     }
@@ -187,6 +186,7 @@ class OfferCertificateActivity : BaseActivity() {
 
     private fun getIntentData() {
         record = intent.extras!!.get(EXTRA_CERTIFICATE_PREVIEW) as Record
+        name = intent.extras!!.getString(EXTRA_CERTIFICATE_NAME, "")
         mCertificateOffer =
             WalletManager.getGson.fromJson(record!!.value, CertificateOffer::class.java)
         mConnectionId = intent.extras!!.get(EXTRA_CONNECTION_ID) as String
@@ -346,7 +346,9 @@ class OfferCertificateActivity : BaseActivity() {
                 )
 
             serviceEndPoint =
-                JSONObject(connectionInvitaitonObject.records?.get(0)?.value?:"").getString("serviceEndpoint")
+                JSONObject(
+                    connectionInvitaitonObject.records?.get(0)?.value ?: ""
+                ).getString("serviceEndpoint")
 
             return null
         }

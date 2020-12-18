@@ -44,7 +44,7 @@ class RequestListAdapter(
         holder.tvVersion.text = message.presentationRequest?.version?:""
 
         holder.cvOffer.setOnClickListener {
-            mListener.onConnectionMessageClick(mList[position])
+            mListener.onConnectionMessageClick(mList[position],message.presentationRequest?.name?:"")
         }
     }
 }
