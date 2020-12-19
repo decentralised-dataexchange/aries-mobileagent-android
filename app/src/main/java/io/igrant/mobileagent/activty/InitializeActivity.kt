@@ -217,43 +217,53 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
         if (requestCode == REQUEST_CODE_SCAN_INVITATION) {
             if (data == null) return
 
-            val uri: Uri =
+            val uri: Uri = try {
                 Uri.parse(data.getStringExtra("com.blikoon.qrcodescanner.got_qr_scan_relult"))
+            } catch (e: Exception) {
+                Uri.parse("igrant.io")
+            }
             val v: String = uri.getQueryParameter("c_i") ?: ""
             if (v != "") {
                 saveConnection(v)
             } else {
-                Toast.makeText(this, "Unexpected error", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, resources.getString(R.string.err_unexpected), Toast.LENGTH_SHORT).show()
             }
         }
         super.onActivityResult(requestCode, resultCode, data)
     }
 
     private fun saveConnection(data: String) {
-        val json =
-            Base64.decode(
-                data,
-                Base64.URL_SAFE
-            ).toString(charset("UTF-8"))
+        var invitation: Invitation? = null
+        try {
+            val json =
+                Base64.decode(
+                    data,
+                    Base64.URL_SAFE
+                ).toString(charset("UTF-8"))
+            invitation = WalletManager.getGson.fromJson(json, Invitation::class.java)
+        } catch (e: Exception) {
+        }
 
-        val gson = Gson()
-        val invitation: Invitation = gson.fromJson(json, Invitation::class.java)
-        if (ConnectionUtils.checkIfConnectionAvailable(invitation.recipientKeys!![0])) {
-            Toast.makeText(
-                this,
-                resources.getString(R.string.err_connection_already_added),
-                Toast.LENGTH_SHORT
-            ).show()
-        } else {
-            Handler(Looper.getMainLooper()).postDelayed({
-                val connectionSuccessDialogFragment: ConnectionProgressDailogFragment =
-                    ConnectionProgressDailogFragment.newInstance(
-                        "${invitation.label} has invited you to connect",
-                        invitation,
-                        ""
-                    )
-                connectionSuccessDialogFragment.show(supportFragmentManager, "fragment_edit_name")
-            }, 200)
+        if (invitation!=null){
+            if (ConnectionUtils.checkIfConnectionAvailable(invitation.recipientKeys!![0])) {
+                Toast.makeText(
+                    this,
+                    resources.getString(R.string.err_connection_already_added),
+                    Toast.LENGTH_SHORT
+                ).show()
+            } else {
+                Handler(Looper.getMainLooper()).postDelayed({
+                    val connectionSuccessDialogFragment: ConnectionProgressDailogFragment =
+                        ConnectionProgressDailogFragment.newInstance(
+                            "${invitation.label ?:""} has invited you to connect",
+                            invitation,
+                            ""
+                        )
+                    connectionSuccessDialogFragment.show(supportFragmentManager, "fragment_edit_name")
+                }, 200)
+            }
+        }else{
+            Toast.makeText(this, resources.getString(R.string.err_unexpected), Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -535,7 +545,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
             value
         )
 
-        EventBus.getDefault().postSticky(ConnectionSuccessEvent(connectionUuid?:""))
+        EventBus.getDefault().postSticky(ConnectionSuccessEvent(connectionUuid ?: ""))
     }
 
     private fun updatePresentProofToAck(jsonObject: JSONObject) {
@@ -1074,7 +1084,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
                     "Received a new offer credential of the organisation ${connecction.theirLabel}"
                 )
 
-                EventBus.getDefault().postSticky(ReceiveOfferEvent(connecction.requestId?:""))
+                EventBus.getDefault().postSticky(ReceiveOfferEvent(connecction.requestId ?: ""))
             } catch (e: Exception) {
             }
         }
