@@ -5,7 +5,6 @@ import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.LinearLayout
@@ -13,19 +12,19 @@ import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
-import com.google.gson.Gson
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_INVITATION
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_PROPOSAL
 import io.igrant.mobileagent.adapter.RequestListAdapter
-import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
+import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionMessageListener
 import io.igrant.mobileagent.models.agentConfig.Invitation
-import io.igrant.mobileagent.models.presentationExchange.CredentialValue
-import io.igrant.mobileagent.models.presentationExchange.ExchangeAttributes
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.qrcode.QrCodeActivity
-import io.igrant.mobileagent.utils.*
+import io.igrant.mobileagent.utils.MessageTypes
+import io.igrant.mobileagent.utils.PermissionUtils
+import io.igrant.mobileagent.utils.SearchUtils
+import io.igrant.mobileagent.utils.WalletRecordType
 import org.json.JSONObject
 
 class RequestActivity : BaseActivity() {
@@ -96,22 +95,43 @@ class RequestActivity : BaseActivity() {
         if (requestCode == REQUEST_CODE_SCAN_INVITATION) {
             if (data == null) return
 
-            val uri: Uri =
-                Uri.parse(data.getStringExtra("com.blikoon.qrcodescanner.got_qr_scan_relult"))
-            val v: String = uri.getQueryParameter("qr_p") ?: ""
-            val json =
-                Base64.decode(
-                    v,
-                    Base64.URL_SAFE
-                ).toString(charset("UTF-8"))
-            val data = JSONObject(json)
-            if (data.getString("invitation_url") != "") {
-                val invitation: String =
-                    Uri.parse(data.getString("invitation_url")).getQueryParameter("c_i") ?: ""
-                val proofRequest = data.getJSONObject("proof_request")
-                saveConnectionAndExchangeData(invitation, proofRequest)
-            } else {
-                Toast.makeText(this, "Unexpected error", Toast.LENGTH_SHORT).show()
+            try {
+                val uri: Uri =
+                    Uri.parse(data.getStringExtra("com.blikoon.qrcodescanner.got_qr_scan_relult"))
+                val v: String = uri.getQueryParameter("qr_p") ?: ""
+                if (v != "") {
+                    val json =
+                        Base64.decode(
+                            v,
+                            Base64.URL_SAFE
+                        ).toString(charset("UTF-8"))
+                    val data = JSONObject(json)
+                    if (data.getString("invitation_url") != "") {
+                        val invitation: String =
+                            Uri.parse(data.getString("invitation_url")).getQueryParameter("c_i")
+                                ?: ""
+                        val proofRequest = data.getJSONObject("proof_request")
+                        saveConnectionAndExchangeData(invitation, proofRequest)
+                    } else {
+                        Toast.makeText(
+                            this,
+                            resources.getString(R.string.err_unexpected),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                } else {
+                    Toast.makeText(
+                        this,
+                        resources.getString(R.string.err_unexpected),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            } catch (e: Exception) {
+                Toast.makeText(
+                    this,
+                    resources.getString(R.string.err_unexpected),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
         super.onActivityResult(requestCode, resultCode, data)
@@ -121,15 +141,25 @@ class RequestActivity : BaseActivity() {
         data: String,
         proofRequest: JSONObject
     ) {
-        val json =
-            Base64.decode(
-                data,
-                Base64.URL_SAFE
-            ).toString(charset("UTF-8"))
+        var invitation: Invitation? = null
+        try {
+            val json =
+                Base64.decode(
+                    data,
+                    Base64.URL_SAFE
+                ).toString(charset("UTF-8"))
 
-        val gson = Gson()
-        val invitation: Invitation = gson.fromJson(json, Invitation::class.java)
-        sendProposal(proofRequest, invitation)
+            invitation = WalletManager.getGson.fromJson(json, Invitation::class.java)
+        } catch (e: Exception) {
+        }
+        if (invitation != null)
+            sendProposal(proofRequest, invitation)
+        else
+            Toast.makeText(
+                this,
+                resources.getString(R.string.err_unexpected),
+                Toast.LENGTH_SHORT
+            ).show()
     }
 
     private fun sendProposal(
@@ -145,7 +175,7 @@ class RequestActivity : BaseActivity() {
 
     private fun setUpAdapter() {
         adapter = RequestListAdapter(connectionMessageList, object : ConnectionMessageListener {
-            override fun onConnectionMessageClick(record: Record,name:String) {
+            override fun onConnectionMessageClick(record: Record, name: String) {
                 val intent: Intent = Intent(this@RequestActivity, ExchangeDataActivity::class.java)
                 intent.putExtra(
                     ExchangeDataActivity.EXTRA_PRESENTATION_RECORD,

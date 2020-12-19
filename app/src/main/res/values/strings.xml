@@ -68,4 +68,5 @@
     <string name="txt_org_overview">Overview</string>
     <string name="txt_delete">Delete</string>
     <string name="txt_version_detail">"Version : %1$s"</string>
+    <string name="err_unexpected">Unexpected error. Please try again.</string>
 </resources>
