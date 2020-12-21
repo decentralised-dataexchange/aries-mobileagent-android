@@ -13,6 +13,7 @@ class CertificateAttributeAdapter(var itemList:ArrayList<Attributes>): RecyclerV
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var tvAttributeName: TextView = itemView.findViewById<View>(R.id.tvAttributeName) as TextView
         var tvAttributeValue: TextView = itemView.findViewById<View>(R.id.tvAttributeValue) as TextView
+        var vDivider: View = itemView.findViewById<View>(R.id.vDivider) as View
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -30,5 +31,7 @@ class CertificateAttributeAdapter(var itemList:ArrayList<Attributes>): RecyclerV
         val attributes = itemList[position]
         holder.tvAttributeName.text = attributes.name?:""
         holder.tvAttributeValue.text = attributes.value?:""
+
+        holder.vDivider.visibility = if (position == itemList.size - 1) View.GONE else View.VISIBLE
     }
 }

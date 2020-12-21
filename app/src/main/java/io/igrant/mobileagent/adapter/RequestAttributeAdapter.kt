@@ -6,13 +6,16 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
-import io.igrant.mobileagent.models.certificateOffer.Attributes
 import io.igrant.mobileagent.models.presentationExchange.ExchangeAttributes
 
-class RequestAttributeAdapter(var itemList:ArrayList<ExchangeAttributes>): RecyclerView.Adapter<RequestAttributeAdapter.ViewHolder>() {
+class RequestAttributeAdapter(var itemList: ArrayList<ExchangeAttributes>) :
+    RecyclerView.Adapter<RequestAttributeAdapter.ViewHolder>() {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var tvAttributeName: TextView = itemView.findViewById<View>(R.id.tvAttributeName) as TextView
-        var tvAttributeValue: TextView = itemView.findViewById<View>(R.id.tvAttributeValue) as TextView
+        var tvAttributeName: TextView =
+            itemView.findViewById<View>(R.id.tvAttributeName) as TextView
+        var tvAttributeValue: TextView =
+            itemView.findViewById<View>(R.id.tvAttributeValue) as TextView
+        var vDivider: View = itemView.findViewById<View>(R.id.vDivider) as View
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -28,7 +31,9 @@ class RequestAttributeAdapter(var itemList:ArrayList<ExchangeAttributes>): Recyc
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
         val attributes = itemList[position]
-        holder.tvAttributeName.text = attributes.name?:""
-        holder.tvAttributeValue.text = attributes.value?:""
+        holder.tvAttributeName.text = attributes.name ?: ""
+        holder.tvAttributeValue.text = attributes.value ?: ""
+
+        holder.vDivider.visibility = if (position == itemList.size - 1) View.GONE else View.VISIBLE
     }
 }
