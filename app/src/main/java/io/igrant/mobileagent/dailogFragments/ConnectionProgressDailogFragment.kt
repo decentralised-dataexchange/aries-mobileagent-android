@@ -8,6 +8,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import com.bumptech.glide.Glide
 import com.kusu.loadingbutton.LoadingButton
@@ -39,6 +40,8 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
     lateinit var btnDecline: LoadingButton
     lateinit var tvDesc: TextView
     lateinit var ivLogo: ImageView
+    lateinit var llSuccess: LinearLayout
+    lateinit var ivSuccess: ImageView
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -206,19 +209,13 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
         }
     }
 
-    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    @Subscribe( threadMode = ThreadMode.MAIN)
     fun onConnectionSuccessEvent(event: ConnectionSuccessEvent) {
         btnConnect.hideLoading()
-//        btnDecline.visibility = View.INVISIBLE
-//        btnConnect.visibility = View.INVISIBLE
-//        ivLogo.visibility = View.INVISIBLE
-        tvDesc.text = resources.getString(R.string.txt_connection_success_message)
-        ivLogo.setImageResource(R.drawable.ic_success)
-        btnDecline.visibility = View.GONE
-        btnConnect.visibility = View.GONE
-        tvDesc.visibility = View.GONE
+        llSuccess.visibility = View.VISIBLE
         Handler(Looper.getMainLooper()).postDelayed({
             onSuccessListener.onSuccess(proposal, event.connectionId ?: "")
+            llSuccess.visibility = View.GONE
             dialog?.dismiss()
         }, 3000)
 
@@ -245,6 +242,8 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
         btnDecline = view.findViewById(R.id.btnDecline)
         tvDesc = view.findViewById(R.id.tvDesc)
         ivLogo = view.findViewById(R.id.ivLogo)
+        llSuccess = view.findViewById(R.id.llSuccess)
+        ivSuccess = view.findViewById(R.id.ivSuccess)
     }
 
     companion object {

@@ -545,7 +545,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
             value
         )
 
-        EventBus.getDefault().postSticky(ConnectionSuccessEvent(connectionUuid ?: ""))
+        EventBus.getDefault().post(ConnectionSuccessEvent(connectionUuid ?: ""))
     }
 
     private fun updatePresentProofToAck(jsonObject: JSONObject) {
