@@ -4,6 +4,7 @@ import android.content.Context
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.text.Html
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -58,7 +59,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 //        dialog!!.setTitle(title)
 
         initViews(view)
-        tvDesc.text = title
+        tvDesc.text = Html.fromHtml(resources.getString(R.string.txt_allow_connection_query,invitation.label?:"Organisation"))
         Glide
             .with(ivLogo.context)
             .load(invitation.imageUrl)

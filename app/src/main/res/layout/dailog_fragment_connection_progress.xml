@@ -4,59 +4,58 @@
     android:id="@+id/edit_name"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="30dp"
-    android:layout_marginEnd="30dp"
-    android:background="@drawable/bg_connection_dailog"
     android:animateLayoutChanges="true"
+    android:background="@drawable/bg_connection_dialog_pad"
     android:padding="10dp">
 
     <LinearLayout
         android:id="@+id/llSuccess"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
         android:background="@color/white"
         android:elevation="5dp"
         android:gravity="center"
-        android:visibility="gone">
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/ivSuccess"
             android:layout_width="80dp"
-            android:contentDescription="@string/txt_logo"
             android:layout_height="80dp"
-            android:src="@drawable/ic_success" />
+            android:contentDescription="@string/txt_logo"
+            android:src="@drawable/ic_success_filled" />
 
     </LinearLayout>
+
     <androidx.cardview.widget.CardView
         android:id="@+id/cvLogo"
         android:layout_width="80dp"
         android:layout_height="80dp"
         app:cardCornerRadius="60dp"
-        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
             android:id="@+id/ivLogo"
             android:layout_width="80dp"
-            android:contentDescription="@string/txt_logo"
             android:layout_height="80dp"
+            android:contentDescription="@string/txt_logo"
             android:src="@drawable/images" />
     </androidx.cardview.widget.CardView>
 
-<!--    <ImageView-->
-<!--        android:id="@+id/ivLogo"-->
-<!--        android:layout_width="50dp"-->
-<!--        android:layout_height="50dp"-->
-<!--        android:layout_marginTop="10dp"-->
-<!--        android:src="@drawable/ic_no_data"-->
-<!--        app:layout_constraintEnd_toEndOf="parent"-->
-<!--        app:layout_constraintStart_toStartOf="parent"-->
-<!--        app:layout_constraintTop_toTopOf="parent" />-->
+    <!--    <ImageView-->
+    <!--        android:id="@+id/ivLogo"-->
+    <!--        android:layout_width="50dp"-->
+    <!--        android:layout_height="50dp"-->
+    <!--        android:layout_marginTop="10dp"-->
+    <!--        android:src="@drawable/ic_no_data"-->
+    <!--        app:layout_constraintEnd_toEndOf="parent"-->
+    <!--        app:layout_constraintStart_toStartOf="parent"-->
+    <!--        app:layout_constraintTop_toTopOf="parent" />-->
 
     <TextView
         android:id="@+id/tvDesc"
@@ -65,10 +64,8 @@
         android:layout_marginTop="10dp"
         android:padding="20dp"
         android:textAlignment="center"
-        android:textAllCaps="true"
         android:textColor="@color/textColor"
         android:textSize="@dimen/text_size_medium"
-        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/cvLogo" />
@@ -80,16 +77,16 @@
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
         android:text="Decline"
-        android:textColor="@color/textColor"
+        android:textColor="@color/white"
         android:textSize="@dimen/text_size_medium"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btnConnect"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvDesc"
-        app:lb_buttonColor="@color/bgColor"
+        app:lb_buttonColor="#FF3B5D7A"
         app:lb_isCircular="true"
-        app:lb_loaderColor="@color/textColor"
-        app:lb_isShadowEnable="false"/>
+        app:lb_isShadowEnable="false"
+        app:lb_loaderColor="@color/textColor" />
 
     <com.kusu.loadingbutton.LoadingButton
         android:id="@+id/btnConnect"
@@ -98,15 +95,15 @@
         android:layout_marginTop="10dp"
         android:layout_marginBottom="10dp"
         android:text="Connect"
-        android:textColor="@color/textColor"
+        android:textColor="@color/white"
         android:textSize="@dimen/text_size_medium"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toEndOf="@+id/btnDecline"
         app:layout_constraintTop_toBottomOf="@+id/tvDesc"
-        app:lb_buttonColor="@color/bgColor"
+        app:lb_buttonColor="@color/primaryBlue"
         app:lb_isCircular="true"
-        app:lb_loaderColor="@color/textColor"
-        app:lb_isShadowEnable="false" />
+        app:lb_isShadowEnable="false"
+        app:lb_loaderColor="@color/textColor" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
