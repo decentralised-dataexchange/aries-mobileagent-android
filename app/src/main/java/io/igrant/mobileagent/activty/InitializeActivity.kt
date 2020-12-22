@@ -23,6 +23,7 @@ import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
 import io.igrant.mobileagent.events.ConnectionSuccessEvent
 import io.igrant.mobileagent.events.ReceiveCertificateEvent
+import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.handlers.PoolHandler
@@ -226,7 +227,11 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
             if (v != "") {
                 saveConnection(v)
             } else {
-                Toast.makeText(this, resources.getString(R.string.err_unexpected), Toast.LENGTH_SHORT).show()
+                Toast.makeText(
+                    this,
+                    resources.getString(R.string.err_unexpected),
+                    Toast.LENGTH_SHORT
+                ).show()
             }
         }
         super.onActivityResult(requestCode, resultCode, data)
@@ -244,7 +249,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
         } catch (e: Exception) {
         }
 
-        if (invitation!=null){
+        if (invitation != null) {
             if (ConnectionUtils.checkIfConnectionAvailable(invitation.recipientKeys!![0])) {
                 Toast.makeText(
                     this,
@@ -255,15 +260,19 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
                 Handler(Looper.getMainLooper()).postDelayed({
                     val connectionSuccessDialogFragment: ConnectionProgressDailogFragment =
                         ConnectionProgressDailogFragment.newInstance(
-                            "${invitation.label ?:""} has invited you to connect",
+                            "${invitation.label ?: ""} has invited you to connect",
                             invitation,
                             ""
                         )
-                    connectionSuccessDialogFragment.show(supportFragmentManager, "fragment_edit_name")
+                    connectionSuccessDialogFragment.show(
+                        supportFragmentManager,
+                        "fragment_edit_name"
+                    )
                 }, 200)
             }
-        }else{
-            Toast.makeText(this, resources.getString(R.string.err_unexpected), Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, resources.getString(R.string.err_unexpected), Toast.LENGTH_SHORT)
+                .show()
         }
     }
 
@@ -549,8 +558,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
     }
 
     private fun updatePresentProofToAck(jsonObject: JSONObject) {
-
-
         WalletRecord.delete(
             WalletManager.getWallet,
             MESSAGE_RECORDS,
@@ -621,9 +628,23 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
                 WalletManager.getGson.toJson(presentationExchange),
                 "{\n" +
                         "  \"type\":\"$TYPE_REQUEST_PRESENTATION\",\n" +
-                        "  \"connectionId\":\"${connectionObject?.requestId}\"\n" +
+                        "  \"connectionId\":\"${connectionObject?.requestId}\",\n" +
+                        "  \"stat\":\"Active\"\n"+
                         "}"
             )
+
+            try {
+                NotificationUtils.showNotification(
+                    this,
+                    TYPE_ISSUE_CREDENTIAL,
+                    "${connectionObject?.theirLabel ?: "Organisation"} - Exchange Request",
+                    "Received a new exchange request from the organisation ${connectionObject?.theirLabel ?: ""}"
+                )
+
+                EventBus.getDefault()
+                    .post(ReceiveExchangeRequestEvent(connectionObject?.requestId ?: ""))
+            } catch (e: Exception) {
+            }
         }
     }
 
@@ -887,7 +908,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
                 "Success",
                 "Certificate successfully added to your wallet"
             )
-            EventBus.getDefault().postSticky(ReceiveCertificateEvent())
+            EventBus.getDefault().post(ReceiveCertificateEvent())
         }
 
     }
@@ -1072,7 +1093,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
                 WalletManager.getGson.toJson(certificateOffer),
                 "{\n" +
                         "  \"type\":\"$TYPE_OFFER_CREDENTIAL\",\n" +
-                        "  \"connectionId\":\"${connecction.requestId}\"\n" +
+                        "  \"connectionId\":\"${connecction.requestId}\",\n" +
+                        "  \"stat\":\"Active\"\n"+
                         "}"
             )
 
@@ -1084,7 +1106,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
                     "Received a new offer credential of the organisation ${connecction.theirLabel}"
                 )
 
-                EventBus.getDefault().postSticky(ReceiveOfferEvent(connecction.requestId ?: ""))
+                EventBus.getDefault().post(ReceiveOfferEvent(connecction.requestId ?: ""))
             } catch (e: Exception) {
             }
         }

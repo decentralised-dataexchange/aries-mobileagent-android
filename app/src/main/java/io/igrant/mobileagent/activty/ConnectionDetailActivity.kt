@@ -338,7 +338,8 @@ class ConnectionDetailActivity : BaseActivity() {
             SearchUtils.searchWallet(
                 WalletRecordType.MESSAGE_RECORDS,
                 "{\"connectionId\": \"${mConnectionId}\"," +
-                        "\"type\":\"${MessageTypes.TYPE_OFFER_CREDENTIAL}\"" +
+                        "\"type\":\"${MessageTypes.TYPE_OFFER_CREDENTIAL}\",\n" +
+                        "\"stat\":\"Active\"\n"+
                         "}"
             )
         if (connectionMessageResponse.totalCount ?: 0 > 0) {
@@ -347,7 +348,7 @@ class ConnectionDetailActivity : BaseActivity() {
         }
     }
 
-    @Subscribe(sticky = true, threadMode = ThreadMode.MAIN)
+    @Subscribe(threadMode = ThreadMode.MAIN)
     fun onConnectionSuccessEvent(event: ReceiveOfferEvent) {
         setUpConnectionMessagesList()
         if (connectionCertList!=null)

@@ -43,22 +43,22 @@ class WalletCertificatesAdapter(
         val certificate =
             WalletManager.getGson.fromJson(credentialList[position].value, WalletModel::class.java)
         val lst = certificate.rawCredential?.schemaId?.split(":")
-        holder.tvCertificateName.text = lst?.get(2) ?: ""
+        holder.tvCertificateName.text = (lst?.get(2) ?: "").toUpperCase()
         holder.ivDelete.setOnClickListener {
             listener.onDelete(certificate.credentialId ?: "", position)
         }
-        holder.tvCompanyName.text = certificate.connection?.theirLabel?:""
+        holder.tvCompanyName.text = certificate.connection?.theirLabel ?: ""
         try {
             Glide
                 .with(holder.ivLogo.context)
-                .load(certificate.connection?.theirImageUrl?:"")
+                .load(certificate.connection?.theirImageUrl ?: "")
                 .centerCrop()
                 .placeholder(R.drawable.images)
                 .into(holder.ivLogo)
         } catch (e: Exception) {
         }
         holder.cvItem.setOnClickListener {
-listener.onItemClick(certificate)
+            listener.onItemClick(certificate)
         }
     }
 }

@@ -49,7 +49,7 @@ class CertificateDetailActivity:BaseActivity() {
 
     private fun initValues() {
         try {
-            tvHead.text = (wallet?.rawCredential?.schemaId?:"").split(":")[2]
+            tvHead.text = ((wallet?.rawCredential?.schemaId?:"").split(":")[2]).toUpperCase()
         } catch (e: Exception) {
         }
     }
