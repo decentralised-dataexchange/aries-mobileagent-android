@@ -86,6 +86,7 @@ class ExchangeDataActivity : BaseActivity() {
             tvDesc.text =
                 resources.getString(R.string.txt_exchange_data_desc, connectionObject.theirLabel)
         }
+
         tvHead.text = (mPresentationExchange?.presentationRequest?.name ?: "").toUpperCase()
 
         val searchHandle = CredentialsSearchForProofReq.open(
