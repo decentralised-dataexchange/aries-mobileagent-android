@@ -4,6 +4,8 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.util.Base64
 import android.view.MenuItem
 import android.view.View
@@ -16,6 +18,8 @@ import io.igrant.mobileagent.R
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_INVITATION
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_PROPOSAL
 import io.igrant.mobileagent.adapter.RequestListAdapter
+import io.igrant.mobileagent.events.ConnectionSuccessEvent
+import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionMessageListener
 import io.igrant.mobileagent.models.agentConfig.Invitation
@@ -25,6 +29,9 @@ import io.igrant.mobileagent.utils.MessageTypes
 import io.igrant.mobileagent.utils.PermissionUtils
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import org.json.JSONObject
 
 class RequestActivity : BaseActivity() {
@@ -196,7 +203,8 @@ class RequestActivity : BaseActivity() {
             SearchUtils.searchWallet(
                 WalletRecordType.MESSAGE_RECORDS,
                 "{" +
-                        "\"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\"" +
+                        "\"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
+                        "\"stat\":\"Active\"\n"+
                         "}"
             )
         if (connectionMessageResponse.totalCount ?: 0 > 0) {
@@ -208,6 +216,28 @@ class RequestActivity : BaseActivity() {
             llErrorMessage.visibility = View.VISIBLE
         }
     }
+
+    @Subscribe( threadMode = ThreadMode.MAIN)
+    fun onConnectionSuccessEvent(event: ReceiveExchangeRequestEvent) {
+        setUpConnectionMessagesList()
+    }
+
+    override fun onStart() {
+        try {
+            EventBus.getDefault().register(this)
+        } catch (e: Exception) {
+        }
+        super.onStart()
+    }
+
+    override fun onStop() {
+        try {
+            EventBus.getDefault().unregister(this)
+        } catch (e: Exception) {
+        }
+        super.onStop()
+    }
+
 
     companion object {
         private const val TAG = "InitializeActivity"

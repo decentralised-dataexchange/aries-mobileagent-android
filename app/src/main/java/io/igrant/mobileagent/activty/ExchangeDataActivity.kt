@@ -21,6 +21,7 @@ import io.igrant.mobileagent.models.presentationExchange.ExchangeAttributes
 import io.igrant.mobileagent.models.presentationExchange.PresentationExchange
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.tasks.ExchangeDataTask
+import io.igrant.mobileagent.utils.MessageTypes
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
 import okhttp3.RequestBody
@@ -85,7 +86,7 @@ class ExchangeDataActivity : BaseActivity() {
             tvDesc.text =
                 resources.getString(R.string.txt_exchange_data_desc, connectionObject.theirLabel)
         }
-        tvHead.text = mPresentationExchange?.presentationRequest?.name ?: ""
+        tvHead.text = (mPresentationExchange?.presentationRequest?.name ?: "").toUpperCase()
 
         val searchHandle = CredentialsSearchForProofReq.open(
             WalletManager.getWallet,
@@ -238,6 +239,18 @@ class ExchangeDataActivity : BaseActivity() {
                                         llProgressBar.visibility = View.GONE
                                         btAccept.isEnabled = true
                                         btReject.isEnabled = true
+
+                                        val tagJson = "{\n" +
+                                                "  \"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
+                                                "  \"connectionId\":\"${mConnectionId}\",\n" +
+                                                "  \"stat\":\"Processed\"\n" +
+                                                "}"
+                                        WalletRecord.updateTags(
+                                            WalletManager.getWallet,
+                                            WalletRecordType.MESSAGE_RECORDS,
+                                            record?.id ?: "",
+                                            tagJson
+                                        )
 
                                         onBackPressed()
                                     }

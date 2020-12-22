@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.CertificateAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
+import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.indy.PoolManager
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
@@ -27,6 +28,7 @@ import io.igrant.mobileagent.models.credentialExchange.CredentialRequestMetadata
 import io.igrant.mobileagent.models.credentialExchange.Thread
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.utils.CredentialExchangeStates
+import io.igrant.mobileagent.utils.MessageTypes
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
 import okhttp3.MediaType
@@ -34,6 +36,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import okio.BufferedSink
+import org.greenrobot.eventbus.EventBus
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.crypto.Crypto
 import org.hyperledger.indy.sdk.did.Did
@@ -85,7 +88,7 @@ class OfferCertificateActivity : BaseActivity() {
     }
 
     private fun initValues() {
-        tvHead.text = name
+        tvHead.text = name.toUpperCase()
     }
 
     private fun initListener() {
@@ -136,6 +139,19 @@ class OfferCertificateActivity : BaseActivity() {
                                 llProgressBar.visibility = View.GONE
                                 btAccept.isEnabled = false
                                 btReject.isEnabled = true
+
+                                val tagJson = "{\n" +
+                                        "  \"type\":\"${MessageTypes.TYPE_OFFER_CREDENTIAL}\",\n" +
+                                        "  \"connectionId\":\"${mConnectionId}\",\n" +
+                                        "  \"stat\":\"Processed\"\n" +
+                                        "}"
+                                WalletRecord.updateTags(
+                                    WalletManager.getWallet,
+                                    WalletRecordType.MESSAGE_RECORDS,
+                                    record?.id ?: "",
+                                    tagJson
+                                )
+                                EventBus.getDefault().post(ReceiveOfferEvent(mConnectionId ?: ""))
                                 onBackPressed()
 
                             }
