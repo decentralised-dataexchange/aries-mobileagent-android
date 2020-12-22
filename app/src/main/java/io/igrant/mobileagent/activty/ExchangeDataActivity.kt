@@ -11,11 +11,11 @@ import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
-import io.igrant.mobileagent.adapter.CertificateAttributeAdapter
 import io.igrant.mobileagent.adapter.RequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
+import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.presentationExchange.CredentialValue
 import io.igrant.mobileagent.models.presentationExchange.ExchangeAttributes
 import io.igrant.mobileagent.models.presentationExchange.PresentationExchange
@@ -73,7 +73,18 @@ class ExchangeDataActivity : BaseActivity() {
     }
 
     private fun initValues() {
-        tvDesc.text = mPresentationExchange?.comment ?: ""
+        val connection = SearchUtils.searchWallet(
+            WalletRecordType.CONNECTION,
+            "{\"request_id\":\"$mConnectionId\"}"
+        )
+        if (connection.totalCount ?: 0 > 0) {
+            val connectionObject = WalletManager.getGson.fromJson(
+                connection.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
+            )
+            tvDesc.text =
+                resources.getString(R.string.txt_exchange_data_desc, connectionObject.theirLabel)
+        }
         tvHead.text = mPresentationExchange?.presentationRequest?.name ?: ""
 
         val searchHandle = CredentialsSearchForProofReq.open(

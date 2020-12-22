@@ -69,4 +69,5 @@
     <string name="txt_delete">Delete</string>
     <string name="txt_version_detail">"Version : %1$s"</string>
     <string name="err_unexpected">Unexpected error. Please try again.</string>
+    <string name="txt_exchange_data_desc">By choosing exchange you agree to share the requested data to %1$s</string>
 </resources>
