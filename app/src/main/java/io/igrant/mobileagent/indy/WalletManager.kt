@@ -3,6 +3,7 @@ package io.igrant.mobileagent.indy
 import android.os.Build
 import android.util.Log
 import com.google.gson.Gson
+import io.igrant.mobileagent.utils.DeviceUtils
 import org.hyperledger.indy.sdk.IndyException
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.non_secrets.WalletSearch
@@ -37,7 +38,7 @@ object WalletManager {
         get() {
             if (wallet == null) {
                 try {
-                    walletName = getDeviceName()?:""
+                    walletName = DeviceUtils.getDeviceName()?:""
                     type = "default"
                     walletCredentials = JSONObject()
                         .put("key", "key")
@@ -100,27 +101,4 @@ object WalletManager {
     fun closeSearchHandle(searchHandle: WalletSearch) {
         WalletSearch.closeSearch(searchHandle)
     }
-
-    private fun getDeviceName(): String? {
-        val manufacturer = Build.MANUFACTURER
-        val model = Build.MODEL
-        return if (model.startsWith(manufacturer)) {
-            capitalize(model)
-        } else {
-            capitalize(manufacturer).toString() + " " + model
-        }
-    }
-
-    private fun capitalize(s: String?): String? {
-        if (s == null || s.isEmpty()) {
-            return ""
-        }
-        val first = s[0]
-        return if (Character.isUpperCase(first)) {
-            s
-        } else {
-            Character.toUpperCase(first).toString() + s.substring(1)
-        }
-    }
-
 }
