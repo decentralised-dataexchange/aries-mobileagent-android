@@ -15,12 +15,12 @@ import java.util.concurrent.atomic.AtomicInteger
 object NotificationUtils {
 
      fun showNotification(context:Context,type:String,title:String,desc:String){
-        val intent = Intent(context, InitializeActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        intent.action = System.currentTimeMillis().toString()
+//        val intent = Intent(context, InitializeActivity::class.java)
+//        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
+//        intent.action = System.currentTimeMillis().toString()
 
-        val pendingIntent: PendingIntent =
-            PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT)
+//        val pendingIntent: PendingIntent =
+//            PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT)
 
         val mNotificationManager =
             context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
@@ -36,11 +36,8 @@ object NotificationUtils {
                     .setSummaryText(desc)
             )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
             .setAutoCancel(true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-
-
             val channel = NotificationChannel(
                 getChannelIdForParu(type,context),
                 getChannelName(type,context),
