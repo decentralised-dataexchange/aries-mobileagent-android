@@ -629,7 +629,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
                 "{\n" +
                         "  \"type\":\"$TYPE_REQUEST_PRESENTATION\",\n" +
                         "  \"connectionId\":\"${connectionObject?.requestId}\",\n" +
-                        "  \"stat\":\"Active\"\n"+
+                        "  \"stat\":\"Active\"\n" +
                         "}"
             )
 
@@ -1094,7 +1094,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
                 "{\n" +
                         "  \"type\":\"$TYPE_OFFER_CREDENTIAL\",\n" +
                         "  \"connectionId\":\"${connecction.requestId}\",\n" +
-                        "  \"stat\":\"Active\"\n"+
+                        "  \"stat\":\"Active\"\n" +
                         "}"
             )
 
@@ -1742,7 +1742,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
         val connectionRequest = ConnectionRequest()
         connectionRequest.type = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request"
         connectionRequest.id = UUID.randomUUID().toString()
-        connectionRequest.label = "Mobile agent 0018"
+        connectionRequest.label = DeviceUtils.getDeviceName() ?: ""
         connectionRequest.connection = did
         connectionRequest.transport = transport
 

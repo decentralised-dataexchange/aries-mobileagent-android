@@ -119,6 +119,7 @@
                         android:layout_marginTop="5dp"
                         android:text="----------"
                         android:lines="3"
+                        android:justificationMode="inter_word"
                         android:ellipsize="end"
                         android:textAlignment="viewStart"
                         android:textColor="@color/textColor"

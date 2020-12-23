@@ -39,6 +39,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:padding="5dp"
+        android:justificationMode="inter_word"
         android:text="@string/txt_Add_certificate_desc"
         android:textColor="#000"
         android:textSize="@dimen/text_size_medium"

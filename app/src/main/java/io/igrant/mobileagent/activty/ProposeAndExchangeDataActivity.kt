@@ -95,6 +95,19 @@ class ProposeAndExchangeDataActivity : BaseActivity(),ConnectionProgressDailogFr
     }
 
     private fun initValues() {
+        val connection = SearchUtils.searchWallet(
+            WalletRecordType.CONNECTION,
+            "{\"request_id\":\"$mConnectionId\"}"
+        )
+        if (connection.totalCount ?: 0 > 0) {
+            val connectionObject = WalletManager.getGson.fromJson(
+                connection.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
+            )
+            tvDesc.text =
+                resources.getString(R.string.txt_exchange_data_desc, connectionObject.theirLabel)
+        }
+
         val searchHandle = CredentialsSearchForProofReq.open(
             WalletManager.getWallet,
             WalletManager.getGson.toJson(proposalData),

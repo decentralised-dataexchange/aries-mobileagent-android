@@ -11,6 +11,7 @@ import io.igrant.mobileagent.models.tagJsons.ConnectionId
 import io.igrant.mobileagent.models.tagJsons.ConnectionTags
 import io.igrant.mobileagent.models.tagJsons.UpdateInvitationKey
 import io.igrant.mobileagent.utils.ConnectionStates
+import io.igrant.mobileagent.utils.DeviceUtils
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
@@ -27,7 +28,10 @@ import org.json.JSONObject
 import java.io.IOException
 import java.util.*
 
-class SaveConnectionTask(private val commonHandler: CommonHandler,private val invitation :Invitation) :
+class SaveConnectionTask(
+    private val commonHandler: CommonHandler,
+    private val invitation: Invitation
+) :
     AsyncTask<Void, Void, Void>() {
 
     private lateinit var queryFeaturePackedBytes: RequestBody
@@ -100,9 +104,9 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
                 "    }\n" +
                 "}"
 
-        val queryFeaturePacked =  Crypto.packMessage(
+        val queryFeaturePacked = Crypto.packMessage(
             WalletManager.getWallet,
-            "[\"${invitation.recipientKeys?.get(0) ?:""}\"]",
+            "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
             key,
             queryFeatureData.toByteArray()
         ).get()
@@ -119,7 +123,15 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
         }
 
         val tagJson =
-            WalletManager.getGson.toJson(UpdateInvitationKey(requestId, myDid, invitation.recipientKeys!![0], null,null))
+            WalletManager.getGson.toJson(
+                UpdateInvitationKey(
+                    requestId,
+                    myDid,
+                    invitation.recipientKeys!![0],
+                    null,
+                    null
+                )
+            )
         WalletRecord.updateTags(
             WalletManager.getWallet,
             CONNECTION,
@@ -138,10 +150,15 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
                 "    }\n" +
                 "}\n"
 
-        val mediatorConnection = SearchUtils.searchWallet(WalletRecordType.MEDIATOR_CONNECTION,
-            "{}")
+        val mediatorConnection = SearchUtils.searchWallet(
+            WalletRecordType.MEDIATOR_CONNECTION,
+            "{}"
+        )
 
-        val mediatorConnectionObject = WalletManager.getGson.fromJson(mediatorConnection.records?.get(0)?.value,MediatorConnectionObject::class.java)
+        val mediatorConnectionObject = WalletManager.getGson.fromJson(
+            mediatorConnection.records?.get(0)?.value,
+            MediatorConnectionObject::class.java
+        )
         val connectionDid = mediatorConnectionObject.myDid
 
         val connectionMetaString =
@@ -149,9 +166,12 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
         val connectionMetaObject = JSONObject(connectionMetaString)
         val connectedKey = connectionMetaObject.getString("verkey")
 
-        val mediatorDidDoc = SearchUtils.searchWallet(MEDIATOR_DID_DOC,"{}")
+        val mediatorDidDoc = SearchUtils.searchWallet(MEDIATOR_DID_DOC, "{}")
 
-        val didDocObj = WalletManager.getGson.fromJson(mediatorDidDoc.records?.get(0)?.value, DidDoc::class.java)
+        val didDocObj = WalletManager.getGson.fromJson(
+            mediatorDidDoc.records?.get(0)?.value,
+            DidDoc::class.java
+        )
 
         val packedMessage = Crypto.packMessage(
             WalletManager.getWallet,
@@ -229,7 +249,7 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
         val connectionRequest = ConnectionRequest()
         connectionRequest.type = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request"
         connectionRequest.id = UUID.randomUUID().toString()
-        connectionRequest.label = "Mobile agent 0018"
+        connectionRequest.label = DeviceUtils.getDeviceName() ?: ""
         connectionRequest.connection = did
         connectionRequest.transport = transport
 
@@ -264,7 +284,11 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
 
     override fun onPostExecute(result: Void?) {
         super.onPostExecute(result)
-        commonHandler.onSaveConnection(typedBytes,connectionRequestTypedBytes,queryFeaturePackedBytes)
+        commonHandler.onSaveConnection(
+            typedBytes,
+            connectionRequestTypedBytes,
+            queryFeaturePackedBytes
+        )
     }
 
     private fun setUpMediatorConnectionObject(
@@ -290,8 +314,10 @@ class SaveConnectionTask(private val commonHandler: CommonHandler,private val in
         connectionObject.updatedAt = "2020-10-22 12:20:23.188047Z"
 
         connectionObject.theirLabel = invitation?.label
-        connectionObject.state = if (did != null) ConnectionStates.CONNECTION_REQUEST else ConnectionStates.CONNECTION_INVITATION
+        connectionObject.state =
+            if (did != null) ConnectionStates.CONNECTION_REQUEST else ConnectionStates.CONNECTION_INVITATION
 
         return connectionObject
     }
+
 }
