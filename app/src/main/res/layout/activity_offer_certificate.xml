@@ -57,6 +57,8 @@
         android:background="@drawable/secondary_button_background"
         android:enabled="true"
         android:text="@string/txt_reject"
+        android:breakStrategy="balanced"
+        android:justificationMode="inter_word"
         android:textColor="@color/white"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@+id/btAccept"
