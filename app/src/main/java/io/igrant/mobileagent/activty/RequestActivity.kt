@@ -199,21 +199,24 @@ class RequestActivity : BaseActivity() {
     }
 
     private fun setUpConnectionMessagesList() {
-        val connectionMessageResponse =
-            SearchUtils.searchWallet(
-                WalletRecordType.MESSAGE_RECORDS,
-                "{" +
-                        "\"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
-                        "\"stat\":\"Active\"\n"+
-                        "}"
-            )
-        if (connectionMessageResponse.totalCount ?: 0 > 0) {
-            llErrorMessage.visibility = View.GONE
-            connectionMessageList.clear()
-            connectionMessageList.addAll(connectionMessageResponse.records ?: ArrayList())
-            adapter.notifyDataSetChanged()
-        } else {
-            llErrorMessage.visibility = View.VISIBLE
+        try {
+            val connectionMessageResponse =
+                SearchUtils.searchWallet(
+                    WalletRecordType.MESSAGE_RECORDS,
+                    "{" +
+                            "\"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
+                            "\"stat\":\"Active\"\n"+
+                            "}"
+                )
+            if (connectionMessageResponse.totalCount ?: 0 > 0) {
+                llErrorMessage.visibility = View.GONE
+                connectionMessageList.clear()
+                connectionMessageList.addAll(connectionMessageResponse.records ?: ArrayList())
+                adapter.notifyDataSetChanged()
+            } else {
+                llErrorMessage.visibility = View.VISIBLE
+            }
+        } catch (e: Exception) {
         }
     }
 

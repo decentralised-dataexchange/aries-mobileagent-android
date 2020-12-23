@@ -132,7 +132,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
     private fun initToolbar() {
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
-        supportActionBar!!.title = "Data Wallet"
+        supportActionBar!!.title = "Data wallet"
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 

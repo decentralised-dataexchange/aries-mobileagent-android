@@ -1,6 +1,5 @@
 package io.igrant.mobileagent.activty
 
-import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -21,7 +20,6 @@ import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
-import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.agentConfig.Invitation
 import io.igrant.mobileagent.models.connectionRequest.DidDoc
@@ -52,9 +50,10 @@ import java.util.*
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 
-class ProposeAndExchangeDataActivity : BaseActivity(),ConnectionProgressDailogFragment.OnConnectionSuccess {
+class ProposeAndExchangeDataActivity : BaseActivity(),
+    ConnectionProgressDailogFragment.OnConnectionSuccess {
 
-    private var mConnectionId: String=""
+    private var mConnectionId: String = ""
     private lateinit var proposalData: PresentationRequest
     private lateinit var invitation: Invitation
     private lateinit var proposal: String
@@ -95,18 +94,9 @@ class ProposeAndExchangeDataActivity : BaseActivity(),ConnectionProgressDailogFr
     }
 
     private fun initValues() {
-        val connection = SearchUtils.searchWallet(
-            WalletRecordType.CONNECTION,
-            "{\"request_id\":\"$mConnectionId\"}"
-        )
-        if (connection.totalCount ?: 0 > 0) {
-            val connectionObject = WalletManager.getGson.fromJson(
-                connection.records?.get(0)?.value,
-                MediatorConnectionObject::class.java
-            )
-            tvDesc.text =
-                resources.getString(R.string.txt_exchange_data_desc, connectionObject.theirLabel)
-        }
+
+        tvDesc.text =
+            resources.getString(R.string.txt_exchange_data_desc, invitation.label ?: "")
 
         val searchHandle = CredentialsSearchForProofReq.open(
             WalletManager.getWallet,
@@ -204,7 +194,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),ConnectionProgressDailogFr
             if (!isInsufficientData) {
                 val connection =
                     ConnectionUtils.getConnectionWithInvitationKey(invitation.recipientKeys!![0])
-                mConnectionId = connection?.requestId?:""
+                mConnectionId = connection?.requestId ?: ""
                 if (connection != null) {
                     llProgressBar.visibility = View.VISIBLE
                     btAccept.isEnabled = false
@@ -254,7 +244,8 @@ class ProposeAndExchangeDataActivity : BaseActivity(),ConnectionProgressDailogFr
                 "}"
 
 
-        var connectionObject = ConnectionUtils.getConnectionWithInvitationKey(invitation.recipientKeys!![0])
+        var connectionObject =
+            ConnectionUtils.getConnectionWithInvitationKey(invitation.recipientKeys!![0])
 //            SearchUtils.searchWallet(
 //                WalletRecordType.CONNECTION,
 //                "{\"request_id\":\"$mConnectionId\"}"
