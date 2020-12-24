@@ -85,7 +85,7 @@ Note: This would be an automated flow integrated to existing organization IT sys
 }
 ```
 
-3. Replace "<connection_id>" with the corresponding connection_id copied in the earlier sections
+3. Replace "<connection_id>" in the above JSON with the corresponding connection_id copied in the earlier sections
 4. Click execute.
 
 ### Individual side flow
@@ -144,7 +144,7 @@ Example scenario: Organization interacts with the existing customer to fetch som
 }
 ```
 
-3. Replace "<connection_id>" with the corresponding connection_id copied in the earlier sections
+3. Replace "<connection_id>" in the above JSON with the corresponding connection_id copied in the earlier sections
 4. Click execute.
 
 #### Individual side flow
