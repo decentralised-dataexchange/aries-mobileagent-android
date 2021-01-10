@@ -22,6 +22,7 @@ import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.agentConfig.Invitation
 import io.igrant.mobileagent.tasks.SaveConnectionTask
 import io.igrant.mobileagent.tasks.SaveDidDocTask
+import kotlinx.android.synthetic.main.dailog_fragment_connection_progress.*
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.greenrobot.eventbus.EventBus
@@ -38,7 +39,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
     private lateinit var invitation: Invitation
     private lateinit var proposal: String
     lateinit var btnConnect: LoadingButton
-    lateinit var btnDecline: LoadingButton
+    lateinit var ivClose: ImageView
     lateinit var tvDesc: TextView
     lateinit var ivLogo: ImageView
     lateinit var llSuccess: LinearLayout
@@ -71,9 +72,10 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
     private fun initListener(view: View) {
 
-        btnDecline.setOnClickListener {
+        ivClose.setOnClickListener {
             dialog?.dismiss()
         }
+
         btnConnect.setOnClickListener {
 
             btnConnect.showLoading()
@@ -240,7 +242,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
     private fun initViews(view: View) {
         btnConnect = view.findViewById(R.id.btnConnect)
-        btnDecline = view.findViewById(R.id.btnDecline)
+        ivClose = view.findViewById(R.id.ivClose)
         tvDesc = view.findViewById(R.id.tvDesc)
         ivLogo = view.findViewById(R.id.ivLogo)
         llSuccess = view.findViewById(R.id.llSuccess)

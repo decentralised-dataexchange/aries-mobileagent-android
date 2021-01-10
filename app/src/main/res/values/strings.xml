@@ -13,7 +13,7 @@
     //qr code
     <string name="qc_code_close">Close</string>
     <string name="qr_code_open_flash_light">Turn on flash light</string>
-    <string name="qr_code_close_flash_light">Turn off txt_org_detail_download_request_processingflash light</string>
+    <string name="qr_code_close_flash_light">Turn off flash light</string>
     <string name="qr_code_auto_scan_notification">Position QR Code</string>
     <string name="qr_code_notification">Notification</string>
     <string name="qr_code_camera_not_open">Could not open your camera</string>
@@ -30,6 +30,7 @@
     <string name="txt_send">Send</string>
     <string name="txt_recieve">Receive</string>
     <string name="txt_certificates">Data</string>
+    <string name="txt_data_agreement">Data Agreement</string>
     <string name="txt_connections">Connections</string>
     <string name="no">No</string>
     <string name="yes">Yes</string>
@@ -56,15 +57,13 @@
     <string name="txt_logo">Logo</string>
     <string name="txt_exchange">Exchange</string>
     <string name="title_connection_list">Choose organisation</string>
-    <string name="title_offer_list">Add data</string>
     <string name="title_offer_detail">Data agreement</string>
-    <string name="title_exchange_data_detail">Exchange data</string>
     <string name="err_insufficient_data">Insufficient data requested</string>
     <string name="txt_requests">Requests</string>
     <string name="txt_connection_success_message">Connection success</string>
-    <string name="notification_channel_success_messages">Success messages</string>
-    <string name="notification_channel_success">success_messages</string>
-    <string name="default_notification_channel_id">NotificationChannel</string>
+    <string name="notification_channel_success_messages" translatable="false">Success messages</string>
+    <string name="notification_channel_success" translatable="false">success_messages</string>
+    <string name="default_notification_channel_id" translatable="false">NotificationChannel</string>
     <string name="txt_org_overview">Overview</string>
     <string name="txt_delete">Delete</string>
     <string name="txt_version_detail">"Version : %1$s"</string>

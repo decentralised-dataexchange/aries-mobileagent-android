@@ -54,6 +54,7 @@ public class QrCodeActivity extends Activity implements Callback, OnClickListene
     private InactivityTimer mInactivityTimer;
     private QrCodeFinderView mQrCodeFinderView;
     private SurfaceView mSurfaceView;
+    private ImageView ivClose;
     private View mLlFlashLight;
     private final DecodeManager mDecodeManager = new DecodeManager();
 
@@ -90,9 +91,20 @@ public class QrCodeActivity extends Activity implements Callback, OnClickListene
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_qr_code);
         initView();
+        initListener();
         initData();
         mApplicationContext = getApplicationContext();
 
+    }
+
+    private void initListener() {
+        ivClose = findViewById(R.id.ivClose);
+        ivClose.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onBackPressed();
+            }
+        });
     }
 
     private void checkPermission() {

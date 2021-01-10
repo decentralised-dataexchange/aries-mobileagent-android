@@ -101,15 +101,10 @@ import java.io.IOException
 import java.util.*
 import kotlin.collections.ArrayList
 
-class InitializeActivity : BaseActivity(), InitialActivityFunctions,
-    ConnectionProgressDailogFragment.OnConnectionSuccess {
+class InitializeActivity : BaseActivity(), InitialActivityFunctions{
 
     companion object {
         private const val TAG = "InitializeActivity"
-        private const val PICK_IMAGE_REQUEST = 101
-        val PERMISSIONS =
-            arrayOf(Manifest.permission.CAMERA)
-        private const val REQUEST_CODE_SCAN_INVITATION = 202
 
         var deviceId = ""
     }
@@ -133,7 +128,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar!!.title = "Data wallet"
-        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+//        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
     private fun initLibIndy() {
@@ -183,96 +178,13 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
         llProgressBar.visibility = View.VISIBLE
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu)
-        return true
-    }
-
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
                 onBackPressed()
                 true
             }
-            R.id.action_new -> {
-                if (PermissionUtils.hasPermissions(
-                        this,
-                        true,
-                        PICK_IMAGE_REQUEST,
-                        PERMISSIONS
-                    )
-                ) {
-                    val i = Intent(this, QrCodeActivity::class.java)
-                    startActivityForResult(
-                        i,
-                        REQUEST_CODE_SCAN_INVITATION
-                    )
-                }
-                true
-            }
             else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == REQUEST_CODE_SCAN_INVITATION) {
-            if (data == null) return
-
-            val uri: Uri = try {
-                Uri.parse(data.getStringExtra("com.blikoon.qrcodescanner.got_qr_scan_relult"))
-            } catch (e: Exception) {
-                Uri.parse("igrant.io")
-            }
-            val v: String = uri.getQueryParameter("c_i") ?: ""
-            if (v != "") {
-                saveConnection(v)
-            } else {
-                Toast.makeText(
-                    this,
-                    resources.getString(R.string.err_unexpected),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, data)
-    }
-
-    private fun saveConnection(data: String) {
-        var invitation: Invitation? = null
-        try {
-            val json =
-                Base64.decode(
-                    data,
-                    Base64.URL_SAFE
-                ).toString(charset("UTF-8"))
-            invitation = WalletManager.getGson.fromJson(json, Invitation::class.java)
-        } catch (e: Exception) {
-        }
-
-        if (invitation != null) {
-            if (ConnectionUtils.checkIfConnectionAvailable(invitation.recipientKeys!![0])) {
-                Toast.makeText(
-                    this,
-                    resources.getString(R.string.err_connection_already_added),
-                    Toast.LENGTH_SHORT
-                ).show()
-            } else {
-                Handler(Looper.getMainLooper()).postDelayed({
-                    val connectionSuccessDialogFragment: ConnectionProgressDailogFragment =
-                        ConnectionProgressDailogFragment.newInstance(
-                            "${invitation.label ?: ""} has invited you to connect",
-                            invitation,
-                            ""
-                        )
-                    connectionSuccessDialogFragment.show(
-                        supportFragmentManager,
-                        "fragment_edit_name"
-                    )
-                }, 200)
-            }
-        } else {
-            Toast.makeText(this, resources.getString(R.string.err_unexpected), Toast.LENGTH_SHORT)
-                .show()
         }
     }
 
@@ -795,7 +707,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
         recipientVerKey: String
     ) {
 
-
         val connectionSearch = SearchUtils.searchWallet(
             CONNECTION,
             "{\"recipient_key\":\"$recipientVerKey\"}"
@@ -860,7 +771,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
                 null
             ).get()
 
-            Log.d(TAG, "storeCredential: $uuid \n $credentialId")
             credentialExchange.state = CREDENTIAL_CREDENTIAL_ACK
 
             WalletRecord.updateValue(
@@ -1153,8 +1063,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
             WalletManager.getGson.toJson(credentialExchange).toString(),
             "{\"thread_id\": \"${certificateOffer.id}\"}"
         )
-
-
     }
 
     private fun unPackSigMessage(body: String, isMediator: Boolean) {
@@ -1818,31 +1726,5 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions,
         WalletManager.closeWallet
         PoolManager.getPool?.close()
         PoolManager.removePool
-    }
-
-    override fun onTitleChange(title: String) {
-        supportActionBar?.title = title
-    }
-
-    fun setActionBarTitle(title: String?) {
-        try {
-            supportActionBar!!.title = title
-        } catch (e: Exception) {
-//            e.printStackTrace();
-        }
-    }
-
-    fun getActionBarTitle(): String? {
-        try {
-            return supportActionBar!!.title.toString()
-        } catch (e: Exception) {
-//            e.printStackTrace();
-        }
-        return ""
-    }
-
-    override fun onSuccess(proposal: String, connectionId: String) {
-        Log.d(TAG, "onSuccess: ")
-
     }
 }

@@ -18,6 +18,8 @@ import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.RequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
+import io.igrant.mobileagent.events.GoHomeEvent
+import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
@@ -37,6 +39,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import okio.BufferedSink
+import org.greenrobot.eventbus.EventBus
 import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq
 import org.hyperledger.indy.sdk.crypto.Crypto
 import org.hyperledger.indy.sdk.did.Did
@@ -159,7 +162,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
 
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
-        supportActionBar!!.title = resources.getString(R.string.title_exchange_data_detail)
+        supportActionBar!!.title = resources.getString(R.string.txt_exchange_data)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
@@ -407,6 +410,8 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                                 llProgressBar.visibility = View.GONE
                                 btAccept.isEnabled = true
                                 btReject.isEnabled = true
+
+                                EventBus.getDefault().post(GoHomeEvent())
 
                                 onBackPressed()
                             }
