@@ -3,7 +3,6 @@ package io.igrant.mobileagent.adapter
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentPagerAdapter
-import io.igrant.mobileagent.fragment.ConnectionListFragment
 import io.igrant.mobileagent.fragment.PreferenceFragment
 import io.igrant.mobileagent.fragment.WalletFragment
 

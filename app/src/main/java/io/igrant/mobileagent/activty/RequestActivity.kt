@@ -4,8 +4,6 @@ import android.Manifest
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Base64
 import android.view.MenuItem
 import android.view.View
@@ -18,7 +16,7 @@ import io.igrant.mobileagent.R
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_INVITATION
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_PROPOSAL
 import io.igrant.mobileagent.adapter.RequestListAdapter
-import io.igrant.mobileagent.events.ConnectionSuccessEvent
+import io.igrant.mobileagent.events.GoHomeEvent
 import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionMessageListener
@@ -50,6 +48,10 @@ class RequestActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_request)
         initViews()
+        try {
+            EventBus.getDefault().register(this)
+        } catch (e: Exception) {
+        }
         initToolbar()
         initListener()
         setUpAdapter()
@@ -205,7 +207,7 @@ class RequestActivity : BaseActivity() {
                     WalletRecordType.MESSAGE_RECORDS,
                     "{" +
                             "\"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
-                            "\"stat\":\"Active\"\n"+
+                            "\"stat\":\"Active\"\n" +
                             "}"
                 )
             if (connectionMessageResponse.totalCount ?: 0 > 0) {
@@ -220,27 +222,23 @@ class RequestActivity : BaseActivity() {
         }
     }
 
-    @Subscribe( threadMode = ThreadMode.MAIN)
+    @Subscribe(threadMode = ThreadMode.MAIN)
     fun onConnectionSuccessEvent(event: ReceiveExchangeRequestEvent) {
         setUpConnectionMessagesList()
     }
 
-    override fun onStart() {
-        try {
-            EventBus.getDefault().register(this)
-        } catch (e: Exception) {
-        }
-        super.onStart()
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onGoHomeEvent(event: GoHomeEvent) {
+        onBackPressed()
     }
 
-    override fun onStop() {
+    override fun onDestroy() {
         try {
             EventBus.getDefault().unregister(this)
         } catch (e: Exception) {
         }
-        super.onStop()
+        super.onDestroy()
     }
-
 
     companion object {
         private const val TAG = "InitializeActivity"

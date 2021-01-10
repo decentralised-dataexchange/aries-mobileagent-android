@@ -13,13 +13,15 @@ class PoolTask(private val poolHandler: PoolHandler) : AsyncTask<Void, Void, Voi
 
         val pool = PoolUtils.createAndOpenPoolLedger()
 
-        val acceptanceMech = Ledger.buildGetAcceptanceMechanismsRequest(null, -1, null).get()
-
-        Ledger.submitRequest(pool, acceptanceMech).get()
-
-        val agreementResponse = Ledger.buildGetTxnAuthorAgreementRequest(null, null).get()
-
-        Ledger.submitRequest(pool, agreementResponse).get()
+        //commenting for performance
+//        val acceptanceMech = Ledger.buildGetAcceptanceMechanismsRequest(null, -1, null).get()
+//
+//        Ledger.submitRequest(pool, acceptanceMech).get()
+//
+//        val agreementResponse = Ledger.buildGetTxnAuthorAgreementRequest(null, null).get()
+//
+//        Ledger.submitRequest(pool, agreementResponse).get()
+        //commenting for performance
 
         this.pool = pool
         return null

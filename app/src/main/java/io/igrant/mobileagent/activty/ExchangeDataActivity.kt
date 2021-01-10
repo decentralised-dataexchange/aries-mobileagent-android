@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.RequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
+import io.igrant.mobileagent.events.GoHomeEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
@@ -26,6 +27,7 @@ import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
+import org.greenrobot.eventbus.EventBus
 import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
 import org.json.JSONArray
@@ -151,7 +153,7 @@ class ExchangeDataActivity : BaseActivity() {
 
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
-        supportActionBar!!.title = resources.getString(R.string.title_exchange_data_detail)
+        supportActionBar!!.title = resources.getString(R.string.txt_exchange_data)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
@@ -252,6 +254,8 @@ class ExchangeDataActivity : BaseActivity() {
                                             record?.id ?: "",
                                             tagJson
                                         )
+
+                                        EventBus.getDefault().post(GoHomeEvent())
 
                                         onBackPressed()
                                     }

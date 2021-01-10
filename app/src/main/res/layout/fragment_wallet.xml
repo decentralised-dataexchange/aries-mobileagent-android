@@ -3,22 +3,9 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
+    android:background="@color/bgColor"
     android:layout_height="match_parent"
     android:padding="10dp">
-
-    <TextView
-        android:id="@+id/tvExchangeData"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="10dp"
-        android:drawableStart="@drawable/ic_scan"
-        android:drawablePadding="5dp"
-        android:gravity="center"
-        android:padding="5dp"
-        android:text="@string/txt_exchange_data"
-        android:textColor="@color/textColor"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
     <TextView
         android:id="@+id/tvAddCertificate"
@@ -34,17 +21,18 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
     <EditText
         android:id="@+id/etSearch"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/primary_edittext_background"
-        android:padding="10dp"
         android:layout_marginStart="5dp"
+        android:layout_marginTop="10dp"
         android:layout_marginEnd="5dp"
+        android:background="@drawable/primary_edittext_background"
         android:hint="@string/txt_search_wallet"
+        android:padding="10dp"
+        android:inputType="text"
+        android:textSize="@dimen/text_size_medium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/tvAddCertificate" />
@@ -64,13 +52,14 @@
         android:id="@+id/llErrorMessage"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:background="@color/white"
+        android:layout_marginTop="10dp"
+        android:background="@color/bgColor"
         android:gravity="center"
         android:orientation="vertical"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvAddCertificate">
+        app:layout_constraintTop_toBottomOf="@+id/etSearch">
 
         <ImageView
             android:layout_width="50dp"
@@ -85,4 +74,24 @@
             android:textSize="@dimen/text_size_normal" />
 
     </LinearLayout>
+
+
+    <TextView
+        android:id="@+id/tvExchangeData"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="10dp"
+        android:drawableStart="@drawable/ic_scan"
+        android:drawablePadding="5dp"
+        android:gravity="center"
+        android:padding="5dp"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:elevation="5dp"
+        android:background="@drawable/primary_button_background"
+        android:text="@string/txt_exchange_data"
+        android:textColor="@color/white"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

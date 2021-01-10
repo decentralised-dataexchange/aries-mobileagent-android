@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.activty.CertificateDetailActivity
 import io.igrant.mobileagent.activty.CertificateDetailActivity.Companion.EXTRA_WALLET_DETAIL
+import io.igrant.mobileagent.activty.ConnectionListActivity
 import io.igrant.mobileagent.activty.RequestActivity
 import io.igrant.mobileagent.adapter.WalletCertificatesAdapter
 import io.igrant.mobileagent.events.ReceiveOfferEvent
@@ -21,9 +22,7 @@ import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.WalletListener
 import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.models.walletSearch.Record
-import io.igrant.mobileagent.utils.NavigationUtils
 import io.igrant.mobileagent.utils.SearchUtils
-import io.igrant.mobileagent.utils.WalletRecordType
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.WALLET
 import kotlinx.android.synthetic.main.fragment_wallet.*
 import org.greenrobot.eventbus.EventBus
@@ -125,7 +124,9 @@ class WalletFragment : BaseFragment() {
 
     private fun initListener() {
         tvAddCertificate.setOnClickListener {
-            NavigationUtils.showConnectionListFragment(fragmentManager = parentFragmentManager)
+            val intent = Intent(context,
+                ConnectionListActivity::class.java)
+            startActivity(intent)
         }
 
         tvExchangeData.setOnClickListener {
