@@ -1,26 +1,18 @@
 package io.igrant.mobileagent.activty
 
-import android.Manifest
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.util.Base64
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.communication.ApiManager
-import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
 import io.igrant.mobileagent.events.ConnectionSuccessEvent
 import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
@@ -28,10 +20,12 @@ import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.handlers.PoolHandler
 import io.igrant.mobileagent.handlers.SearchHandler
+import io.igrant.mobileagent.indy.LedgerNetworkType
 import io.igrant.mobileagent.indy.PoolManager
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.InitialActivityFunctions
 import io.igrant.mobileagent.models.MediatorConnectionObject
+import io.igrant.mobileagent.models.Notification
 import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.agentConfig.ConfigResponse
 import io.igrant.mobileagent.models.agentConfig.Invitation
@@ -51,7 +45,6 @@ import io.igrant.mobileagent.models.tagJsons.UpdateInvitationKey
 import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.models.walletSearch.SearchResponse
-import io.igrant.mobileagent.qrcode.QrCodeActivity
 import io.igrant.mobileagent.tasks.LoadLibIndyTask
 import io.igrant.mobileagent.tasks.OpenWalletTask
 import io.igrant.mobileagent.tasks.PoolTask
@@ -101,7 +94,7 @@ import java.io.IOException
 import java.util.*
 import kotlin.collections.ArrayList
 
-class InitializeActivity : BaseActivity(), InitialActivityFunctions{
+class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
     companion object {
         private const val TAG = "InitializeActivity"
@@ -114,22 +107,44 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions{
     private lateinit var clLoading: ConstraintLayout
 
     private lateinit var tvLoadingStatus: TextView
-    private lateinit var toolbar: Toolbar
+//    private lateinit var toolbar: Toolbar
+    private lateinit var ivSettings:ImageView
+    private lateinit var ivNotifications:ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_initialize)
         initViews()
-        initToolbar()
+        initListener()
+//        initToolbar()
         initLibIndy()
     }
 
-    private fun initToolbar() {
-        val toolbar: Toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar!!.title = "Data wallet"
-//        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+    private fun initListener() {
+        ivSettings.setOnClickListener {
+            val intent = Intent(
+                    this,
+                    SettingsActivity::class.java
+                )
+                startActivity(intent)
+        }
+
+        ivNotifications.setOnClickListener {
+            startActivity(
+                Intent(
+                    this,
+                    RequestActivity::class.java
+                )
+            )
+        }
     }
+
+//    private fun initToolbar() {
+//        val toolbar: Toolbar = findViewById(R.id.toolbar)
+//        setSupportActionBar(toolbar)
+//        supportActionBar!!.title = ""
+////        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+//    }
 
     private fun initLibIndy() {
         LoadLibIndyTask(object : CommonHandler {
@@ -168,25 +183,48 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions{
             override fun taskStarted() {
 
             }
-        }).execute()
+        },LedgerNetworkType.getSelectedNetwork(this)).execute()
     }
 
     private fun initViews() {
         llProgressBar = findViewById(R.id.llProgressBar)
         clLoading = findViewById(R.id.clLoadingScreen)
         tvLoadingStatus = findViewById(R.id.tvLoadingStatus)
+        ivSettings = findViewById(R.id.ivSettings)
+        ivNotifications = findViewById(R.id.ivNotification)
         llProgressBar.visibility = View.VISIBLE
     }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                onBackPressed()
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
+//    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+//        menuInflater.inflate(R.menu.menu_settings, menu)
+//        return true
+//    }
+
+//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+//        return when (item.itemId) {
+//            android.R.id.home -> {
+//                onBackPressed()
+//                true
+//            }
+//            R.id.action_settings->{
+//                val intent = Intent(
+//                    this,
+//                    SettingsActivity::class.java
+//                )
+//                startActivity(intent)
+//                true
+//            }
+////            R.id.action_add_data -> {
+////                val intent = Intent(
+////                    this,
+////                    ConnectionListActivity::class.java
+////                )
+////                startActivity(intent)
+////                true
+////            }
+//            else -> super.onOptionsItemSelected(item)
+//        }
+//    }
 
     private fun getMediatorConfig() {
         WalletSearchTask(object : SearchHandler {
@@ -511,8 +549,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions{
             val presentationExchange = PresentationExchange()
             presentationExchange.threadId =
                 JSONObject(jsonObject.getString("message")).getString("@id")
-            presentationExchange.createdAt = "2020-11-25 12:17:53.491756Z"
-            presentationExchange.updatedAt = "2020-11-25 12:17:53.491756Z"
+            presentationExchange.createdAt = DateUtils.getIndyFormattedDate()
+            presentationExchange.updatedAt = DateUtils.getIndyFormattedDate()
             presentationExchange.connectionId = connectionObject?.requestId
             presentationExchange.initiator = "external"
             presentationExchange.presentationProposalDict = null
@@ -533,11 +571,17 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions{
                 tag
             )
 
+            val notification=Notification()
+            notification.type = TYPE_REQUEST_PRESENTATION
+            notification.presentation = presentationExchange
+            notification.connection = connectionObject
+            notification.date = DateUtils.getIndyFormattedDate()
+
             WalletRecord.add(
                 WalletManager.getWallet,
                 MESSAGE_RECORDS,
                 JSONObject(jsonObject.getString("message")).getString("@id"),
-                WalletManager.getGson.toJson(presentationExchange),
+                WalletManager.getGson.toJson(notification),
                 "{\n" +
                         "  \"type\":\"$TYPE_REQUEST_PRESENTATION\",\n" +
                         "  \"connectionId\":\"${connectionObject?.requestId}\",\n" +
@@ -755,12 +799,12 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions{
             val credentialExchange =
                 gson.fromJson(searchResponse.records?.get(0)?.value, CredentialExchange::class.java)
 
-            Log.d(
-                TAG,
-                "storeCredential: \n credentialRequestMetadata: \n ${gson.toJson(credentialExchange.credentialRequestMetadata)} \n rawCredential: \n ${gson.toJson(
-                    credentialExchange.rawCredential
-                )} \n parsedCredDefResponse.objectJson: \n ${parsedCredDefResponse.objectJson}"
-            )
+//            Log.d(
+//                TAG,
+//                "storeCredential: \n credentialRequestMetadata: \n ${gson.toJson(credentialExchange.credentialRequestMetadata)} \n rawCredential: \n ${gson.toJson(
+//                    credentialExchange.rawCredential
+//                )} \n parsedCredDefResponse.objectJson: \n ${parsedCredDefResponse.objectJson}"
+//            )
             val uuid = UUID.randomUUID().toString()
             val credentialId = Anoncreds.proverStoreCredential(
                 WalletManager.getWallet,
@@ -996,11 +1040,17 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions{
                 )
             }
 
+            val notification=Notification()
+            notification.type = TYPE_OFFER_CREDENTIAL
+            notification.certificateOffer = certificateOffer
+            notification.connection = connecction
+            notification.date = DateUtils.getIndyFormattedDate()
+
             WalletRecord.add(
                 WalletManager.getWallet,
                 MESSAGE_RECORDS,
                 certificateOffer.id,
-                WalletManager.getGson.toJson(certificateOffer),
+                WalletManager.getGson.toJson(notification),
                 "{\n" +
                         "  \"type\":\"$TYPE_OFFER_CREDENTIAL\",\n" +
                         "  \"connectionId\":\"${connecction.requestId}\",\n" +
@@ -1015,7 +1065,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions{
                     "${connecction.theirLabel} - Offer Credential",
                     "Received a new offer credential of the organisation ${connecction.theirLabel}"
                 )
-
+                EventBus.getDefault()
+                    .post(ReceiveExchangeRequestEvent(connecction?.requestId ?: ""))
                 EventBus.getDefault().post(ReceiveOfferEvent(connecction.requestId ?: ""))
             } catch (e: Exception) {
             }

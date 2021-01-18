@@ -23,6 +23,7 @@ import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionMessageListener
 import io.igrant.mobileagent.models.MediatorConnectionObject
+import io.igrant.mobileagent.models.Notification
 import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.certificateOffer.CertificateOffer
 import io.igrant.mobileagent.models.connection.Certificate
@@ -226,10 +227,11 @@ class ConnectionDetailActivity : BaseActivity() {
             tempCer = certificate
             for (cer in connectionMessageList) {
                 val gson = Gson()
-                val message = gson.fromJson(cer.value, CertificateOffer::class.java)
+                val notification = gson.fromJson(cer.value, Notification::class.java)
+                val message = notification.certificateOffer
 
                 val schema = gson.fromJson(
-                    Base64.decode(message.offersAttach?.get(0)?.data?.base64, Base64.URL_SAFE)
+                    Base64.decode(message?.offersAttach?.get(0)?.data?.base64, Base64.URL_SAFE)
                         .toString(charset("UTF-8")), RawCredential::class.java
                 ).schemaId
 

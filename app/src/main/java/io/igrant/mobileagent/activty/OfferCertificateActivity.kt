@@ -1,8 +1,10 @@
 package io.igrant.mobileagent.activty
 
+import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
 import android.util.Base64
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
@@ -14,10 +16,12 @@ import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.CertificateAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
+import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.indy.PoolManager
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
+import io.igrant.mobileagent.models.Notification
 import io.igrant.mobileagent.models.certificateOffer.CertificateOffer
 import io.igrant.mobileagent.models.certificateOffer.OfferAttach
 import io.igrant.mobileagent.models.certificateOffer.OfferData
@@ -27,10 +31,8 @@ import io.igrant.mobileagent.models.credentialExchange.CredentialRequest
 import io.igrant.mobileagent.models.credentialExchange.CredentialRequestMetadata
 import io.igrant.mobileagent.models.credentialExchange.Thread
 import io.igrant.mobileagent.models.walletSearch.Record
-import io.igrant.mobileagent.utils.CredentialExchangeStates
-import io.igrant.mobileagent.utils.MessageTypes
-import io.igrant.mobileagent.utils.SearchUtils
-import io.igrant.mobileagent.utils.WalletRecordType
+import io.igrant.mobileagent.qrcode.QrCodeActivity
+import io.igrant.mobileagent.utils.*
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
@@ -59,7 +61,7 @@ class OfferCertificateActivity : BaseActivity() {
     private var record: Record? = null
 
     private lateinit var toolbar: Toolbar
-    private lateinit var btReject: Button
+//    private lateinit var btReject: Button
     private lateinit var btAccept: Button
     private lateinit var tvHead: TextView
     private lateinit var rvAttributes: RecyclerView
@@ -92,34 +94,10 @@ class OfferCertificateActivity : BaseActivity() {
     }
 
     private fun initListener() {
-        btReject.setOnClickListener {
-            WalletRecord.delete(
-                WalletManager.getWallet,
-                WalletRecordType.MESSAGE_RECORDS,
-                mCertificateOffer?.id ?: ""
-            ).get()
-
-            val credentialExchangeResponse =
-                SearchUtils.searchWallet(
-                    WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-                    "{\"thread_id\": \"${mCertificateOffer?.id}\"}"
-                )
-
-            if (credentialExchangeResponse.totalCount ?: 0 > 0) {
-                WalletRecord.delete(
-                    WalletManager.getWallet,
-                    WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-                    "${credentialExchangeResponse.records?.get(0)?.id}"
-                ).get()
-            }
-
-            onBackPressed()
-        }
 
         btAccept.setOnClickListener {
             llProgressBar.visibility = View.VISIBLE
             btAccept.isEnabled = false
-            btReject.isEnabled = false
             RequestCertificateTask(object : RequestCertificateHandler {
                 override fun taskCompleted(requestBody: RequestBody, endPoint: String) {
 
@@ -129,7 +107,6 @@ class OfferCertificateActivity : BaseActivity() {
                             override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                                 llProgressBar.visibility = View.GONE
                                 btAccept.isEnabled = true
-                                btReject.isEnabled = false
                             }
 
                             override fun onResponse(
@@ -138,20 +115,23 @@ class OfferCertificateActivity : BaseActivity() {
                             ) {
                                 llProgressBar.visibility = View.GONE
                                 btAccept.isEnabled = false
-                                btReject.isEnabled = true
 
                                 val tagJson = "{\n" +
                                         "  \"type\":\"${MessageTypes.TYPE_OFFER_CREDENTIAL}\",\n" +
                                         "  \"connectionId\":\"${mConnectionId}\",\n" +
                                         "  \"stat\":\"Processed\"\n" +
                                         "}"
+
                                 WalletRecord.updateTags(
                                     WalletManager.getWallet,
                                     WalletRecordType.MESSAGE_RECORDS,
                                     record?.id ?: "",
                                     tagJson
                                 )
-                                EventBus.getDefault().post(ReceiveOfferEvent(mConnectionId ?: ""))
+                                EventBus.getDefault().post(ReceiveOfferEvent(mConnectionId))
+                                EventBus.getDefault()
+                                    .post(ReceiveExchangeRequestEvent(mConnectionId))
+
                                 onBackPressed()
 
                             }
@@ -176,7 +156,6 @@ class OfferCertificateActivity : BaseActivity() {
     private fun initViews() {
         toolbar = findViewById(R.id.toolbar)
         btAccept = findViewById(R.id.btAccept)
-        btReject = findViewById(R.id.btReject)
         tvHead = findViewById(R.id.tvHead)
         rvAttributes = findViewById(R.id.rvAttributes)
         llProgressBar = findViewById(R.id.llProgressBar)
@@ -188,9 +167,40 @@ class OfferCertificateActivity : BaseActivity() {
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_delete, menu)
+        return true
+    }
+
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             android.R.id.home -> {
+                onBackPressed()
+            }
+            R.id.action_delete -> {
+                WalletRecord.delete(
+                    WalletManager.getWallet,
+                    WalletRecordType.MESSAGE_RECORDS,
+                    mCertificateOffer?.id ?: ""
+                ).get()
+
+                val credentialExchangeResponse =
+                    SearchUtils.searchWallet(
+                        WalletRecordType.CREDENTIAL_EXCHANGE_V10,
+                        "{\"thread_id\": \"${mCertificateOffer?.id}\"}"
+                    )
+
+                if (credentialExchangeResponse.totalCount ?: 0 > 0) {
+                    WalletRecord.delete(
+                        WalletManager.getWallet,
+                        WalletRecordType.CREDENTIAL_EXCHANGE_V10,
+                        "${credentialExchangeResponse.records?.get(0)?.id}"
+                    ).get()
+                }
+
+                EventBus.getDefault()
+                    .post(ReceiveExchangeRequestEvent(mConnectionId))
+
                 onBackPressed()
             }
             else -> {
@@ -203,8 +213,8 @@ class OfferCertificateActivity : BaseActivity() {
     private fun getIntentData() {
         record = intent.extras!!.get(EXTRA_CERTIFICATE_PREVIEW) as Record
         name = intent.extras!!.getString(EXTRA_CERTIFICATE_NAME, "")
-        mCertificateOffer =
-            WalletManager.getGson.fromJson(record!!.value, CertificateOffer::class.java)
+        val notification = WalletManager.getGson.fromJson(record!!.value, Notification::class.java)
+        mCertificateOffer = notification.certificateOffer
         mConnectionId = intent.extras!!.get(EXTRA_CONNECTION_ID) as String
     }
 
@@ -222,7 +232,7 @@ class OfferCertificateActivity : BaseActivity() {
             val credentialExchangeResponse =
                 SearchUtils.searchWallet(
                     WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-                    "{\"thread_id\": \"${mCertificateOffer?.id}\"}"
+                    "{\"thread_id\": \"${mCertificateOffer.id}\"}"
                 )
 
             var credentialExchangeData = CredentialExchange()

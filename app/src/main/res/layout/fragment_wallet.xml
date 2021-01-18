@@ -3,22 +3,23 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:background="@color/bgColor"
     android:layout_height="match_parent"
+    android:background="@color/bgColor"
     android:padding="10dp">
 
     <TextView
-        android:id="@+id/tvAddCertificate"
+        android:id="@+id/tvDataWallet"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
-        android:drawableStart="@drawable/ic_add"
-        android:drawablePadding="5dp"
+        android:drawableEnd="@drawable/ic_add_circle_black"
+        android:drawablePadding="10dp"
         android:gravity="center"
         android:padding="5dp"
-        android:text="@string/txt_add_certificate"
-        android:textColor="@color/textColor"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:textSize="@dimen/text_size_x_large"
+        android:text="@string/txt_data_wallet"
+        android:textColor="@color/Black"
+        app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
     <EditText
@@ -26,16 +27,18 @@
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="5dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="15dp"
         android:layout_marginEnd="5dp"
         android:background="@drawable/primary_edittext_background"
         android:hint="@string/txt_search_wallet"
-        android:padding="10dp"
         android:inputType="text"
+        android:drawablePadding="10dp"
+        android:drawableStart="@drawable/ic_search_grey"
+        android:padding="10dp"
         android:textSize="@dimen/text_size_medium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/tvAddCertificate" />
+        app:layout_constraintTop_toBottomOf="@+id/tvDataWallet" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvCertificates"
@@ -81,17 +84,18 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
+        android:background="@drawable/primary_button_background"
         android:drawableStart="@drawable/ic_scan"
         android:drawablePadding="5dp"
+        android:elevation="5dp"
         android:gravity="center"
         android:padding="5dp"
         android:paddingStart="20dp"
         android:paddingEnd="20dp"
-        android:elevation="5dp"
-        android:background="@drawable/primary_button_background"
         android:text="@string/txt_exchange_data"
         android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent" />
+        app:layout_constraintStart_toStartOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
