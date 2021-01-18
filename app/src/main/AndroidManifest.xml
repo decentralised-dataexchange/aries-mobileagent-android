@@ -50,6 +50,15 @@
 
         <activity android:name=".activty.ConnectionListActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.SettingsActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.LedgerNetworkListActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.LanguageSelectionActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
     </application>
 
 </manifest>

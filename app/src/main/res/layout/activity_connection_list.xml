@@ -27,6 +27,8 @@
         android:hint="@string/txt_search_connections"
         android:padding="10dp"
         android:inputType="text"
+        android:drawablePadding="10dp"
+        android:drawableStart="@drawable/ic_search_grey"
         android:textSize="@dimen/text_size_medium"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

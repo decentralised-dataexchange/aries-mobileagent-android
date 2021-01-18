@@ -20,10 +20,12 @@ import io.igrant.mobileagent.events.GoHomeEvent
 import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionMessageListener
+import io.igrant.mobileagent.models.Notification
 import io.igrant.mobileagent.models.agentConfig.Invitation
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.qrcode.QrCodeActivity
 import io.igrant.mobileagent.utils.MessageTypes
+import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_REQUEST_PRESENTATION
 import io.igrant.mobileagent.utils.PermissionUtils
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
@@ -37,7 +39,7 @@ class RequestActivity : BaseActivity() {
     private lateinit var rvRequests: RecyclerView
     private lateinit var llErrorMessage: LinearLayout
     private lateinit var llProgressBar: LinearLayout
-    private lateinit var fabScan: FloatingActionButton
+//    private lateinit var fabScan: FloatingActionButton
 
     private lateinit var adapter: RequestListAdapter
     private var connectionMessageList: ArrayList<Record> = ArrayList()
@@ -61,7 +63,7 @@ class RequestActivity : BaseActivity() {
     private fun initToolbar() {
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
-        supportActionBar!!.title = resources.getString(R.string.txt_requests)
+        supportActionBar!!.title = resources.getString(R.string.txt_notification)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
@@ -79,121 +81,139 @@ class RequestActivity : BaseActivity() {
         rvRequests = findViewById(R.id.rvRequests)
         llErrorMessage = findViewById(R.id.llErrorMessage)
         llProgressBar = findViewById(R.id.llProgressBar)
-        fabScan = findViewById(R.id.fabScan)
+//        fabScan = findViewById(R.id.fabScan)
     }
 
     private fun initListener() {
-        fabScan.setOnClickListener {
-            if (PermissionUtils.hasPermissions(
-                    this,
-                    true,
-                    PICK_IMAGE_REQUEST,
-                    PERMISSIONS
-                )
-            ) {
-                val i = Intent(this, QrCodeActivity::class.java)
-                startActivityForResult(
-                    i,
-                    REQUEST_CODE_SCAN_INVITATION
-                )
-            }
-        }
+//        fabScan.setOnClickListener {
+//            if (PermissionUtils.hasPermissions(
+//                    this,
+//                    true,
+//                    PICK_IMAGE_REQUEST,
+//                    PERMISSIONS
+//                )
+//            ) {
+//                val i = Intent(this, QrCodeActivity::class.java)
+//                startActivityForResult(
+//                    i,
+//                    REQUEST_CODE_SCAN_INVITATION
+//                )
+//            }
+//        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == REQUEST_CODE_SCAN_INVITATION) {
-            if (data == null) return
-
-            try {
-                val uri: Uri =
-                    Uri.parse(data.getStringExtra("com.blikoon.qrcodescanner.got_qr_scan_relult"))
-                val v: String = uri.getQueryParameter("qr_p") ?: ""
-                if (v != "") {
-                    val json =
-                        Base64.decode(
-                            v,
-                            Base64.URL_SAFE
-                        ).toString(charset("UTF-8"))
-                    val data = JSONObject(json)
-                    if (data.getString("invitation_url") != "") {
-                        val invitation: String =
-                            Uri.parse(data.getString("invitation_url")).getQueryParameter("c_i")
-                                ?: ""
-                        val proofRequest = data.getJSONObject("proof_request")
-                        saveConnectionAndExchangeData(invitation, proofRequest)
-                    } else {
-                        Toast.makeText(
-                            this,
-                            resources.getString(R.string.err_unexpected),
-                            Toast.LENGTH_SHORT
-                        ).show()
-                    }
-                } else {
-                    Toast.makeText(
-                        this,
-                        resources.getString(R.string.err_unexpected),
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            } catch (e: Exception) {
-                Toast.makeText(
-                    this,
-                    resources.getString(R.string.err_unexpected),
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        }
+//        if (requestCode == REQUEST_CODE_SCAN_INVITATION) {
+//            if (data == null) return
+//
+//            try {
+//                val uri: Uri =
+//                    Uri.parse(data.getStringExtra("com.blikoon.qrcodescanner.got_qr_scan_relult"))
+//                val v: String = uri.getQueryParameter("qr_p") ?: ""
+//                if (v != "") {
+//                    val json =
+//                        Base64.decode(
+//                            v,
+//                            Base64.URL_SAFE
+//                        ).toString(charset("UTF-8"))
+//                    val data = JSONObject(json)
+//                    if (data.getString("invitation_url") != "") {
+//                        val invitation: String =
+//                            Uri.parse(data.getString("invitation_url")).getQueryParameter("c_i")
+//                                ?: ""
+//                        val proofRequest = data.getJSONObject("proof_request")
+//                        saveConnectionAndExchangeData(invitation, proofRequest)
+//                    } else {
+//                        Toast.makeText(
+//                            this,
+//                            resources.getString(R.string.err_unexpected),
+//                            Toast.LENGTH_SHORT
+//                        ).show()
+//                    }
+//                } else {
+//                    Toast.makeText(
+//                        this,
+//                        resources.getString(R.string.err_unexpected),
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+//                }
+//            } catch (e: Exception) {
+//                Toast.makeText(
+//                    this,
+//                    resources.getString(R.string.err_unexpected),
+//                    Toast.LENGTH_SHORT
+//                ).show()
+//            }
+//        }
         super.onActivityResult(requestCode, resultCode, data)
     }
 
-    private fun saveConnectionAndExchangeData(
-        data: String,
-        proofRequest: JSONObject
-    ) {
-        var invitation: Invitation? = null
-        try {
-            val json =
-                Base64.decode(
-                    data,
-                    Base64.URL_SAFE
-                ).toString(charset("UTF-8"))
+//    private fun saveConnectionAndExchangeData(
+//        data: String,
+//        proofRequest: JSONObject
+//    ) {
+//        var invitation: Invitation? = null
+//        try {
+//            val json =
+//                Base64.decode(
+//                    data,
+//                    Base64.URL_SAFE
+//                ).toString(charset("UTF-8"))
+//
+//            invitation = WalletManager.getGson.fromJson(json, Invitation::class.java)
+//        } catch (e: Exception) {
+//        }
+//        if (invitation != null)
+//            sendProposal(proofRequest, invitation)
+//        else
+//            Toast.makeText(
+//                this,
+//                resources.getString(R.string.err_unexpected),
+//                Toast.LENGTH_SHORT
+//            ).show()
+//    }
 
-            invitation = WalletManager.getGson.fromJson(json, Invitation::class.java)
-        } catch (e: Exception) {
-        }
-        if (invitation != null)
-            sendProposal(proofRequest, invitation)
-        else
-            Toast.makeText(
-                this,
-                resources.getString(R.string.err_unexpected),
-                Toast.LENGTH_SHORT
-            ).show()
-    }
-
-    private fun sendProposal(
-        proofRequest: JSONObject,
-        invitation: Invitation
-    ) {
-
-        val intent = Intent(this, ProposeAndExchangeDataActivity::class.java)
-        intent.putExtra(EXTRA_PRESENTATION_PROPOSAL, proofRequest.toString())
-        intent.putExtra(EXTRA_PRESENTATION_INVITATION, invitation)
-        startActivity(intent)
-    }
+//    private fun sendProposal(
+//        proofRequest: JSONObject,
+//        invitation: Invitation
+//    ) {
+//        val intent = Intent(this, ProposeAndExchangeDataActivity::class.java)
+//        intent.putExtra(EXTRA_PRESENTATION_PROPOSAL, proofRequest.toString())
+//        intent.putExtra(EXTRA_PRESENTATION_INVITATION, invitation)
+//        startActivity(intent)
+//    }
 
     private fun setUpAdapter() {
         adapter = RequestListAdapter(connectionMessageList, object : ConnectionMessageListener {
             override fun onConnectionMessageClick(record: Record, name: String) {
-                val intent: Intent = Intent(this@RequestActivity, ExchangeDataActivity::class.java)
-                intent.putExtra(
-                    ExchangeDataActivity.EXTRA_PRESENTATION_RECORD,
-                    record
-                )
+                val message =
+                    WalletManager.getGson.fromJson(record.value, Notification::class.java)
+                if (message.type ==TYPE_REQUEST_PRESENTATION) {
+                    val intent =
+                        Intent(this@RequestActivity, ExchangeDataActivity::class.java)
+                    intent.putExtra(
+                        ExchangeDataActivity.EXTRA_PRESENTATION_RECORD,
+                        record
+                    )
 
-                startActivity(intent)
-
-                finish()
+                    startActivity(intent)
+                }else{
+                    val intent =
+                        Intent(this@RequestActivity, OfferCertificateActivity::class.java)
+                    intent.putExtra(
+                        OfferCertificateActivity.EXTRA_CERTIFICATE_PREVIEW,
+                        record
+                    )
+                    intent.putExtra(
+                        OfferCertificateActivity.EXTRA_CERTIFICATE_NAME,
+                        name
+                    )
+                    intent.putExtra(
+                        OfferCertificateActivity.EXTRA_CONNECTION_ID,
+                        message.connection?.requestId?:""
+                    )
+                    startActivity(intent)
+                }
             }
 
         })
@@ -206,7 +226,7 @@ class RequestActivity : BaseActivity() {
                 SearchUtils.searchWallet(
                     WalletRecordType.MESSAGE_RECORDS,
                     "{" +
-                            "\"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
+//                            "\"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
                             "\"stat\":\"Active\"\n" +
                             "}"
                 )
@@ -242,11 +262,11 @@ class RequestActivity : BaseActivity() {
 
     companion object {
         private const val TAG = "InitializeActivity"
-        private const val PICK_IMAGE_REQUEST = 101
-        val PERMISSIONS =
-            arrayOf(Manifest.permission.CAMERA)
-        private const val REQUEST_CODE_SCAN_INVITATION = 202
-
-        var deviceId = ""
+//        private const val PICK_IMAGE_REQUEST = 101
+//        val PERMISSIONS =
+//            arrayOf(Manifest.permission.CAMERA)
+//        private const val REQUEST_CODE_SCAN_INVITATION = 202
+//
+//        var deviceId = ""
     }
 }

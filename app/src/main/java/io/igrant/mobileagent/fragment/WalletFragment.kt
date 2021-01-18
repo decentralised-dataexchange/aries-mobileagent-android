@@ -33,7 +33,7 @@ import org.hyperledger.indy.sdk.non_secrets.WalletRecord
 
 class WalletFragment : BaseFragment() {
 
-    lateinit var tvAddCertificate: TextView
+    lateinit var tvDataWallet: TextView
     lateinit var etSearchWallet: EditText
     lateinit var rvCertificates: RecyclerView
     lateinit var llErrorMessage: LinearLayout
@@ -123,7 +123,7 @@ class WalletFragment : BaseFragment() {
     }
 
     private fun initListener() {
-        tvAddCertificate.setOnClickListener {
+        tvDataWallet.setOnClickListener {
             val intent = Intent(context,
                 ConnectionListActivity::class.java)
             startActivity(intent)
@@ -171,7 +171,7 @@ class WalletFragment : BaseFragment() {
     }
 
     private fun initViews(view: View) {
-        tvAddCertificate = view.findViewById(R.id.tvAddCertificate)
+        tvDataWallet = view.findViewById(R.id.tvDataWallet)
         etSearchWallet = view.findViewById(R.id.etSearch)
         rvCertificates = view.findViewById(R.id.rvCertificates)
         llErrorMessage = view.findViewById(R.id.llErrorMessage)

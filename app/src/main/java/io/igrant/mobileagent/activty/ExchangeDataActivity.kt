@@ -1,6 +1,7 @@
 package io.igrant.mobileagent.activty
 
 import android.os.Bundle
+import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Button
@@ -14,9 +15,11 @@ import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.RequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.events.GoHomeEvent
+import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
+import io.igrant.mobileagent.models.Notification
 import io.igrant.mobileagent.models.presentationExchange.CredentialValue
 import io.igrant.mobileagent.models.presentationExchange.ExchangeAttributes
 import io.igrant.mobileagent.models.presentationExchange.PresentationExchange
@@ -38,6 +41,7 @@ import retrofit2.Response
 
 class ExchangeDataActivity : BaseActivity() {
 
+    private var connection: MediatorConnectionObject? = null
     private lateinit var mConnectionId: String
     private var record: Record? = null
 
@@ -46,7 +50,7 @@ class ExchangeDataActivity : BaseActivity() {
     private lateinit var toolbar: Toolbar
     private lateinit var tvDesc: TextView
     private lateinit var tvHead: TextView
-    private lateinit var btReject: Button
+//    private lateinit var btReject: Button
     private lateinit var btAccept: Button
     private lateinit var rvAttributes: RecyclerView
     private lateinit var llProgressBar: LinearLayout
@@ -75,18 +79,15 @@ class ExchangeDataActivity : BaseActivity() {
         initValues()
     }
 
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.menu_delete, menu)
+        return true
+    }
+
     private fun initValues() {
-        val connection = SearchUtils.searchWallet(
-            WalletRecordType.CONNECTION,
-            "{\"request_id\":\"$mConnectionId\"}"
-        )
-        if (connection.totalCount ?: 0 > 0) {
-            val connectionObject = WalletManager.getGson.fromJson(
-                connection.records?.get(0)?.value,
-                MediatorConnectionObject::class.java
-            )
+        if (connection!=null) {
             tvDesc.text =
-                resources.getString(R.string.txt_exchange_data_desc, connectionObject.theirLabel)
+                resources.getString(R.string.txt_exchange_data_desc, connection?.theirLabel?:resources.getString(R.string.txt_organisations))
         }
 
         tvHead.text = (mPresentationExchange?.presentationRequest?.name ?: "").toUpperCase()
@@ -146,8 +147,9 @@ class ExchangeDataActivity : BaseActivity() {
 
     private fun getIntentData() {
         record = intent.extras!!.get(EXTRA_PRESENTATION_RECORD) as Record
-        mPresentationExchange =
-            WalletManager.getGson.fromJson(record!!.value, PresentationExchange::class.java)
+        val notification = WalletManager.getGson.fromJson(record!!.value, Notification::class.java)
+        mPresentationExchange = notification.presentation
+        connection = notification.connection
         mConnectionId = mPresentationExchange?.connectionId ?: ""
     }
 
@@ -162,6 +164,32 @@ class ExchangeDataActivity : BaseActivity() {
             android.R.id.home -> {
                 onBackPressed()
             }
+            R.id.action_delete -> {
+                WalletRecord.delete(
+                    WalletManager.getWallet,
+                    WalletRecordType.MESSAGE_RECORDS,
+                    mPresentationExchange?.threadId ?: ""
+                ).get()
+
+                val credentialExchangeResponse =
+                    SearchUtils.searchWallet(
+                        WalletRecordType.CREDENTIAL_EXCHANGE_V10,
+                        "{\"thread_id\": \"${mPresentationExchange?.threadId}\"}"
+                    )
+
+                if (credentialExchangeResponse.totalCount ?: 0 > 0) {
+                    WalletRecord.delete(
+                        WalletManager.getWallet,
+                        WalletRecordType.CREDENTIAL_EXCHANGE_V10,
+                        "${credentialExchangeResponse.records?.get(0)?.id}"
+                    ).get()
+                }
+
+                EventBus.getDefault()
+                    .post(ReceiveExchangeRequestEvent(mConnectionId))
+
+                onBackPressed()
+            }
             else -> {
 
             }
@@ -174,41 +202,21 @@ class ExchangeDataActivity : BaseActivity() {
         tvDesc = findViewById(R.id.tvDesc)
         tvHead = findViewById(R.id.tvHead)
         btAccept = findViewById(R.id.btAccept)
-        btReject = findViewById(R.id.btReject)
+//        btReject = findViewById(R.id.btReject)
         rvAttributes = findViewById(R.id.rvAttributes)
         llProgressBar = findViewById(R.id.llProgressBar)
     }
 
     private fun initListener() {
-        btReject.setOnClickListener {
-            WalletRecord.delete(
-                WalletManager.getWallet,
-                WalletRecordType.MESSAGE_RECORDS,
-                mPresentationExchange?.threadId ?: ""
-            ).get()
-
-            val credentialExchangeResponse =
-                SearchUtils.searchWallet(
-                    WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-                    "{\"thread_id\": \"${mPresentationExchange?.threadId}\"}"
-                )
-
-            if (credentialExchangeResponse.totalCount ?: 0 > 0) {
-                WalletRecord.delete(
-                    WalletManager.getWallet,
-                    WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-                    "${credentialExchangeResponse.records?.get(0)?.id}"
-                ).get()
-            }
-
-            onBackPressed()
-        }
+//        btReject.setOnClickListener {
+//
+//        }
 
         btAccept.setOnClickListener {
             if (!isInsufficientData) {
                 llProgressBar.visibility = View.VISIBLE
                 btAccept.isEnabled = false
-                btReject.isEnabled = false
+//                btReject.isEnabled = false
 
                 ExchangeDataTask(object : CommonHandler {
                     override fun taskStarted() {
@@ -231,7 +239,7 @@ class ExchangeDataActivity : BaseActivity() {
                                 ) {
                                     llProgressBar.visibility = View.GONE
                                     btAccept.isEnabled = true
-                                    btReject.isEnabled = true
+//                                    btReject.isEnabled = true
                                 }
 
                                 override fun onResponse(
@@ -241,7 +249,7 @@ class ExchangeDataActivity : BaseActivity() {
                                     if (response.code() == 200 && response.body() != null) {
                                         llProgressBar.visibility = View.GONE
                                         btAccept.isEnabled = true
-                                        btReject.isEnabled = true
+//                                        btReject.isEnabled = true
 
                                         val tagJson = "{\n" +
                                                 "  \"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
@@ -255,7 +263,8 @@ class ExchangeDataActivity : BaseActivity() {
                                             tagJson
                                         )
 
-                                        EventBus.getDefault().post(GoHomeEvent())
+                                        EventBus.getDefault()
+                                            .post(ReceiveExchangeRequestEvent(mConnectionId))
 
                                         onBackPressed()
                                     }

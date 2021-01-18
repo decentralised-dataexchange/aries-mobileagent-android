@@ -63,7 +63,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     private lateinit var toolbar: Toolbar
     private lateinit var tvDesc: TextView
     private lateinit var tvHead: TextView
-    private lateinit var btReject: Button
+//    private lateinit var btReject: Button
     private lateinit var btAccept: Button
     private lateinit var rvAttributes: RecyclerView
     private lateinit var llProgressBar: LinearLayout
@@ -183,15 +183,15 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
         tvDesc = findViewById(R.id.tvDesc)
         tvHead = findViewById(R.id.tvHead)
         btAccept = findViewById(R.id.btAccept)
-        btReject = findViewById(R.id.btReject)
+//        btReject = findViewById(R.id.btReject)
         rvAttributes = findViewById(R.id.rvAttributes)
         llProgressBar = findViewById(R.id.llProgressBar)
     }
 
     private fun initListener() {
-        btReject.setOnClickListener {
-            onBackPressed()
-        }
+//        btReject.setOnClickListener {
+//            onBackPressed()
+//        }
 
         btAccept.setOnClickListener {
             if (!isInsufficientData) {
@@ -201,7 +201,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                 if (connection != null) {
                     llProgressBar.visibility = View.VISIBLE
                     btAccept.isEnabled = false
-                    btReject.isEnabled = false
+//                    btReject.isEnabled = false
                     if (mPresentationExchange != null) {
                         exchangeData()
                     } else {
@@ -247,7 +247,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                 "}"
 
 
-        var connectionObject =
+        val connectionObject =
             ConnectionUtils.getConnectionWithInvitationKey(invitation.recipientKeys!![0])
 //            SearchUtils.searchWallet(
 //                WalletRecordType.CONNECTION,
@@ -399,7 +399,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                         ) {
                             llProgressBar.visibility = View.GONE
                             btAccept.isEnabled = true
-                            btReject.isEnabled = true
+//                            btReject.isEnabled = true
                         }
 
                         override fun onResponse(
@@ -409,7 +409,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                             if (response.code() == 200 && response.body() != null) {
                                 llProgressBar.visibility = View.GONE
                                 btAccept.isEnabled = true
-                                btReject.isEnabled = true
+//                                btReject.isEnabled = true
 
                                 EventBus.getDefault().post(GoHomeEvent())
 
@@ -449,7 +449,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     override fun onSuccess(proposal: String, connectionId: String) {
         llProgressBar.visibility = View.VISIBLE
         btAccept.isEnabled = false
-        btReject.isEnabled = false
+//        btReject.isEnabled = false
         if (mPresentationExchange != null) {
             exchangeData()
         } else {
