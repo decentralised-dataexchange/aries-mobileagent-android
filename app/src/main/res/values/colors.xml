@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="colorPrimary">#6200EE</color>
+    <color name="colorPrimaryDark">#202020</color>
+    <color name="colorAccent">#03DAC5</color>
+    <color name="white">#FFFFFF</color>
+    <color name="trans">#00FFFFFF</color>
+    <color name="bgColor">#f0f0f0</color>
+
+    <color name="transBgColor">#66E3E3E3</color>
+    <color name="primaryBlue">#005dad</color>
+    <color name="textColor">#413F41</color>
+
+    <color name="mask_color">#55000000</color>
+</resources>
