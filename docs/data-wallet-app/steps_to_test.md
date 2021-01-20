@@ -54,7 +54,7 @@ Note: This would be an automated flow integrated to existing organization IT sys
   "comment": "Covid19 Test Result",
   "auto_remove": false,
   "trace": false,
-  "cred_def_id": "YSvXV1j3DHDNEHFPh3z1ja:3:CL:342:Covid19 Rapid Test Department",
+  "cred_def_id": "TAzgX7huQhYqHduEjoBbYr:3:CL:342:default",
   "connection_id": "<connection_id>",
   "credential_preview": {
     "@type": "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/credential-preview",
