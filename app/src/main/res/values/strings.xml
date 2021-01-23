@@ -39,7 +39,7 @@
     <string name="txt_reject">Reject</string>
     <string name="txt_accept">Accept</string>
     <string name="txt_add_certificate">Add data</string>
-    <string name="txt_Add_certificate_desc">Choose the organisation from which to add data to your wallet</string>
+    <string name="txt_Add_certificate_desc">Choose the organisation to be connected to add data to the wallet or exchange data with</string>
     <string name="txt_wallet">Wallet</string>
     <string name="txt_preferences">Preferences</string>
     <string name="txt_no_connections_avaialable">No connections available</string>
@@ -78,4 +78,9 @@
     <string name="txt_data_wallet">Data wallet</string>
     <string name="txt_data_exchange">Data exchange</string>
     <string name="txt_notification">Notifications</string>
+    <string name="txt_remove_data_card">Remove data card</string>
+    <string name="txt_exchange_successful">Data has been shared with %1$s successfully</string>
+    <string name="txt_exchange_successful_without_name">Data has been shared successfully</string>
+    <string name="txt_certificate_delete_confirmation">Do you want to delete the certificate?</string>
+    <string name="txt_confirmation">Confirmation</string>
 </resources>

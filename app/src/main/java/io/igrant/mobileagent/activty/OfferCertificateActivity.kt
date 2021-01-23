@@ -164,6 +164,7 @@ class OfferCertificateActivity : BaseActivity() {
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar!!.title = resources.getString(R.string.title_offer_detail)
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 

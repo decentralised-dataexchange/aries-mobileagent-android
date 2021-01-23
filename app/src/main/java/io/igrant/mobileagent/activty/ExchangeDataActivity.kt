@@ -1,5 +1,6 @@
 package io.igrant.mobileagent.activty
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -8,13 +9,13 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
-import io.igrant.mobileagent.adapter.RequestAttributeAdapter
+import io.igrant.mobileagent.adapter.ExchangeRequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
-import io.igrant.mobileagent.events.GoHomeEvent
 import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
@@ -39,6 +40,7 @@ import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
 
+
 class ExchangeDataActivity : BaseActivity() {
 
     private var connection: MediatorConnectionObject? = null
@@ -50,12 +52,13 @@ class ExchangeDataActivity : BaseActivity() {
     private lateinit var toolbar: Toolbar
     private lateinit var tvDesc: TextView
     private lateinit var tvHead: TextView
-//    private lateinit var btReject: Button
+
+    //    private lateinit var btReject: Button
     private lateinit var btAccept: Button
     private lateinit var rvAttributes: RecyclerView
     private lateinit var llProgressBar: LinearLayout
 
-    private lateinit var adapter: RequestAttributeAdapter
+    private lateinit var adapter: ExchangeRequestAttributeAdapter
 
     private var attributelist: ArrayList<ExchangeAttributes> = ArrayList()
 
@@ -85,9 +88,12 @@ class ExchangeDataActivity : BaseActivity() {
     }
 
     private fun initValues() {
-        if (connection!=null) {
+        if (connection != null) {
             tvDesc.text =
-                resources.getString(R.string.txt_exchange_data_desc, connection?.theirLabel?:resources.getString(R.string.txt_organisations))
+                resources.getString(
+                    R.string.txt_exchange_data_desc,
+                    connection?.theirLabel ?: resources.getString(R.string.txt_organisations)
+                )
         }
 
         tvHead.text = (mPresentationExchange?.presentationRequest?.name ?: "").toUpperCase()
@@ -138,7 +144,7 @@ class ExchangeDataActivity : BaseActivity() {
 
         searchHandle.closeSearch()
 
-        adapter = RequestAttributeAdapter(
+        adapter = ExchangeRequestAttributeAdapter(
             attributelist
         )
         rvAttributes.layoutManager = LinearLayoutManager(this)
@@ -156,6 +162,7 @@ class ExchangeDataActivity : BaseActivity() {
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar!!.title = resources.getString(R.string.txt_exchange_data)
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
@@ -266,7 +273,20 @@ class ExchangeDataActivity : BaseActivity() {
                                         EventBus.getDefault()
                                             .post(ReceiveExchangeRequestEvent(mConnectionId))
 
-                                        onBackPressed()
+                                        AlertDialog.Builder(this@ExchangeDataActivity)
+                                            .setMessage(
+                                                resources.getString(
+                                                    R.string.txt_exchange_successful,
+                                                    connection?.theirLabel ?: ""
+                                                )
+                                            ) // Specifying a listener allows you to take an action before dismissing the dialog.
+                                            // The dialog is automatically dismissed when a dialog button is clicked.
+                                            .setPositiveButton(
+                                                android.R.string.ok,
+                                                DialogInterface.OnClickListener { dialog, which ->
+                                                    onBackPressed()
+                                                }) // A null listener allows the button to dismiss the dialog and take no further action.
+                                            .show()
                                     }
                                 }
                             })

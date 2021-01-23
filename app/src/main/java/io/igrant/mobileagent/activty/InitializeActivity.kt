@@ -107,9 +107,11 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
     private lateinit var clLoading: ConstraintLayout
 
     private lateinit var tvLoadingStatus: TextView
-//    private lateinit var toolbar: Toolbar
-    private lateinit var ivSettings:ImageView
-    private lateinit var ivNotifications:ImageView
+
+    //    private lateinit var toolbar: Toolbar
+    private lateinit var ivSettings: ImageView
+    private lateinit var ivNotifications: ImageView
+    private lateinit var vDot: View
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -123,10 +125,10 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
     private fun initListener() {
         ivSettings.setOnClickListener {
             val intent = Intent(
-                    this,
-                    SettingsActivity::class.java
-                )
-                startActivity(intent)
+                this,
+                SettingsActivity::class.java
+            )
+            startActivity(intent)
         }
 
         ivNotifications.setOnClickListener {
@@ -183,7 +185,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             override fun taskStarted() {
 
             }
-        },LedgerNetworkType.getSelectedNetwork(this)).execute()
+        }, LedgerNetworkType.getSelectedNetwork(this)).execute()
     }
 
     private fun initViews() {
@@ -193,6 +195,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         ivSettings = findViewById(R.id.ivSettings)
         ivNotifications = findViewById(R.id.ivNotification)
         llProgressBar.visibility = View.VISIBLE
+        vDot = findViewById(R.id.vDot)
     }
 
 //    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -267,6 +270,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                             initFragment()
 
                             clLoading.visibility = View.GONE
+
+                            setNotificationIcon()
                         }
                     }
                 }
@@ -279,6 +284,23 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             MEDIATOR_CONNECTION,
             "{}"
         )
+    }
+
+    private fun setNotificationIcon() {
+        try {
+            val connectionMessageResponse =
+                SearchUtils.searchWallet(
+                    WalletRecordType.MESSAGE_RECORDS,
+                    "{" +
+//                            "\"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
+                            "\"stat\":\"Active\"\n" +
+                            "}"
+                )
+
+            vDot.visibility = if (connectionMessageResponse.totalCount ?: 0 > 0) View.VISIBLE else View.GONE
+
+        } catch (e: Exception) {
+        }
     }
 
     private fun initFragment() {
@@ -571,7 +593,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 tag
             )
 
-            val notification=Notification()
+            val notification = Notification()
             notification.type = TYPE_REQUEST_PRESENTATION
             notification.presentation = presentationExchange
             notification.connection = connectionObject
@@ -599,6 +621,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
                 EventBus.getDefault()
                     .post(ReceiveExchangeRequestEvent(connectionObject?.requestId ?: ""))
+
+                setNotificationIcon()
             } catch (e: Exception) {
             }
         }
@@ -863,6 +887,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 "Certificate successfully added to your wallet"
             )
             EventBus.getDefault().post(ReceiveCertificateEvent())
+
+            setNotificationIcon()
         }
 
     }
@@ -1040,7 +1066,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 )
             }
 
-            val notification=Notification()
+            val notification = Notification()
             notification.type = TYPE_OFFER_CREDENTIAL
             notification.certificateOffer = certificateOffer
             notification.connection = connecction
@@ -1068,6 +1094,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 EventBus.getDefault()
                     .post(ReceiveExchangeRequestEvent(connecction?.requestId ?: ""))
                 EventBus.getDefault().post(ReceiveOfferEvent(connecction.requestId ?: ""))
+
+                setNotificationIcon()
             } catch (e: Exception) {
             }
         }

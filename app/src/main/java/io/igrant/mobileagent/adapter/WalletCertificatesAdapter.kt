@@ -23,7 +23,7 @@ class WalletCertificatesAdapter(
             itemView.findViewById<View>(R.id.tvCertificateName) as TextView
         var tvCompanyName: TextView =
             itemView.findViewById<View>(R.id.tvCompanyName) as TextView
-        var ivDelete: ImageView = itemView.findViewById<View>(R.id.ivDelete) as ImageView
+//        var ivDelete: ImageView = itemView.findViewById<View>(R.id.ivDelete) as ImageView
         var ivLogo: ImageView = itemView.findViewById(R.id.ivLogo)
         var cvItem: CardView = itemView.findViewById(R.id.cvItem)
     }
@@ -44,9 +44,9 @@ class WalletCertificatesAdapter(
             WalletManager.getGson.fromJson(credentialList[position].value, WalletModel::class.java)
         val lst = certificate.rawCredential?.schemaId?.split(":")
         holder.tvCertificateName.text = (lst?.get(2) ?: "").toUpperCase()
-        holder.ivDelete.setOnClickListener {
-            listener.onDelete(certificate.credentialId ?: "", position)
-        }
+//        holder.ivDelete.setOnClickListener {
+//            listener.onDelete(certificate.credentialId ?: "", position)
+//        }
         holder.tvCompanyName.text = certificate.connection?.theirLabel ?: ""
         try {
             Glide

@@ -1,5 +1,6 @@
 package io.igrant.mobileagent.activty
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -11,15 +12,15 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
-import io.igrant.mobileagent.adapter.RequestAttributeAdapter
+import io.igrant.mobileagent.adapter.ExchangeRequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
 import io.igrant.mobileagent.events.GoHomeEvent
-import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
@@ -70,7 +71,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
 
     private var mPresentationExchange: PresentationExchange? = null
 
-    private lateinit var adapter: RequestAttributeAdapter
+    private lateinit var adapter: ExchangeRequestAttributeAdapter
 
     private var attributelist: ArrayList<ExchangeAttributes> = ArrayList()
 
@@ -147,7 +148,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
 
         searchHandle.closeSearch()
 
-        adapter = RequestAttributeAdapter(
+        adapter = ExchangeRequestAttributeAdapter(
             attributelist
         )
         rvAttributes.layoutManager = LinearLayoutManager(this)
@@ -163,6 +164,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar!!.title = resources.getString(R.string.txt_exchange_data)
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
@@ -412,6 +414,20 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
 //                                btReject.isEnabled = true
 
                                 EventBus.getDefault().post(GoHomeEvent())
+
+                                AlertDialog.Builder(this@ProposeAndExchangeDataActivity)
+                                    .setMessage(
+                                        resources.getString(
+                                            R.string.txt_exchange_successful_without_name
+                                        )
+                                    ) // Specifying a listener allows you to take an action before dismissing the dialog.
+                                    // The dialog is automatically dismissed when a dialog button is clicked.
+                                    .setPositiveButton(
+                                        android.R.string.ok,
+                                        DialogInterface.OnClickListener { dialog, which ->
+                                            onBackPressed()
+                                        }) // A null listener allows the button to dismiss the dialog and take no further action.
+                                    .show()
 
                                 onBackPressed()
                             }

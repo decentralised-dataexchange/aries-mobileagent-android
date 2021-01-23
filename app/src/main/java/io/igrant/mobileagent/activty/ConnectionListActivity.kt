@@ -12,11 +12,10 @@ import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Base64
-import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
@@ -37,7 +36,8 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 
-class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.OnConnectionSuccess {
+class ConnectionListActivity : BaseActivity(),
+    ConnectionProgressDailogFragment.OnConnectionSuccess {
 
     private lateinit var connectionRecords: JSONArray
     private lateinit var connectionRecordsCopy: JSONArray
@@ -46,14 +46,16 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
     private lateinit var llErrorMessage: LinearLayout
     private lateinit var etSearch: EditText
     private lateinit var toolbar: Toolbar
+    private lateinit var ivAdd: ImageView
 
-    companion object{
+    companion object {
         private const val PICK_IMAGE_REQUEST = 101
         val PERMISSIONS =
             arrayOf(Manifest.permission.CAMERA)
         private const val REQUEST_CODE_SCAN_INVITATION = 202
 
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_connection_list)
@@ -65,14 +67,16 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
 
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
-        supportActionBar!!.title = resources.getString(R.string.title_connection_list)
+//        supportActionBar!!.title = resources.getString(R.string.title_connection_list)
+        supportActionBar!!.title = ""
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu)
-        return true
-    }
+//    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+//        menuInflater.inflate(R.menu.main_menu, menu)
+//        return true
+//    }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
@@ -80,22 +84,22 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
                 onBackPressed()
                 true
             }
-            R.id.action_new -> {
-                if (PermissionUtils.hasPermissions(
-                        this,
-                        true,
-                        PICK_IMAGE_REQUEST,
-                        PERMISSIONS
-                    )
-                ) {
-                    val i = Intent(this, QrCodeActivity::class.java)
-                    startActivityForResult(
-                        i,
-                        REQUEST_CODE_SCAN_INVITATION
-                    )
-                }
-                true
-            }
+//            R.id.action_new -> {
+//                if (PermissionUtils.hasPermissions(
+//                        this,
+//                        true,
+//                        PICK_IMAGE_REQUEST,
+//                        PERMISSIONS
+//                    )
+//                ) {
+//                    val i = Intent(this, QrCodeActivity::class.java)
+//                    startActivityForResult(
+//                        i,
+//                        REQUEST_CODE_SCAN_INVITATION
+//                    )
+//                }
+//                true
+//            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -194,8 +198,9 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
                         getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
                     val clip = ClipData.newPlainText("DID", did)
                     clipboard?.setPrimaryClip(clip)
-                    val intent = Intent(this@ConnectionListActivity,ConnectionDetailActivity::class.java)
-                    intent.putExtra(ConnectionDetailActivity.EXTRA_CONNECTION_DATA,connection)
+                    val intent =
+                        Intent(this@ConnectionListActivity, ConnectionDetailActivity::class.java)
+                    intent.putExtra(ConnectionDetailActivity.EXTRA_CONNECTION_DATA, connection)
                     startActivity(intent)
                 }
             })
@@ -204,6 +209,21 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
     }
 
     private fun initListener() {
+        ivAdd.setOnClickListener {
+            if (PermissionUtils.hasPermissions(
+                    this,
+                    true,
+                    PICK_IMAGE_REQUEST,
+                    PERMISSIONS
+                )
+            ) {
+                val i = Intent(this, QrCodeActivity::class.java)
+                startActivityForResult(
+                    i,
+                    REQUEST_CODE_SCAN_INVITATION
+                )
+            }
+        }
 
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
@@ -244,6 +264,7 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
         rvConnections = findViewById(R.id.rvConnections)
         llErrorMessage = findViewById(R.id.llErrorMessage)
         etSearch = findViewById(R.id.etSearch)
+        ivAdd = findViewById(R.id.ivAdd)
     }
 
     override fun onSuccess(proposal: String, connectionId: String) {

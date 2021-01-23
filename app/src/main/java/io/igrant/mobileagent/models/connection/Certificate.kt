@@ -2,6 +2,8 @@ package io.igrant.mobileagent.models.connection
 
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
+import io.igrant.mobileagent.models.certificateOffer.Attributes
+import io.igrant.mobileagent.models.presentationExchange.ExchangeAttributes
 import io.igrant.mobileagent.models.walletSearch.Record
 
 class Certificate {
@@ -37,4 +39,12 @@ class Certificate {
     @SerializedName("record")
     @Expose
     var record: Record? = null
+
+    @SerializedName("schema_attributes")
+    @Expose
+    var schemaAttributes : ArrayList<String> = ArrayList()
+
+    @SerializedName("attributeList")
+    @Expose
+    var attributeList : ArrayList<Attributes> = ArrayList()
 }

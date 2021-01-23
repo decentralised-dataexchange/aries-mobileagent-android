@@ -6,10 +6,10 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
-import io.igrant.mobileagent.models.certificateOffer.Attributes
+import io.igrant.mobileagent.models.presentationExchange.ExchangeAttributes
 
-class RequestAttributeAdapter(var itemList: ArrayList<Attributes>) :
-    RecyclerView.Adapter<RequestAttributeAdapter.ViewHolder>() {
+class ExchangeRequestAttributeAdapter(var itemList: ArrayList<ExchangeAttributes>) :
+    RecyclerView.Adapter<ExchangeRequestAttributeAdapter.ViewHolder>() {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var tvAttributeName: TextView =
             itemView.findViewById<View>(R.id.tvAttributeName) as TextView
