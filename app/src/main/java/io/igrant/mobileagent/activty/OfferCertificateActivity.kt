@@ -1,6 +1,5 @@
 package io.igrant.mobileagent.activty
 
-import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
 import android.util.Base64
@@ -31,7 +30,6 @@ import io.igrant.mobileagent.models.credentialExchange.CredentialRequest
 import io.igrant.mobileagent.models.credentialExchange.CredentialRequestMetadata
 import io.igrant.mobileagent.models.credentialExchange.Thread
 import io.igrant.mobileagent.models.walletSearch.Record
-import io.igrant.mobileagent.qrcode.QrCodeActivity
 import io.igrant.mobileagent.utils.*
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull

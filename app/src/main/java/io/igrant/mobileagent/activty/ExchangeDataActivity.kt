@@ -16,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.ExchangeRequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
+import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
@@ -32,6 +33,7 @@ import io.igrant.mobileagent.utils.WalletRecordType
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.greenrobot.eventbus.EventBus
+import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
 import org.json.JSONArray
@@ -172,30 +174,50 @@ class ExchangeDataActivity : BaseActivity() {
                 onBackPressed()
             }
             R.id.action_delete -> {
-                WalletRecord.delete(
-                    WalletManager.getWallet,
-                    WalletRecordType.MESSAGE_RECORDS,
-                    mPresentationExchange?.threadId ?: ""
-                ).get()
+                AlertDialog.Builder(this@ExchangeDataActivity)
+                    .setTitle(resources.getString(R.string.txt_confirmation))
+                    .setMessage(
+                        resources.getString(
+                            R.string.txt_exchange_request_delete_confirmation
+                        )
+                    ) // Specifying a listener allows you to take an action before dismissing the dialog.
+                    // The dialog is automatically dismissed when a dialog button is clicked.
+                    .setPositiveButton(
+                        android.R.string.ok,
+                        DialogInterface.OnClickListener { dialog, which ->
+                            WalletRecord.delete(
+                                WalletManager.getWallet,
+                                WalletRecordType.MESSAGE_RECORDS,
+                                mPresentationExchange?.threadId ?: ""
+                            ).get()
 
-                val credentialExchangeResponse =
-                    SearchUtils.searchWallet(
-                        WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-                        "{\"thread_id\": \"${mPresentationExchange?.threadId}\"}"
-                    )
+                            val credentialExchangeResponse =
+                                SearchUtils.searchWallet(
+                                    WalletRecordType.CREDENTIAL_EXCHANGE_V10,
+                                    "{\"thread_id\": \"${mPresentationExchange?.threadId}\"}"
+                                )
 
-                if (credentialExchangeResponse.totalCount ?: 0 > 0) {
-                    WalletRecord.delete(
-                        WalletManager.getWallet,
-                        WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-                        "${credentialExchangeResponse.records?.get(0)?.id}"
-                    ).get()
-                }
+                            if (credentialExchangeResponse.totalCount ?: 0 > 0) {
+                                WalletRecord.delete(
+                                    WalletManager.getWallet,
+                                    WalletRecordType.CREDENTIAL_EXCHANGE_V10,
+                                    "${credentialExchangeResponse.records?.get(0)?.id}"
+                                ).get()
+                            }
 
-                EventBus.getDefault()
-                    .post(ReceiveExchangeRequestEvent(mConnectionId))
+                            EventBus.getDefault()
+                                .post(ReceiveExchangeRequestEvent(mConnectionId))
 
-                onBackPressed()
+                            onBackPressed()
+                        }) // A null listener allows the button to dismiss the dialog and take no further action.
+                    .setNegativeButton(
+                        android.R.string.cancel,
+                        DialogInterface.OnClickListener { dialog, which ->
+
+                        })
+                    .show()
+
+
             }
             else -> {
 

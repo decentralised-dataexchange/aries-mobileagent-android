@@ -286,6 +286,11 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         )
     }
 
+    override fun onResume() {
+        super.onResume()
+        setNotificationIcon()
+    }
+
     private fun setNotificationIcon() {
         try {
             val connectionMessageResponse =

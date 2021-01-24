@@ -21,6 +21,7 @@ import io.igrant.mobileagent.models.connection.Connection
 import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.utils.SearchUtils
+import io.igrant.mobileagent.utils.TextUtils
 import io.igrant.mobileagent.utils.WalletRecordType
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -168,6 +169,7 @@ class CertificateDetailActivity : BaseActivity() {
             .into(ivCoverUrl)
 
         tvDescription.text = connectionData?.description
+        TextUtils.makeTextViewResizable(tvDescription, 3, "See More", true);
         tvName.text = connectionData?.name
         tvLocation.text = connectionData?.location
     }

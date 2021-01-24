@@ -34,6 +34,7 @@ import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.utils.MessageTypes
 import io.igrant.mobileagent.utils.SearchUtils
+import io.igrant.mobileagent.utils.TextUtils
 import io.igrant.mobileagent.utils.WalletRecordType
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.DID_DOC
@@ -297,6 +298,7 @@ class ConnectionDetailActivity : BaseActivity() {
             .into(ivCoverUrl)
 
         tvDescription.text = connectionData?.description
+        TextUtils.makeTextViewResizable(tvDescription, 3, "See More", true);
         tvName.text = connectionData?.name
         tvLocation.text = connectionData?.location
     }

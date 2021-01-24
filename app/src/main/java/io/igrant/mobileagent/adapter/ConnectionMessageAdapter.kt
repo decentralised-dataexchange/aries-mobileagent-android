@@ -41,7 +41,7 @@ class ConnectionMessageAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        holder.tvName.text = mList[position].schemaName
+        holder.tvName.text = mList[position].schemaName?.toUpperCase()
 
         holder.ivAdd.visibility = if (mList[position].record != null) View.VISIBLE else View.GONE
 
