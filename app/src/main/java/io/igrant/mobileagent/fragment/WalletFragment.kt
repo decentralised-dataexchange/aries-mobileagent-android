@@ -2,6 +2,7 @@ package io.igrant.mobileagent.fragment
 
 import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -142,8 +143,6 @@ class WalletFragment : BaseFragment() {
 
             if (PermissionUtils.hasPermissions(
                     requireActivity(),
-                    true,
-                    PICK_IMAGE_REQUEST,
                     PERMISSIONS
                 )
             ) {
@@ -152,6 +151,8 @@ class WalletFragment : BaseFragment() {
                     i,
                     REQUEST_CODE_SCAN_INVITATION
                 )
+            }else{
+                requestPermissions(PERMISSIONS, PICK_IMAGE_REQUEST)
             }
         }
 
@@ -168,6 +169,21 @@ class WalletFragment : BaseFragment() {
         })
 
     }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            val i = Intent(requireActivity(), QrCodeActivity::class.java)
+            startActivityForResult(
+                i,
+                REQUEST_CODE_SCAN_INVITATION
+            )
+        }
+    }
+
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         if (requestCode == REQUEST_CODE_SCAN_INVITATION) {

@@ -23,7 +23,7 @@
         android:id="@+id/ivAdd"
         android:layout_width="30dp"
         android:layout_height="30dp"
-        android:layout_marginStart="10dp"
+        android:layout_marginStart="5dp"
         android:padding="5dp"
         android:src="@drawable/ic_add_circle_black"
         app:layout_constraintBottom_toBottomOf="@+id/tvName"

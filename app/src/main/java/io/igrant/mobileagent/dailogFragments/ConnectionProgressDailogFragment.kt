@@ -77,7 +77,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
         }
 
         btnConnect.setOnClickListener {
-
+btnConnect.isEnabled = false
             btnConnect.showLoading()
 
             SaveConnectionTask(object : CommonHandler {
@@ -215,6 +215,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
     @Subscribe( threadMode = ThreadMode.MAIN)
     fun onConnectionSuccessEvent(event: ConnectionSuccessEvent) {
         btnConnect.hideLoading()
+        btnConnect.isEnabled = true
         llSuccess.visibility = View.VISIBLE
         Handler(Looper.getMainLooper()).postDelayed({
             onSuccessListener.onSuccess(proposal, event.connectionId ?: "")

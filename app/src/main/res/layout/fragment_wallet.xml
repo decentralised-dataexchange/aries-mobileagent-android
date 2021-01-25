@@ -83,6 +83,7 @@
             android:layout_height="wrap_content"
             android:padding="10dp"
             android:text="@string/txt_no_data_avaialable"
+            android:textColor="@color/textColor"
             android:textSize="@dimen/text_size_normal" />
 
     </LinearLayout>

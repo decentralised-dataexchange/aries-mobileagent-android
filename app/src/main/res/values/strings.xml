@@ -39,7 +39,7 @@
     <string name="txt_reject">Reject</string>
     <string name="txt_accept">Accept</string>
     <string name="txt_add_certificate">Add data</string>
-    <string name="txt_Add_certificate_desc">Choose the organisation to be connected to add data to the wallet or exchange data with</string>
+    <string name="txt_Add_certificate_desc">Choose the organisation to be connected to add data to the wallet or to exchange data</string>
     <string name="txt_wallet">Wallet</string>
     <string name="txt_preferences">Preferences</string>
     <string name="txt_no_connections_avaialable">No connections available</string>
@@ -84,6 +84,9 @@
     <string name="txt_certificate_delete_confirmation">Do you want to delete the certificate?</string>
     <string name="txt_confirmation">Confirmation</string>
     <string name="txt_exchange_request_delete_confirmation">Do you want to remove the exchange request?</string>
-    <string name="txt_read_more">Read More</string>
-    <string name="txt_read_less">.. Read Less</string>
+    <string name="txt_read_more">Read more</string>
+    <string name="txt_read_less">.. Read less</string>
+    <string name="txt_no_notifications_available">No new notification available</string>
+    <string name="txt_language_caps">LANGUAGE</string>
+    <string name="txt_ledger_network_caps">LEDGER NETWORK</string>
 </resources>

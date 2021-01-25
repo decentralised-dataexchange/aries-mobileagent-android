@@ -41,7 +41,7 @@
     <string name="txt_reject">Avböj</string>
     <string name="txt_accept">Acceptera</string>
     <string name="txt_add_certificate">Lägg till data</string>
-    <string name="txt_Add_certificate_desc">Välj organisation från vilken data skall läggas till din plånbok</string>
+    <string name="txt_Add_certificate_desc">Välj organisation som skall anslutas för att lägga till data i plånboken eller för datadelning</string>
     <string name="txt_wallet">Plånbok</string>
     <string name="txt_preferences">Preferenser</string>
     <string name="txt_no_connections_avaialable">Inga kontakter tillgängliga</string>
@@ -64,8 +64,8 @@
     <string name="err_insufficient_data">Insufficient data requested</string>
 
     <string name="txt_requests">Förfrågningar</string>
+    <string name="txt_connection_success_message">Anslutningen lyckad</string>
 
-    <string name="txt_connection_success_message">Connection success</string>
     <string name="notification_channel_success_messages" translatable="false">Success messages</string>
     <string name="notification_channel_success" translatable="false">success_messages</string>
     <string name="default_notification_channel_id" translatable="false">NotificationChannel</string>
@@ -82,17 +82,17 @@
     <string name="txt_network">Nätverk</string>
     <string name="txt_powered_by">Drivs av iGrant.io, Sverige</string>
     <string name="txt_data_wallet">Digital plånbok</string>
-
-    <string name="txt_data_exchange">Data exchange</string>
-
+    <string name="txt_data_exchange">Datadelning</string>
     <string name="txt_notification">Meddelanden</string>
-
-    <string name="txt_remove_data_card">Remove data card</string>
-    <string name="txt_exchange_successful">Data has been shared with %1$s successfully</string>
-    <string name="txt_exchange_successful_without_name">Data has been shared successfully</string>
-    <string name="txt_certificate_delete_confirmation">Do you want to delete the certificate?</string>
-    <string name="txt_confirmation">Confirmation</string>
-    <string name="txt_exchange_request_delete_confirmation">Do you want to remove the exchange request?</string>
-    <string name="txt_read_more">Read More</string>
-    <string name="txt_read_less">.. Read Less</string>
+    <string name="txt_remove_data_card">Ta bort datakort</string>
+    <string name="txt_exchange_successful">Data har framgångsrikt delats med %1$s</string>
+    <string name="txt_exchange_successful_without_name">Data har framgångsrikt delats</string>
+    <string name="txt_certificate_delete_confirmation">Vill du ta bort certifikatet</string>
+    <string name="txt_confirmation">Bekräftelse</string>
+    <string name="txt_exchange_request_delete_confirmation">Vill du avbryta delningsförfrågan?</string>
+    <string name="txt_read_more">Läs mer</string>
+    <string name="txt_read_less">.. Läs mindre</string>
+    <string name="txt_no_notifications_available">Inga nya meddelanden finns</string>
+    <string name="txt_language_caps">SPRÅK</string>
+    <string name="txt_ledger_network_caps">LEDGER-NÄTVERK</string>
 </resources>

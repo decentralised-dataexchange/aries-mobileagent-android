@@ -5,6 +5,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -12,6 +13,7 @@ import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Base64
+import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
@@ -236,6 +238,21 @@ class ConnectionListActivity : BaseActivity(),
                 filterList(s)
             }
         })
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            val i = Intent(this, QrCodeActivity::class.java)
+            startActivityForResult(
+                i,
+                REQUEST_CODE_SCAN_INVITATION
+            )
+        }
     }
 
     private fun filterList(s: CharSequence?) {

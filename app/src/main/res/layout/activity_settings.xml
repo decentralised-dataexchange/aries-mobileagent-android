@@ -21,7 +21,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/mar_start"
         android:layout_marginTop="20dp"
-        android:text="@string/txt_language"
+        android:text="@string/txt_language_caps"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toolbar" />
 
@@ -66,7 +66,7 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/mar_start"
         android:layout_marginTop="20dp"
-        android:text="@string/txt_ledger_network"
+        android:text="@string/txt_ledger_network_caps"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/clLanguage" />
 

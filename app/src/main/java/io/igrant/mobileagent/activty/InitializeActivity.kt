@@ -13,10 +13,7 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.communication.ApiManager
-import io.igrant.mobileagent.events.ConnectionSuccessEvent
-import io.igrant.mobileagent.events.ReceiveCertificateEvent
-import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
-import io.igrant.mobileagent.events.ReceiveOfferEvent
+import io.igrant.mobileagent.events.*
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.handlers.PoolHandler
 import io.igrant.mobileagent.handlers.SearchHandler
@@ -78,6 +75,8 @@ import okhttp3.ResponseBody
 import okio.BufferedSink
 import org.apache.commons.io.IOUtils
 import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.crypto.Crypto
 import org.hyperledger.indy.sdk.did.Did
@@ -120,6 +119,10 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         initListener()
 //        initToolbar()
         initLibIndy()
+        try {
+            EventBus.getDefault().register(this)
+        } catch (e: Exception) {
+        }
     }
 
     private fun initListener() {
@@ -284,11 +287,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             MEDIATOR_CONNECTION,
             "{}"
         )
-    }
-
-    override fun onResume() {
-        super.onResume()
-        setNotificationIcon()
     }
 
     private fun setNotificationIcon() {
@@ -1810,5 +1808,14 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         WalletManager.closeWallet
         PoolManager.getPool?.close()
         PoolManager.removePool
+        try {
+            EventBus.getDefault().unregister(this)
+        } catch (e: Exception) {
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun onGoHomeEvent(event: ReceiveExchangeRequestEvent) {
+        setNotificationIcon()
     }
 }

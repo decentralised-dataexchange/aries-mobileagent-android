@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:padding="20dp"
-            android:text="@string/txt_no_data_avaialable"
+            android:text="@string/txt_no_notifications_available"
             android:textSize="@dimen/text_size_normal" />
 
     </LinearLayout>

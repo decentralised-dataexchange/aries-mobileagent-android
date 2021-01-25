@@ -294,11 +294,11 @@ class ConnectionDetailActivity : BaseActivity() {
             .with(ivCoverUrl.context)
             .load(connectionData?.coverImageUrl)
             .centerCrop()
-            .placeholder(R.drawable.images)
+//            .placeholder(R.drawable.images)
             .into(ivCoverUrl)
 
         tvDescription.text = connectionData?.description
-        TextUtils.makeTextViewResizable(tvDescription, 3, "See More", true);
+        TextUtils.makeTextViewResizable(tvDescription, 3, resources.getString(R.string.txt_read_more), true);
         tvName.text = connectionData?.name
         tvLocation.text = connectionData?.location
     }

@@ -34,11 +34,11 @@
         android:layout_width="40dp"
         android:layout_height="40dp"
         android:padding="5dp"
-        android:layout_marginTop="10dp"
+        android:layout_marginTop="20dp"
         android:src="@drawable/ic_close_black"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginEnd="30dp"/>
+        android:layout_marginEnd="20dp"/>
 
     <androidx.cardview.widget.CardView
         android:id="@+id/cvLogo"

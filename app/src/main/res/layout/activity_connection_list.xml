@@ -109,6 +109,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:padding="10dp"
+            android:textColor="@color/textColor"
             android:text="@string/txt_no_connections_avaialable"
             android:textSize="@dimen/text_size_normal" />
 
