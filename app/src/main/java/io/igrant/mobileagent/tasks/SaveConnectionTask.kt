@@ -10,10 +10,7 @@ import io.igrant.mobileagent.models.connectionRequest.*
 import io.igrant.mobileagent.models.tagJsons.ConnectionId
 import io.igrant.mobileagent.models.tagJsons.ConnectionTags
 import io.igrant.mobileagent.models.tagJsons.UpdateInvitationKey
-import io.igrant.mobileagent.utils.ConnectionStates
-import io.igrant.mobileagent.utils.DeviceUtils
-import io.igrant.mobileagent.utils.SearchUtils
-import io.igrant.mobileagent.utils.WalletRecordType
+import io.igrant.mobileagent.utils.*
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION_INVITATION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.MEDIATOR_DID_DOC
@@ -104,12 +101,29 @@ class SaveConnectionTask(
                 "    }\n" +
                 "}"
 
-        val queryFeaturePacked = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
-            key,
-            queryFeatureData.toByteArray()
-        ).get()
+        val queryFeaturePacked: ByteArray
+
+        queryFeaturePacked =
+            if (invitation.routingKeys != null && invitation.routingKeys?.size ?: 0 > 0) {
+                PackingUtils.packMessage(
+                    "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
+                    WalletManager.getGson.toJson(invitation.routingKeys),
+                    key,
+                    queryFeatureData
+                )
+            } else {
+                PackingUtils.packMessage(
+                    "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
+                    key,
+                    queryFeatureData
+                )
+            }
+//        val queryFeaturePacked = Crypto.packMessage(
+//            WalletManager.getWallet,
+//            "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
+//            key,
+//            queryFeatureData.toByteArray()
+//        ).get()
 
         queryFeaturePackedBytes = object : RequestBody() {
             override fun contentType(): MediaType? {

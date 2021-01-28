@@ -29,7 +29,7 @@ object NotificationUtils {
             context,
             context.resources.getString(R.string.default_notification_channel_id)
         )
-            .setSmallIcon(R.drawable.notification_icon)
+            .setSmallIcon(R.drawable.notification)
             .setContentTitle(title)
             .setStyle(
                 NotificationCompat.InboxStyle()

@@ -22,7 +22,6 @@ import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.agentConfig.Invitation
 import io.igrant.mobileagent.tasks.SaveConnectionTask
 import io.igrant.mobileagent.tasks.SaveDidDocTask
-import kotlinx.android.synthetic.main.dailog_fragment_connection_progress.*
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.greenrobot.eventbus.EventBus
@@ -42,6 +41,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
     lateinit var ivClose: ImageView
     lateinit var tvDesc: TextView
     lateinit var ivLogo: ImageView
+    lateinit var tvName: TextView
     lateinit var llSuccess: LinearLayout
     lateinit var ivSuccess: ImageView
     override fun onCreateView(
@@ -60,7 +60,13 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 //        dialog!!.setTitle(title)
 
         initViews(view)
-        tvDesc.text = Html.fromHtml(resources.getString(R.string.txt_allow_connection_query,invitation.label?:"Organisation"))
+        tvDesc.text = Html.fromHtml(
+            resources.getString(
+                R.string.txt_allow_connection_query,
+                invitation.label ?: "Organisation"
+            )
+        )
+        tvName.text = invitation.label ?: "Organisation"
         Glide
             .with(ivLogo.context)
             .load(invitation.imageUrl)
@@ -77,7 +83,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
         }
 
         btnConnect.setOnClickListener {
-btnConnect.isEnabled = false
+            btnConnect.isEnabled = false
             btnConnect.showLoading()
 
             SaveConnectionTask(object : CommonHandler {
@@ -212,7 +218,7 @@ btnConnect.isEnabled = false
         }
     }
 
-    @Subscribe( threadMode = ThreadMode.MAIN)
+    @Subscribe(threadMode = ThreadMode.MAIN)
     fun onConnectionSuccessEvent(event: ConnectionSuccessEvent) {
         btnConnect.hideLoading()
         btnConnect.isEnabled = true
@@ -246,6 +252,7 @@ btnConnect.isEnabled = false
         ivClose = view.findViewById(R.id.ivClose)
         tvDesc = view.findViewById(R.id.tvDesc)
         ivLogo = view.findViewById(R.id.ivLogo)
+        tvName = view.findViewById(R.id.tvName)
         llSuccess = view.findViewById(R.id.llSuccess)
         ivSuccess = view.findViewById(R.id.ivSuccess)
     }

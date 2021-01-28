@@ -20,7 +20,7 @@ class Invitation:Serializable {
 
     @SerializedName("routingKeys")
     @Expose
-    var routingKeys: String? = null
+    var routingKeys: ArrayList<String>? = null
 
     @SerializedName("recipientKeys")
     @Expose

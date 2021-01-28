@@ -39,7 +39,7 @@
         android:layout_marginTop="15dp"
         android:layout_marginEnd="5dp"
         android:background="@drawable/primary_edittext_background"
-        android:hint="@string/txt_search_wallet"
+        android:hint="@string/txt_search"
         android:inputType="text"
         android:drawablePadding="10dp"
         android:drawableStart="@drawable/ic_search_grey"

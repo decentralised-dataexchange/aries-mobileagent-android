@@ -59,6 +59,12 @@
 
         <activity android:name=".activty.LanguageSelectionActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.AboutAppActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.WebViewActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
     </application>
 
 </manifest>

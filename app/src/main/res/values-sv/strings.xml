@@ -51,6 +51,7 @@
     <string name="txt_exchange_data">Dela data</string>
     <string name="txt_add_connection">Lägg till kontakt</string>
     <string name="txt_search_wallet">Sök i plånbok...</string>
+    <string name="txt_search">Sök...</string>
     <string name="txt_search_connections">Sök organisation...</string>
     <string name="txt_creating_pool">Konfigureringspool...</string>
     <string name="txt_finishing">Slutför...</string>
@@ -95,4 +96,13 @@
     <string name="txt_no_notifications_available">Inga nya meddelanden finns</string>
     <string name="txt_language_caps">SPRÅK</string>
     <string name="txt_ledger_network_caps">LEDGER-NÄTVERK</string>
+    <string name="txt_data_added_success_desc">Data har framgångsrikt lagts till plånboken</string>
+
+    <string name="title_about_this_app">About this app</string>
+
+    <string name="txt_about">Om</string>
+    <string name="txt_privacy_policy">Integritetspolicy</string>
+    <string name="txt_terms_and_conditions">Villkor</string>
+    <string name="txt_aries_interoperatable_protocols">Aries interoperabilitetsprotokoll</string>
+    <string name="txt_supported_protocols">Protokoll som stöds</string>
 </resources>

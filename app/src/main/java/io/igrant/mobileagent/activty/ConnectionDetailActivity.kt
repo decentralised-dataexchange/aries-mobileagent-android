@@ -323,7 +323,7 @@ class ConnectionDetailActivity : BaseActivity() {
         val toolbar: Toolbar = findViewById(R.id.toolBarCommon)
         setSupportActionBar(toolbar)
         supportActionBar!!.title = ""
-        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_back_bg)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 

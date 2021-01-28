@@ -63,7 +63,7 @@
         android:layout_marginStart="@dimen/mar_start"
         android:layout_marginEnd="@dimen/mar_start"
         android:background="@drawable/primary_edittext_background"
-        android:hint="@string/txt_search_connections"
+        android:hint="@string/txt_search"
         android:padding="10dp"
         android:inputType="text"
         android:drawablePadding="10dp"

@@ -234,7 +234,7 @@ class CertificateDetailActivity : BaseActivity() {
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar!!.title = ""
-        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_back_bg)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 

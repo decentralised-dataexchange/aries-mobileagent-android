@@ -886,8 +886,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             NotificationUtils.showNotification(
                 this,
                 TYPE_ISSUE_CREDENTIAL,
-                "Success",
-                "Certificate successfully added to your wallet"
+                "Received Data",
+                resources.getString(R.string.txt_data_added_success_desc)
             )
             EventBus.getDefault().post(ReceiveCertificateEvent())
 
