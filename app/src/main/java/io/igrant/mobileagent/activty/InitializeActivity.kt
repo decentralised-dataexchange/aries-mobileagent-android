@@ -618,7 +618,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 NotificationUtils.showNotification(
                     this,
                     TYPE_ISSUE_CREDENTIAL,
-                    "${connectionObject?.theirLabel ?: "Organisation"} - Exchange Request",
+                    "Received Exchange Request",
                     "Received a new exchange request from the organisation ${connectionObject?.theirLabel ?: ""}"
                 )
 
@@ -1091,8 +1091,9 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 NotificationUtils.showNotification(
                     this,
                     TYPE_ISSUE_CREDENTIAL,
-                    "${connecction.theirLabel} - Offer Credential",
-                    "Received a new offer credential of the organisation ${connecction.theirLabel}"
+                    resources.getString(R.string.txt_received_offer),
+                    resources.getString(R.string.txt_received_offer_credential_desc)
+//                    "Received a new offer credential of the organisation ${connecction.theirLabel}"
                 )
                 EventBus.getDefault()
                     .post(ReceiveExchangeRequestEvent(connecction?.requestId ?: ""))

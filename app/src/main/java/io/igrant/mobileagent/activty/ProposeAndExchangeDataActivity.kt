@@ -428,8 +428,6 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                                             onBackPressed()
                                         }) // A null listener allows the button to dismiss the dialog and take no further action.
                                     .show()
-
-                                onBackPressed()
                             }
                         }
                     })
