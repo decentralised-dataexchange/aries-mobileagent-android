@@ -11,6 +11,7 @@ import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.presentationExchange.CredentialValue
 import io.igrant.mobileagent.models.presentationExchange.PresentationExchange
 import io.igrant.mobileagent.models.presentationExchange.RequestCredential
+import io.igrant.mobileagent.utils.PackingUtils
 import io.igrant.mobileagent.utils.PresentationExchangeStates
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
@@ -191,12 +192,16 @@ class ExchangeDataTask(
                         "}"
             )
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"${searchResponse.records?.get(0)?.value ?: ""}\"]",
-            publicKey,
-            data.toByteArray()
-        ).get()
+        val didDoc =
+            WalletManager.getGson.fromJson(didDocObject.records?.get(0)?.value, DidDoc::class.java)
+
+        val packedMessage = PackingUtils.packMessage(didDoc,publicKey,data)
+//        val packedMessage = Crypto.packMessage(
+//            WalletManager.getWallet,
+//            "[\"${searchResponse.records?.get(0)?.value ?: ""}\"]",
+//            publicKey,
+//            data.toByteArray()
+//        ).get()
 
         typedBytes = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -208,8 +213,7 @@ class ExchangeDataTask(
                 sink.write(packedMessage)
             }
         }
-        val didDoc =
-            WalletManager.getGson.fromJson(didDocObject.records?.get(0)?.value, DidDoc::class.java)
+
         serviceEndPoint =
             didDoc.service?.get(0)?.serviceEndpoint ?: ""
         return null

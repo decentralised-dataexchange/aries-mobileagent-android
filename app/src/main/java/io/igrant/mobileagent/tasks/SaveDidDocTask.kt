@@ -8,6 +8,7 @@ import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.utils.ConnectionStates
+import io.igrant.mobileagent.utils.PackingUtils
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.DID_DOC
@@ -84,8 +85,10 @@ class SaveDidDocTask(
             didKeyTagJson
         )
 
-        val connectionSearch = SearchUtils.searchWallet(CONNECTION,
-            "{\"invitation_key\":\"$recipientKey\"}")
+        val connectionSearch = SearchUtils.searchWallet(
+            CONNECTION,
+            "{\"invitation_key\":\"$recipientKey\"}"
+        )
 
         val mediatorConnectionObject: MediatorConnectionObject =
             WalletManager.getGson.fromJson(
@@ -116,29 +119,34 @@ class SaveDidDocTask(
         val metaObject = JSONObject(metaString)
         val publicKey2 = metaObject.getString("verkey")
 
-        val didDocSearch = SearchUtils.searchWallet(
-            DID_DOC,
-            "{\"did\":\"$theirDid\"}"
+//        val didDocSearch = SearchUtils.searchWallet(
+//            DID_DOC,
+//            "{\"did\":\"$theirDid\"}"
+//        )
+//
+//        serviceEndPoint = ""
+//        var recipient = ""
+//        if (didDocSearch.totalCount ?: 0 > 0) {
+//            val didDoc = WalletManager.getGson.fromJson(
+//                didDocSearch.records?.get(0)?.value,
+//                DidDoc::class.java
+//            )
+//
+//            serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
+//            recipient = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
+//        }
+
+        val didDocObj = WalletManager.getGson.fromJson(
+            didDoc,
+            DidDoc::class.java
         )
-
-        serviceEndPoint = ""
-        var recipient = ""
-        if (didDocSearch.totalCount ?: 0 > 0) {
-            val didDoc = WalletManager.getGson.fromJson(
-                didDocSearch.records?.get(0)?.value,
-                DidDoc::class.java
-            )
-
-            serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
-            recipient = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
-        }
 
         val connectionTagJson = "{\n" +
                 "  \"their_did\": \"$theirDid\",\n" +
                 "  \"request_id\": \"$requestId\",\n" +
                 "  \"my_did\": \"$myDid\",\n" +
                 "  \"invitation_key\": \"$recipientKey\",\n" +
-                "  \"recipient_key\": \"$recipient\"\n" +
+                "  \"recipient_key\": \"${didDocObj.publicKey?.get(0)?.publicKeyBase58 ?: ""}\"\n" +
                 "}"
 
         WalletRecord.updateTags(
@@ -155,12 +163,13 @@ class SaveDidDocTask(
                 "  \"response_requested\": true\n" +
                 "}\n"
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"$recipient\"]",
-            publicKey2,
-            trustPingData.toByteArray()
-        ).get()
+        val packedMessage = PackingUtils.packMessage(didDocObj,publicKey2,trustPingData)
+//        val packedMessage = Crypto.packMessage(
+//            WalletManager.getWallet,
+//            "[\"$recipient\"]",
+//            publicKey2,
+//            trustPingData.toByteArray()
+//        ).get()
 
         Log.d(TAG, "packed message: ${String(packedMessage)}")
 
@@ -184,6 +193,6 @@ class SaveDidDocTask(
 
     override fun onPostExecute(result: Void?) {
         super.onPostExecute(result)
-        commonHandler.onSaveDidComplete(typedBytes,serviceEndPoint)
+        commonHandler.onSaveDidComplete(typedBytes, serviceEndPoint)
     }
 }

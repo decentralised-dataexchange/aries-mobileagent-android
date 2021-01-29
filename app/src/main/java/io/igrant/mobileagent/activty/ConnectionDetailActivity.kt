@@ -32,10 +32,7 @@ import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.credentialExchange.RawCredential
 import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.models.walletSearch.Record
-import io.igrant.mobileagent.utils.MessageTypes
-import io.igrant.mobileagent.utils.SearchUtils
-import io.igrant.mobileagent.utils.TextUtils
-import io.igrant.mobileagent.utils.WalletRecordType
+import io.igrant.mobileagent.utils.*
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.DID_DOC
 import okhttp3.MediaType
@@ -117,12 +114,13 @@ class ConnectionDetailActivity : BaseActivity() {
                 val metaObject = JSONObject(metaString)
                 val key = metaObject.getString("verkey")
 
-                val orgDetailPacked = Crypto.packMessage(
-                    WalletManager.getWallet,
-                    "[\"${publicKey ?: ""}\"]",
-                    key,
-                    orgData.toByteArray()
-                ).get()
+                val orgDetailPacked = PackingUtils.packMessage(didDocObj,key,orgData)
+//                val orgDetailPacked = Crypto.packMessage(
+//                    WalletManager.getWallet,
+//                    "[\"${publicKey ?: ""}\"]",
+//                    key,
+//                    orgData.toByteArray()
+//                ).get()
 
                 val orgDetailTypedArray = object : RequestBody() {
                     override fun contentType(): MediaType? {
@@ -168,12 +166,13 @@ class ConnectionDetailActivity : BaseActivity() {
 
                     })
 
-                val orgCerListPacked = Crypto.packMessage(
-                    WalletManager.getWallet,
-                    "[\"${publicKey ?: ""}\"]",
-                    key,
-                    cerData.toByteArray()
-                ).get()
+                val orgCerListPacked = PackingUtils.packMessage(didDocObj,key,cerData)
+//                val orgCerListPacked = Crypto.packMessage(
+//                    WalletManager.getWallet,
+//                    "[\"${publicKey ?: ""}\"]",
+//                    key,
+//                    cerData.toByteArray()
+//                ).get()
 
                 val orgCerListTypedArray = object : RequestBody() {
                     override fun contentType(): MediaType? {

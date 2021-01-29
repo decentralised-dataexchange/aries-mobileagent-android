@@ -13,7 +13,10 @@ import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.communication.ApiManager
-import io.igrant.mobileagent.events.*
+import io.igrant.mobileagent.events.ConnectionSuccessEvent
+import io.igrant.mobileagent.events.ReceiveCertificateEvent
+import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
+import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.handlers.PoolHandler
 import io.igrant.mobileagent.handlers.SearchHandler
@@ -300,7 +303,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                             "}"
                 )
 
-            vDot.visibility = if (connectionMessageResponse.totalCount ?: 0 > 0) View.VISIBLE else View.GONE
+            vDot.visibility =
+                if (connectionMessageResponse.totalCount ?: 0 > 0) View.VISIBLE else View.GONE
 
         } catch (e: Exception) {
         }
@@ -344,14 +348,15 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             JSONObject(value).getJSONArray("records").get(0).toString()
         ).getString("value")
         Log.d(TAG, "did doc 2: $didDoc")
-        val test = gson.fromJson(didDoc, DidDoc::class.java)
+        val didDocObj = gson.fromJson(didDoc, DidDoc::class.java)
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"${test.publicKey!![0].publicKeyBase58}\"]",
-            key,
-            data.toByteArray()
-        ).get()
+        val packedMessage = PackingUtils.packMessage(didDocObj, key, data)
+//        val packedMessage = Crypto.packMessage(
+//            WalletManager.getWallet,
+//            "[\"${test.publicKey!![0].publicKeyBase58}\"]",
+//            key,
+//            data.toByteArray()
+//        ).get()
 
         val typedBytes: RequestBody = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -410,14 +415,15 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             JSONObject(value).getJSONArray("records").get(0).toString()
         ).getString("value")
         Log.d(TAG, "did doc 2: $didDoc")
-        val test = gson.fromJson(didDoc, DidDoc::class.java)
+        val didDocObj = gson.fromJson(didDoc, DidDoc::class.java)
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"${test.publicKey?.get(0)?.publicKeyBase58}\"]",
-            key,
-            data.toByteArray()
-        ).get()
+        val packedMessage = PackingUtils.packMessage(didDocObj, key, data)
+//        val packedMessage = Crypto.packMessage(
+//            WalletManager.getWallet,
+//            "[\"${test.publicKey?.get(0)?.publicKeyBase58}\"]",
+//            key,
+//            data.toByteArray()
+//        ).get()
 
         Timer().scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
@@ -734,12 +740,14 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         val didDoc =
             gson.fromJson(searchResult.records?.get(0)?.value, DidDoc::class.java)
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"$recipientVerKey\"]",
-            senderVerKey,
-            data.toByteArray()
-        ).get()
+//        val packedMessage = Crypto.packMessage(
+//            WalletManager.getWallet,
+//            "[\"$recipientVerKey\"]",
+//            senderVerKey,
+//            data.toByteArray()
+//        ).get()
+
+        val packedMessage = PackingUtils.packMessage(didDoc, senderVerKey, data)
 
         Log.d(TAG, "packed message: ${String(packedMessage)}")
 
@@ -981,6 +989,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         connectionRequest.transport = transport
 
         val str = WalletManager.getGson.toJson(connectionRequest)
+
 
         val packedMessage = Crypto.packMessage(
             WalletManager.getWallet,
@@ -1302,58 +1311,49 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         )
 
         var serviceEndPoint = ""
-        var recipient = ""
         if (didDocSearch.totalCount ?: 0 > 0) {
             val didDoc = WalletManager.getGson.fromJson(
                 didDocSearch.records?.get(0)?.value,
                 DidDoc::class.java
             )
 
+            val data = "{\n" +
+                    "  \"@type\": \"https://didcomm.org/trust_ping/1.0/ping\",\n" +
+                    "  \"@id\": \"${UUID.randomUUID()}\",\n" +
+                    "  \"comment\": \"ping\",\n" +
+                    "  \"response_requested\": true\n" +
+                    "}\n"
+
+            val packedMessage = PackingUtils.packMessage(didDoc, publicKey, data)
+
+            val typedBytes: RequestBody = object : RequestBody() {
+                override fun contentType(): MediaType? {
+                    return "application/ssi-agent-wire".toMediaTypeOrNull()
+                }
+
+                @Throws(IOException::class)
+                override fun writeTo(sink: BufferedSink) {
+                    sink.write(packedMessage)
+                }
+            }
+
             serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
-            recipient = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
+
+            ApiManager.api.getService()
+                ?.postDataWithoutData(serviceEndPoint, typedBytes)
+                ?.enqueue(object : Callback<ResponseBody> {
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        llProgressBar.visibility = View.GONE
+                    }
+
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+
+                    }
+                })
         }
-
-        val data = "{\n" +
-                "  \"@type\": \"https://didcomm.org/trust_ping/1.0/ping\",\n" +
-                "  \"@id\": \"${UUID.randomUUID()}\",\n" +
-                "  \"comment\": \"ping\",\n" +
-                "  \"response_requested\": true\n" +
-                "}\n"
-
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"$recipient\"]",
-            publicKey,
-            data.toByteArray()
-        ).get()
-
-        Log.d(TAG, "packed message: ${String(packedMessage)}")
-
-        val typedBytes: RequestBody = object : RequestBody() {
-            override fun contentType(): MediaType? {
-                return "application/ssi-agent-wire".toMediaTypeOrNull()
-            }
-
-            @Throws(IOException::class)
-            override fun writeTo(sink: BufferedSink) {
-                sink.write(packedMessage)
-            }
-        }
-
-        ApiManager.api.getService()
-            ?.postDataWithoutData(serviceEndPoint, typedBytes)
-            ?.enqueue(object : Callback<ResponseBody> {
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    llProgressBar.visibility = View.GONE
-                }
-
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>
-                ) {
-
-                }
-            })
     }
 
     private fun createInbox(
@@ -1535,27 +1535,25 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         updateRecord1Tag(
             requestId,
             myDid,
-            invitation?.recipientKeys?.get(0),
+            invitation ?: Invitation(),
             connectionUuid,
-            isMediator,
-            invitation?.serviceEndpoint
+            isMediator
         )
     }
 
     private fun updateRecord1Tag(
         requestId: String?,
         myDid: String?,
-        recipient: String?,
+        invitation: Invitation,
         connectionUuid: String,
-        isMediator: Boolean,
-        serviceEndpoint: String?
+        isMediator: Boolean
     ) {
         val tagJson =
             WalletManager.getGson.toJson(
                 UpdateInvitationKey(
                     requestId,
                     myDid,
-                    recipient,
+                    invitation.recipientKeys?.get(0),
                     null,
                     null
                 )
@@ -1569,13 +1567,12 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         if (isMediator)
             getMediatorConfig()
         else
-            createRoute(myDid, recipient, serviceEndpoint)
+            createRoute(myDid, invitation)
     }
 
     private fun createRoute(
         myDid: String?,
-        recipient: String?,
-        serviceEndpoint: String?
+        invitation: Invitation?
     ) {
         val messageUuid = UUID.randomUUID().toString()
 
@@ -1617,63 +1614,52 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         val connectionMetaObject = JSONObject(connectionMetaString)
         val connectedKey = connectionMetaObject.getString("verkey")
 
-        WalletSearchTask(object : SearchHandler {
-            override fun taskCompleted(searchResponse: SearchResponse) {
-                val didDoc = searchResponse.records?.get(0)?.value
-                val didDocObj = WalletManager.getGson.fromJson(didDoc, DidDoc::class.java)
+        val didDoc = SearchUtils.searchWallet(MEDIATOR_DID_DOC, "{}")
+        if (didDoc.totalCount ?: 0 > 0) {
+            val didDocObj =
+                WalletManager.getGson.fromJson(didDoc.records?.get(0)?.value, DidDoc::class.java)
 
-                val packedMessage = Crypto.packMessage(
-                    WalletManager.getWallet,
-                    "[\"${didDocObj.publicKey!![0].publicKeyBase58}\"]",
-                    connectedKey,
-                    data.toByteArray()
-                ).get()
+            val packedMessage = PackingUtils.packMessage(didDocObj, connectedKey, data)
 
-                val typedBytes: RequestBody = object : RequestBody() {
-                    override fun contentType(): MediaType? {
-                        return "application/ssi-agent-wire".toMediaTypeOrNull()
-                    }
-
-                    @Throws(IOException::class)
-                    override fun writeTo(sink: BufferedSink) {
-                        sink.write(packedMessage)
-                    }
+            val typedBytes: RequestBody = object : RequestBody() {
+                override fun contentType(): MediaType? {
+                    return "application/ssi-agent-wire".toMediaTypeOrNull()
                 }
 
-                ApiManager.api.getService()?.cloudConnection(typedBytes)
-                    ?.enqueue(object : Callback<ResponseBody> {
-                        override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                            llProgressBar.visibility = View.GONE
-                        }
-
-                        override fun onResponse(
-                            call: Call<ResponseBody>,
-                            response: Response<ResponseBody>
-                        ) {
-                            if (response.code() == 200 && response.body() != null) {
-                                sendInvitation(
-                                    serviceEndpoint,
-                                    myDid,
-                                    key,
-                                    didDocObj.service!![0].routingKeys!![0],
-                                    recipient
-                                )
-                            }
-                        }
-                    })
+                @Throws(IOException::class)
+                override fun writeTo(sink: BufferedSink) {
+                    sink.write(packedMessage)
+                }
             }
-        }).execute(
-            MEDIATOR_DID_DOC,
-            "{}"
-        )
+
+            ApiManager.api.getService()?.cloudConnection(typedBytes)
+                ?.enqueue(object : Callback<ResponseBody> {
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        llProgressBar.visibility = View.GONE
+                    }
+
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+                        if (response.code() == 200 && response.body() != null) {
+                            sendInvitation(
+                                myDid,
+                                key,
+                                didDocObj.service!![0].routingKeys!![0],
+                                invitation
+                            )
+                        }
+                    }
+                })
+        }
     }
 
     private fun sendInvitation(
-        serviceEndpoint: String?,
         myDid: String?,
         newVKey: String,
         routingKey: String,
-        recipient: String?
+        invitation: Invitation?
     ) {
         //public keys
         val publicKey = PublicKey()
@@ -1739,12 +1725,13 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         val data = WalletManager.getGson.toJson(connectionRequest)
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"$recipient\"]",
-            newVKey,
-            data.toByteArray()
-        ).get()
+        val packedMessage = PackingUtils.packMessage(invitation ?: Invitation(), newVKey, data)
+//        val packedMessage = Crypto.packMessage(
+//            WalletManager.getWallet,
+//            "[\"$recipient\"]",
+//            newVKey,
+//            data.toByteArray()
+//        ).get()
 
         Log.d(TAG, "packed message: ${String(packedMessage)}")
 
@@ -1759,7 +1746,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             }
         }
 
-        ApiManager.api.getService()?.postData(serviceEndpoint ?: "", typedBytes)
+        ApiManager.api.getService()?.postData(invitation?.serviceEndpoint ?: "", typedBytes)
             ?.enqueue(object : Callback<ConfigPostResponse> {
                 override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
                     llProgressBar.visibility = View.GONE

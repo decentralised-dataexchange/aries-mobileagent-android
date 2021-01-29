@@ -20,6 +20,7 @@ import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.connection.Connection
 import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.wallet.WalletModel
+import io.igrant.mobileagent.utils.PackingUtils
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.TextUtils
 import io.igrant.mobileagent.utils.WalletRecordType
@@ -100,12 +101,13 @@ class CertificateDetailActivity : BaseActivity() {
             val metaObject = JSONObject(metaString)
             val key = metaObject.getString("verkey")
 
-            val orgDetailPacked = Crypto.packMessage(
-                WalletManager.getWallet,
-                "[\"${publicKey ?: ""}\"]",
-                key,
-                orgData.toByteArray()
-            ).get()
+            val orgDetailPacked = PackingUtils.packMessage(didDocObj,key,orgData)
+//            val orgDetailPacked = Crypto.packMessage(
+//                WalletManager.getWallet,
+//                "[\"${publicKey ?: ""}\"]",
+//                key,
+//                orgData.toByteArray()
+//            ).get()
 
             val orgDetailTypedArray = object : RequestBody() {
                 override fun contentType(): MediaType? {

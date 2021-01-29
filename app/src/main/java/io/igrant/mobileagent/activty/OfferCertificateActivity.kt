@@ -28,6 +28,7 @@ import io.igrant.mobileagent.models.certificateOffer.CertificateOffer
 import io.igrant.mobileagent.models.certificateOffer.OfferAttach
 import io.igrant.mobileagent.models.certificateOffer.OfferData
 import io.igrant.mobileagent.models.certificateOffer.RequestOffer
+import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.credentialExchange.CredentialExchange
 import io.igrant.mobileagent.models.credentialExchange.CredentialRequest
 import io.igrant.mobileagent.models.credentialExchange.CredentialRequestMetadata
@@ -374,42 +375,45 @@ class OfferCertificateActivity : BaseActivity() {
 
             //get prover did
             val searchResponse = SearchUtils.searchWallet(
-                WalletRecordType.DID_KEY,
+                WalletRecordType.DID_DOC,
                 "{\n" +
                         "  \"did\":\"${connectionObject.theirDid}\"\n" +
                         "}"
             )
 
-            val packedMessage = Crypto.packMessage(
-                WalletManager.getWallet,
-                "[\"${searchResponse.records?.get(0)?.value ?: ""}\"]",
-                publicKey,
-                WalletManager.getGson.toJson(certificateOffer).toByteArray()
-            ).get()
+            if (searchResponse.totalCount?:0>0){
+                val didDoc = WalletManager.getGson.fromJson(searchResponse.records?.get(0)?.value,DidDoc::class.java)
+                val packedMessage = PackingUtils.packMessage(didDoc,publicKey,WalletManager.getGson.toJson(certificateOffer))
+                typedBytes = object : RequestBody() {
+                    override fun contentType(): MediaType? {
+                        return "application/ssi-agent-wire".toMediaTypeOrNull()
+                    }
 
-            typedBytes = object : RequestBody() {
-                override fun contentType(): MediaType? {
-                    return "application/ssi-agent-wire".toMediaTypeOrNull()
+                    @Throws(IOException::class)
+                    override fun writeTo(sink: BufferedSink) {
+                        sink.write(packedMessage)
+                    }
                 }
 
-                @Throws(IOException::class)
-                override fun writeTo(sink: BufferedSink) {
-                    sink.write(packedMessage)
-                }
+                serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?:""
             }
 
-            val connectionInvitaitonObject =
-                SearchUtils.searchWallet(
-                    WalletRecordType.CONNECTION_INVITATION,
-                    "{\n" +
-                            "  \"connection_id\":\"${resultObject.records?.get(0)?.id}\"\n" +
-                            "}"
-                )
+//            val packedMessage = Crypto.packMessage(
+//                WalletManager.getWallet,
+//                "[\"${searchResponse.records?.get(0)?.value ?: ""}\"]",
+//                publicKey,
+//                WalletManager.getGson.toJson(certificateOffer).toByteArray()
+//            ).get()
 
-            serviceEndPoint =
-                JSONObject(
-                    connectionInvitaitonObject.records?.get(0)?.value ?: ""
-                ).getString("serviceEndpoint")
+
+//            val connectionInvitaitonObject =
+//                SearchUtils.searchWallet(
+//                    WalletRecordType.CONNECTION_INVITATION,
+//                    "{\n" +
+//                            "  \"connection_id\":\"${resultObject.records?.get(0)?.id}\"\n" +
+//                            "}"
+//                )
+
 
             return null
         }
