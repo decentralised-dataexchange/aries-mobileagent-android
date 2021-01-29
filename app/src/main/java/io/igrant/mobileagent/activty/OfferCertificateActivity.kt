@@ -10,14 +10,15 @@ import android.view.View
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.snackbar.Snackbar
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.CertificateAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
-import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.indy.PoolManager
@@ -33,7 +34,10 @@ import io.igrant.mobileagent.models.credentialExchange.CredentialRequest
 import io.igrant.mobileagent.models.credentialExchange.CredentialRequestMetadata
 import io.igrant.mobileagent.models.credentialExchange.Thread
 import io.igrant.mobileagent.models.walletSearch.Record
-import io.igrant.mobileagent.utils.*
+import io.igrant.mobileagent.utils.CredentialExchangeStates
+import io.igrant.mobileagent.utils.MessageTypes
+import io.igrant.mobileagent.utils.SearchUtils
+import io.igrant.mobileagent.utils.WalletRecordType
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
@@ -62,7 +66,8 @@ class OfferCertificateActivity : BaseActivity() {
     private var record: Record? = null
 
     private lateinit var toolbar: Toolbar
-//    private lateinit var btReject: Button
+
+    //    private lateinit var btReject: Button
     private lateinit var btAccept: Button
     private lateinit var tvHead: TextView
     private lateinit var rvAttributes: RecyclerView
@@ -133,19 +138,26 @@ class OfferCertificateActivity : BaseActivity() {
                                 EventBus.getDefault()
                                     .post(ReceiveExchangeRequestEvent(mConnectionId))
 
-                                AlertDialog.Builder(this@OfferCertificateActivity)
-                                    .setMessage(
-                                        resources.getString(
-                                            R.string.txt_data_request_accepted_successfully
-                                        )
-                                    ) // Specifying a listener allows you to take an action before dismissing the dialog.
-                                    // The dialog is automatically dismissed when a dialog button is clicked.
-                                    .setPositiveButton(
-                                        android.R.string.ok,
-                                        DialogInterface.OnClickListener { dialog, which ->
-                                            onBackPressed()
-                                        }) // A null listener allows the button to dismiss the dialog and take no further action.
-                                    .show()
+                                Toast.makeText(
+                                    this@OfferCertificateActivity, resources.getString(
+                                        R.string.txt_data_request_accepted_successfully
+                                    ), Toast.LENGTH_SHORT
+                                ).show()
+
+//                                AlertDialog.Builder(this@OfferCertificateActivity)
+//                                    .setMessage(
+//                                        resources.getString(
+//                                            R.string.txt_data_request_accepted_successfully
+//                                        )
+//                                    ) // Specifying a listener allows you to take an action before dismissing the dialog.
+//                                    // The dialog is automatically dismissed when a dialog button is clicked.
+//                                    .setPositiveButton(
+//                                        android.R.string.ok,
+//                                        DialogInterface.OnClickListener { dialog, which ->
+                                onBackPressed()
+//                                        }) // A null listener allows the button to dismiss the dialog and take no further action.
+//                                    .show()
+
                             }
                         })
                 }

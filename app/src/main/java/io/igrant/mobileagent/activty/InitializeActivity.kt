@@ -618,7 +618,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 NotificationUtils.showNotification(
                     this,
                     TYPE_ISSUE_CREDENTIAL,
-                    "Received Exchange Request",
+                    resources.getString(R.string.txt_recieved_exchange_request),
                     "Received a new exchange request from the organisation ${connectionObject?.theirLabel ?: ""}"
                 )
 

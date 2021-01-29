@@ -102,13 +102,14 @@
 
     <string name="txt_about">Om</string>
     <string name="txt_privacy_policy">Integritetspolicy</string>
-    <string name="txt_terms_and_conditions">Villkor</string>
+    <string name="txt_terms_and_conditions">Användarvillkor </string>
     <string name="txt_aries_interoperatable_protocols">Aries interoperabilitetsprotokoll</string>
     <string name="txt_supported_protocols">Protokoll som stöds</string>
+    <string name="txt_received_offer_credential_desc">Mottagningsbevis från organisation.</string>
+    <string name="txt_received_offer">Mottagningsbevis</string>
 
-    <string name="txt_received_offer_credential_desc">Received offer credential from organisation.</string>
-    <string name="txt_received_offer">Received Offer Credential</string>
     <string name="txt_offer_credential_delete_confirmation">Do you want to remove the offer credential?</string>
     <string name="txt_data_request_accepted_successfully">Data offer accepted successfully.</string>
 
+    <string name="txt_recieved_exchange_request">Mottagen delningsförfrågan</string>
 </resources>
