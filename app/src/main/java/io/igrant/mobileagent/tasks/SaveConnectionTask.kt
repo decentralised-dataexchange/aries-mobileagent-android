@@ -104,20 +104,12 @@ class SaveConnectionTask(
         val queryFeaturePacked: ByteArray
 
         queryFeaturePacked =
-            if (invitation.routingKeys != null && invitation.routingKeys?.size ?: 0 > 0) {
-                PackingUtils.packMessage(
-                    "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
-                    WalletManager.getGson.toJson(invitation.routingKeys),
-                    key,
-                    queryFeatureData
-                )
-            } else {
-                PackingUtils.packMessage(
-                    "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
-                    key,
-                    queryFeatureData
-                )
-            }
+            PackingUtils.packMessage(
+                invitation,
+                key,
+                queryFeatureData
+            )
+
 //        val queryFeaturePacked = Crypto.packMessage(
 //            WalletManager.getWallet,
 //            "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
@@ -187,12 +179,13 @@ class SaveConnectionTask(
             DidDoc::class.java
         )
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"${didDocObj.publicKey!![0].publicKeyBase58}\"]",
-            connectedKey,
-            data.toByteArray()
-        ).get()
+        val packedMessage = PackingUtils.packMessage(didDocObj, connectedKey, data)
+//        val packedMessage = Crypto.packMessage(
+//            WalletManager.getWallet,
+//            "[\"${didDocObj.publicKey!![0].publicKeyBase58}\"]",
+//            connectedKey,
+//            data.toByteArray()
+//        ).get()
 
         typedBytes = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -269,12 +262,13 @@ class SaveConnectionTask(
 
         val connectionRequestData = WalletManager.getGson.toJson(connectionRequest)
 
-        val connectionRequestPackedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"${invitation.recipientKeys?.get(0)}\"]",
-            key,
-            connectionRequestData.toByteArray()
-        ).get()
+        val connectionRequestPackedMessage = PackingUtils.packMessage(invitation,key,connectionRequestData)
+//        val connectionRequestPackedMessage = Crypto.packMessage(
+//            WalletManager.getWallet,
+//            "[\"${invitation.recipientKeys?.get(0)}\"]",
+//            key,
+//            connectionRequestData.toByteArray()
+//        ).get()
 
         Log.d(TAG, "packed message: ${String(packedMessage)}")
 
