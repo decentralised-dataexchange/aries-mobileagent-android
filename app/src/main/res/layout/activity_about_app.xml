@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bgColor">
@@ -17,14 +18,25 @@
 
 
     <ImageView
-        android:id="@+id/ivMyData"
-        android:layout_width="160dp"
+        android:id="@+id/ivIgrantIcon"
+        android:layout_width="180dp"
         android:layout_height="90dp"
+        android:src="@drawable/igrant_icon"
+        app:layout_constraintBottom_toTopOf="@+id/ivMyData"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_chainStyle="packed" />
+
+    <ImageView
+        android:id="@+id/ivMyData"
+        android:layout_width="148dp"
+        android:layout_height="104dp"
         android:src="@drawable/my_data"
         app:layout_constraintBottom_toTopOf="@+id/tvPoweredBy"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ivIgrantIcon"
         app:layout_constraintVertical_chainStyle="packed" />
 
     <TextView
@@ -51,7 +63,8 @@
         app:layout_constraintBottom_toTopOf="@+id/tvVersion"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ivMyData" />
+        app:layout_constraintTop_toBottomOf="@+id/ivMyData"
+        android:visibility="gone"/>
 
 
     <TextView

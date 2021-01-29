@@ -167,10 +167,10 @@
         app:layout_constraintStart_toStartOf="parent" />
 
     <ImageView
-        android:layout_width="100dp"
+        android:layout_width="180dp"
         android:layout_height="70dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintBottom_toTopOf="@+id/tvPoweredBy"
-        android:src="@drawable/my_data"/>
+        android:src="@drawable/igrant_icon"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
