@@ -95,7 +95,7 @@
     <string name="txt_about">About</string>
     <string name="txt_privacy_policy">Privacy Policy</string>
     <string name="txt_terms_and_conditions">Terms Of Service</string>
-    <string name="txt_aries_interoperatable_protocols">Aries interoperability protocols</string>
+    <string name="txt_aries_interoperatable_protocols">Aries Interoperability Protocols</string>
     <string name="txt_supported_protocols">Supported protocols</string>
     <string name="txt_received_offer_credential_desc">Received offer credential from organisation.</string>
     <string name="txt_received_offer">Received Offer Credential</string>

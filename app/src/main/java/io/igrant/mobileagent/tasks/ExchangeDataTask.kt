@@ -140,7 +140,7 @@ class ExchangeDataTask(
             SearchUtils.searchWallet(
                 WalletRecordType.CONNECTION,
                 "{\n" +
-                        "  \"request_id\":\"${mConnectionId}\"\n" +
+                        "  \"request_id\":\"${mPresentationExchange?.connectionId}\"\n" +
                         "}"
             )
 

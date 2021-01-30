@@ -205,7 +205,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                     btAccept.isEnabled = false
 //                    btReject.isEnabled = false
                     if (mPresentationExchange != null) {
-                        exchangeData()
+                        exchangeData(UUID.randomUUID().toString())
                     } else {
                         sendProposal()
                     }
@@ -223,9 +223,10 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     }
 
     private fun sendProposal() {
+        val threadId = UUID.randomUUID().toString()
         var data = "{\n" +
                 "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/propose-presentation\",\n" +
-                "  \"@id\": \"${UUID.randomUUID()}\",\n" +
+                "  \"@id\": \"$threadId\",\n" +
                 "  \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
                 "    },\n" +
@@ -333,7 +334,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
 
                     val presentationExchange = PresentationExchange()
                     presentationExchange.threadId =
-                        JSONObject(message).getString("@id")
+                        JSONObject(message).getJSONObject("~thread").getString("thid")
                     presentationExchange.createdAt = "2020-11-25 12:17:53.491756Z"
                     presentationExchange.updatedAt = "2020-11-25 12:17:53.491756Z"
                     presentationExchange.connectionId = connectionObject?.requestId
@@ -374,12 +375,12 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                             isInsufficientData = true
                         }
                     }
-                    exchangeData()
+                    exchangeData(threadId)
                 }
             })
     }
 
-    private fun exchangeData() {
+    private fun exchangeData(threadId:String) {
         ExchangeDataTask(object : CommonHandler {
             override fun taskStarted() {
 
@@ -465,7 +466,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
         btAccept.isEnabled = false
 //        btReject.isEnabled = false
         if (mPresentationExchange != null) {
-            exchangeData()
+            exchangeData(UUID.randomUUID().toString())
         } else {
             sendProposal()
         }

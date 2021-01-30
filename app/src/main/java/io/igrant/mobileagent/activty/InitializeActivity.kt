@@ -533,23 +533,27 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
     }
 
     private fun updatePresentProofToAck(jsonObject: JSONObject) {
-        WalletRecord.delete(
-            WalletManager.getWallet,
-            MESSAGE_RECORDS,
-            JSONObject(jsonObject.getString("message")).getJSONObject("~thread").getString("thid")
-        ).get()
+        try {
+            WalletRecord.delete(
+                WalletManager.getWallet,
+                MESSAGE_RECORDS,
+                JSONObject(jsonObject.getString("message")).getJSONObject("~thread").getString("thid")
+            ).get()
 
-        val presentationExchange = SearchUtils.searchWallet(
-            WalletRecordType.PRESENTATION_EXCHANGE_V10,
-            "{\"thread_id\":\"${JSONObject(jsonObject.getString("message")).getJSONObject("~thread")
-                .getString("thid")}\"}"
-        )
+            val presentationExchange = SearchUtils.searchWallet(
+                WalletRecordType.PRESENTATION_EXCHANGE_V10,
+                "{\"thread_id\":\"${JSONObject(jsonObject.getString("message")).getJSONObject("~thread")
+                    .getString("thid")}\"}"
+            )
 //
-        WalletRecord.delete(
-            WalletManager.getWallet,
-            WalletRecordType.PRESENTATION_EXCHANGE_V10,
-            "${presentationExchange.records?.get(0)?.id}"
-        ).get()
+            WalletRecord.delete(
+                WalletManager.getWallet,
+                WalletRecordType.PRESENTATION_EXCHANGE_V10,
+                "${presentationExchange.records?.get(0)?.id}"
+            ).get()
+        } catch (e: Exception) {
+
+        }
     }
 
     private fun unPackRequestPresentation(jsonObject: JSONObject) {
