@@ -97,9 +97,7 @@
     <string name="txt_language_caps">SPRÅK</string>
     <string name="txt_ledger_network_caps">LEDGER-NÄTVERK</string>
     <string name="txt_data_added_success_desc">Data har framgångsrikt lagts till plånboken</string>
-
-    <string name="title_about_this_app">About this app</string>
-
+    <string name="title_about_this_app">Om denna app</string>
     <string name="txt_about">Om</string>
     <string name="txt_privacy_policy">Integritetspolicy</string>
     <string name="txt_terms_and_conditions">Användarvillkor </string>
@@ -107,9 +105,8 @@
     <string name="txt_supported_protocols">Protokoll som stöds</string>
     <string name="txt_received_offer_credential_desc">Mottagningsbevis från organisation.</string>
     <string name="txt_received_offer">Mottagningsbevis</string>
-
-    <string name="txt_offer_credential_delete_confirmation">Do you want to remove the offer credential?</string>
-    <string name="txt_data_request_accepted_successfully">Data offer accepted successfully.</string>
-
+    <string name="txt_offer_credential_delete_confirmation">Vill du ta bort erbjudandet?</string>
+    <string name="txt_data_request_accepted_successfully">Data erbjudandet accepteras framgångsrikt</string>
     <string name="txt_recieved_exchange_request">Mottagen delningsförfrågan</string>
+    <string name="txt_remove_organization">Ta bort organisationen</string>
 </resources>

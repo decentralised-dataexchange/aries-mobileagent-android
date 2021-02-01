@@ -166,7 +166,7 @@ class ExchangeDataActivity : BaseActivity() {
 
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
-        supportActionBar!!.title = resources.getString(R.string.txt_exchange_data)
+        supportActionBar!!.title = resources.getString(R.string.txt_data_agreement)
         supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }

@@ -102,4 +102,5 @@
     <string name="txt_offer_credential_delete_confirmation">Do you want to remove the offer credential?</string>
     <string name="txt_data_request_accepted_successfully">Data offer accepted successfully.</string>
     <string name="txt_recieved_exchange_request">Received Exchange Request</string>
+    <string name="txt_remove_organization">Remove Organization</string>
 </resources>
