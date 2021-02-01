@@ -657,31 +657,26 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         )
 
         val string = body.getString("sender_verkey")
-        val searchDid = SearchUtils.searchWallet(
+        val searchDid = WalletSearch.open(
+            WalletManager.getWallet,
             DID_KEY,
-            "{\"key\": \"${string}\"}"
-        )
-//            WalletSearch.open(
-//            WalletManager.getWallet,
-//            DID_KEY,
-//            "{\"key\": \"${string}\"}",
-//            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-//        ).get()
+            "{\"key\": \"${string}\"}",
+            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
+        ).get()
 
-//        val didResponse =
-//            WalletSearch.searchFetchNextRecords(WalletManager.getWallet, searchDid, 100).get()
+        val didResponse =
+            WalletSearch.searchFetchNextRecords(WalletManager.getWallet, searchDid, 100).get()
 
-//        Log.d(TAG, "searchDid: $didResponse")
-//        WalletManager.closeSearchHandle(searchDid)
+        Log.d(TAG, "searchDid: $didResponse")
+        WalletManager.closeSearchHandle(searchDid)
 
-//        val didData = JSONObject(didResponse).getJSONArray("records").get(0).toString()
-        if (searchDid.totalCount ?: 0 > 0) {
-            val didResult = gson.fromJson(searchDid.records?.get(0)?.value, DidResult::class.java)
+        if (JSONObject(didResponse).getInt("totalCount")>0){
+            val didData = JSONObject(didResponse).getJSONArray("records").get(0).toString()
 
-            val credentialExchangeSearch = SearchUtils.searchWallet(
-                CREDENTIAL_EXCHANGE_V10,
-                "{\"thread_id\": \"${issueCredential.thread?.thid ?: ""}\"}"
-            )
+            val didResult = gson.fromJson(didData, DidResult::class.java)
+
+        val credentialExchangeSearch = SearchUtils.searchWallet(CREDENTIAL_EXCHANGE_V10,
+            "{\"thread_id\": \"${issueCredential.thread?.thid ?: ""}\"}")
 
             if (credentialExchangeSearch.totalCount ?: 0 > 0) {
                 val credentialExchange =
@@ -708,28 +703,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 )
             }
         }
-//        val credentialExchangeSearch = WalletSearch.open(
-//            WalletManager.getWallet,
-//            CREDENTIAL_EXCHANGE_V10,
-//            "{\"thread_id\": \"${issueCredential.thread?.thid ?: ""}\"}",
-//            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-//        ).get()
-//
-//        val credentialExchangeResponse =
-//            WalletSearch.searchFetchNextRecords(
-//                WalletManager.getWallet,
-//                credentialExchangeSearch,
-//                100
-//            ).get()
-//
-//        Log.d(TAG, "credentialExchangeResult: $credentialExchangeResponse")
-//        WalletManager.closeSearchHandle(credentialExchangeSearch)
-
-
-//        val searchResponse = gson.fromJson(credentialExchangeResponse, SearchResponse::class.java)
-//        if (searchResponse.totalCount ?: 0 > 0) {
-//
-//        }
     }
 
     private fun sendAcknoledge(
@@ -1068,16 +1041,22 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
     }
 
     private fun searchDidKey(string: String, certificateOffer: CertificateOffer) {
-        val searchDid = SearchUtils.searchWallet(
+        val searchDid = WalletSearch.open(
+            WalletManager.getWallet,
             DID_KEY,
-            "{\"key\": \"${string}\"}"
-        )
+            "{\"key\": \"${string}\"}",
+            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
+        ).get()
 
-        if (searchDid.totalCount ?: 0 > 0) {
-            val didResult = WalletManager.getGson.fromJson(
-                searchDid.records?.get(0)?.value,
-                DidResult::class.java
-            )
+        val didResponse =
+            WalletSearch.searchFetchNextRecords(WalletManager.getWallet, searchDid, 100).get()
+
+        Log.d(TAG, "searchDid: $didResponse")
+        WalletManager.closeSearchHandle(searchDid)
+
+        if (JSONObject(didResponse).getInt("totalCount")>0){
+            val didData = JSONObject(didResponse).getJSONArray("records").get(0).toString()
+            val didResult = WalletManager.getGson.fromJson(didData, DidResult::class.java)
 
             val connectionResult = SearchUtils.searchWallet(
                 CONNECTION,
