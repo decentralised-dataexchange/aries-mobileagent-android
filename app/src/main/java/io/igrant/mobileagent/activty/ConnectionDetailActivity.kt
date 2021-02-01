@@ -32,10 +32,7 @@ import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.credentialExchange.RawCredential
 import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.models.walletSearch.Record
-import io.igrant.mobileagent.utils.MessageTypes
-import io.igrant.mobileagent.utils.SearchUtils
-import io.igrant.mobileagent.utils.TextUtils
-import io.igrant.mobileagent.utils.WalletRecordType
+import io.igrant.mobileagent.utils.*
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.DID_DOC
 import okhttp3.MediaType
@@ -70,6 +67,7 @@ class ConnectionDetailActivity : BaseActivity() {
     private lateinit var tvName: TextView
     private lateinit var tvLocation: TextView
     private lateinit var tvDescription: TextView
+    private lateinit var tvRemove: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -311,6 +309,7 @@ class ConnectionDetailActivity : BaseActivity() {
         tvName = findViewById(R.id.tvName)
         tvLocation = findViewById(R.id.tvLocation)
         tvDescription = findViewById(R.id.tvDescription)
+        tvRemove = findViewById(R.id.tvRemove)
     }
 
     private fun getIntentData() {
@@ -340,7 +339,10 @@ class ConnectionDetailActivity : BaseActivity() {
     }
 
     private fun initListener() {
-
+        tvRemove.setOnClickListener {
+            DeleteUtils.deleteConnection(mConnectionId)
+            finish()
+        }
     }
 
     private fun setUpAdapter() {

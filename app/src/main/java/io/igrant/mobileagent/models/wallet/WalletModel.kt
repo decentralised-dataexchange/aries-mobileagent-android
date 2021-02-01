@@ -3,11 +3,12 @@ package io.igrant.mobileagent.models.wallet
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 import io.igrant.mobileagent.models.MediatorConnectionObject
+import io.igrant.mobileagent.models.connection.Connection
 import io.igrant.mobileagent.models.credentialExchange.CredentialProposalDict
 import io.igrant.mobileagent.models.credentialExchange.RawCredential
 import java.io.Serializable
 
-class WalletModel:Serializable {
+class WalletModel : Serializable {
 
     @SerializedName("raw_credential")
     @Expose
@@ -24,5 +25,9 @@ class WalletModel:Serializable {
     @SerializedName("credential_proposal_dict")
     @Expose
     var credentialProposalDict: CredentialProposalDict? = null
+
+    @SerializedName("organization")
+    @Expose
+    var organization: Connection? = null
 
 }

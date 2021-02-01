@@ -136,7 +136,7 @@ class OfferCertificateActivity : BaseActivity() {
                                 )
                                 EventBus.getDefault().post(ReceiveOfferEvent(mConnectionId))
                                 EventBus.getDefault()
-                                    .post(ReceiveExchangeRequestEvent(mConnectionId))
+                                    .post(ReceiveExchangeRequestEvent())
 
                                 Toast.makeText(
                                     this@OfferCertificateActivity, resources.getString(
@@ -237,7 +237,7 @@ class OfferCertificateActivity : BaseActivity() {
                                 }
 
                                 EventBus.getDefault()
-                                    .post(ReceiveExchangeRequestEvent(mConnectionId))
+                                    .post(ReceiveExchangeRequestEvent())
 
                                 onBackPressed()
                             } catch (e: Exception) {

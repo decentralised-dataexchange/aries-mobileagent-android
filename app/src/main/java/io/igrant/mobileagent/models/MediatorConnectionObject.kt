@@ -82,6 +82,10 @@ class MediatorConnectionObject :Serializable{
     @Expose
     var theirImageUrl: String? = null
 
+    @SerializedName("location")
+    @Expose
+    var location: String? = ""
+
     @SerializedName("state")
     @Expose
     var state: String? = null

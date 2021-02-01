@@ -20,8 +20,11 @@ import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.agentConfig.Invitation
+import io.igrant.mobileagent.tasks.GetConnectionDetailTask
 import io.igrant.mobileagent.tasks.SaveConnectionTask
 import io.igrant.mobileagent.tasks.SaveDidDocTask
+import io.igrant.mobileagent.utils.SearchUtils
+import io.igrant.mobileagent.utils.WalletRecordType
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.greenrobot.eventbus.EventBus
@@ -224,6 +227,8 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
         btnConnect.isEnabled = true
         llSuccess.visibility = View.VISIBLE
         Handler(Looper.getMainLooper()).postDelayed({
+
+            GetConnectionDetailTask().execute(event.connectionId)
             onSuccessListener.onSuccess(proposal, event.connectionId ?: "")
             llSuccess.visibility = View.GONE
             dialog?.dismiss()

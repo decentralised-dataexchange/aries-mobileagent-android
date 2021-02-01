@@ -209,7 +209,7 @@ class ExchangeDataActivity : BaseActivity() {
                             }
 
                             EventBus.getDefault()
-                                .post(ReceiveExchangeRequestEvent(mConnectionId))
+                                .post(ReceiveExchangeRequestEvent())
 
                             onBackPressed()
                         }) // A null listener allows the button to dismiss the dialog and take no further action.
@@ -296,7 +296,7 @@ class ExchangeDataActivity : BaseActivity() {
                                         )
 
                                         EventBus.getDefault()
-                                            .post(ReceiveExchangeRequestEvent(mConnectionId))
+                                            .post(ReceiveExchangeRequestEvent())
 
                                         AlertDialog.Builder(this@ExchangeDataActivity)
                                             .setMessage(

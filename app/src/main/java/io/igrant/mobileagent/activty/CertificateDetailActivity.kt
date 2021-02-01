@@ -75,82 +75,82 @@ class CertificateDetailActivity : BaseActivity() {
     }
 
     private fun getConnectionDetail() {
-        val orgData =
-            "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"${wallet?.connection?.requestId ?: ""}\" , \"~transport\": {" +
-                    "\"return_route\": \"all\"}\n}"
-
-
-        val didDoc =
-            SearchUtils.searchWallet(
-                WalletRecordType.DID_DOC,
-                "{\"did\":\"${wallet?.connection?.theirDid}\"}"
-            )
-
-        if (didDoc.totalCount ?: 0 > 0) {
-            val didDocObj = WalletManager.getGson.fromJson(
-                didDoc.records?.get(0)?.value,
-                DidDoc::class.java
-            )
-
-            val serviceEndPoint = didDocObj.service?.get(0)?.serviceEndpoint ?: ""
-            val publicKey = didDocObj.publicKey?.get(0)?.publicKeyBase58
-
-            val metaString =
-                Did.getDidWithMeta(WalletManager.getWallet, wallet?.connection?.myDid).get()
-            val metaObject = JSONObject(metaString)
-            val key = metaObject.getString("verkey")
-
-            val orgDetailPacked = Crypto.packMessage(
-                WalletManager.getWallet,
-                "[\"${publicKey ?: ""}\"]",
-                key,
-                orgData.toByteArray()
-            ).get()
-
-            val orgDetailTypedArray = object : RequestBody() {
-                override fun contentType(): MediaType? {
-                    return "application/ssi-agent-wire".toMediaTypeOrNull()
-                }
-
-                @Throws(IOException::class)
-                override fun writeTo(sink: BufferedSink) {
-                    sink.write(orgDetailPacked)
-                }
-            }
-            ApiManager.api.getService()?.postData(serviceEndPoint, orgDetailTypedArray)
-                ?.enqueue(object :
-                    Callback<ConfigPostResponse> {
-                    override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
-
-                    }
-
-                    override fun onResponse(
-                        call: Call<ConfigPostResponse>,
-                        response: Response<ConfigPostResponse>
-                    ) {
-                        if (response.code() == 200 && response.body() != null) {
-                            val unpack =
-                                Crypto.unpackMessage(
-                                    WalletManager.getWallet,
-                                    WalletManager.getGson.toJson(response.body()).toString()
-                                        .toByteArray()
-                                ).get()
-
-                            Log.d(
-                                "milan",
-                                "onResponse: ${JSONObject(String(unpack)).getString("message")}"
-                            )
-                            val connectionData = WalletManager.getGson.fromJson(
-                                JSONObject(String(unpack)).getString("message"),
-                                Connection::class.java
-                            )
-                            initDataValues(connectionData)
-                        }
-
-                    }
-
-                })
-        }
+//        val orgData =
+//            "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"${wallet?.connection?.requestId ?: ""}\" , \"~transport\": {" +
+//                    "\"return_route\": \"all\"}\n}"
+//
+//
+//        val didDoc =
+//            SearchUtils.searchWallet(
+//                WalletRecordType.DID_DOC,
+//                "{\"did\":\"${wallet?.connection?.theirDid}\"}"
+//            )
+//
+//        if (didDoc.totalCount ?: 0 > 0) {
+//            val didDocObj = WalletManager.getGson.fromJson(
+//                didDoc.records?.get(0)?.value,
+//                DidDoc::class.java
+//            )
+//
+//            val serviceEndPoint = didDocObj.service?.get(0)?.serviceEndpoint ?: ""
+//            val publicKey = didDocObj.publicKey?.get(0)?.publicKeyBase58
+//
+//            val metaString =
+//                Did.getDidWithMeta(WalletManager.getWallet, wallet?.connection?.myDid).get()
+//            val metaObject = JSONObject(metaString)
+//            val key = metaObject.getString("verkey")
+//
+//            val orgDetailPacked = Crypto.packMessage(
+//                WalletManager.getWallet,
+//                "[\"${publicKey ?: ""}\"]",
+//                key,
+//                orgData.toByteArray()
+//            ).get()
+//
+//            val orgDetailTypedArray = object : RequestBody() {
+//                override fun contentType(): MediaType? {
+//                    return "application/ssi-agent-wire".toMediaTypeOrNull()
+//                }
+//
+//                @Throws(IOException::class)
+//                override fun writeTo(sink: BufferedSink) {
+//                    sink.write(orgDetailPacked)
+//                }
+//            }
+//            ApiManager.api.getService()?.postData(serviceEndPoint, orgDetailTypedArray)
+//                ?.enqueue(object :
+//                    Callback<ConfigPostResponse> {
+//                    override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
+//
+//                    }
+//
+//                    override fun onResponse(
+//                        call: Call<ConfigPostResponse>,
+//                        response: Response<ConfigPostResponse>
+//                    ) {
+//                        if (response.code() == 200 && response.body() != null) {
+//                            val unpack =
+//                                Crypto.unpackMessage(
+//                                    WalletManager.getWallet,
+//                                    WalletManager.getGson.toJson(response.body()).toString()
+//                                        .toByteArray()
+//                                ).get()
+//
+//                            Log.d(
+//                                "milan",
+//                                "onResponse: ${JSONObject(String(unpack)).getString("message")}"
+//                            )
+//                            val connectionData = WalletManager.getGson.fromJson(
+//                                JSONObject(String(unpack)).getString("message"),
+//                                Connection::class.java
+//                            )
+                            initDataValues(wallet?.organization)
+//                        }
+//
+//                    }
+//
+//                })
+//        }
     }
 
     private fun initDataValues(connectionData: Connection?) {

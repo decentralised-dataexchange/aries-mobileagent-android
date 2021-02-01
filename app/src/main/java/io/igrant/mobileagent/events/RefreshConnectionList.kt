@@ -1,3 +1,3 @@
 package io.igrant.mobileagent.events
 
-class ReceiveExchangeRequestEvent()
+class RefreshConnectionList()

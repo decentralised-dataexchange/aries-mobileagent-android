@@ -42,10 +42,7 @@ import io.igrant.mobileagent.models.tagJsons.UpdateInvitationKey
 import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.models.walletSearch.SearchResponse
-import io.igrant.mobileagent.tasks.LoadLibIndyTask
-import io.igrant.mobileagent.tasks.OpenWalletTask
-import io.igrant.mobileagent.tasks.PoolTask
-import io.igrant.mobileagent.tasks.WalletSearchTask
+import io.igrant.mobileagent.tasks.*
 import io.igrant.mobileagent.utils.*
 import io.igrant.mobileagent.utils.ConnectionStates.Companion.CONNECTION_ACTIVE
 import io.igrant.mobileagent.utils.ConnectionStates.Companion.CONNECTION_INVITATION
@@ -591,7 +588,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
             val id = UUID.randomUUID().toString()
             val tag =
-                "{\"thread_id\": \"${JSONObject(jsonObject.getString("message")).getString("@id")}\"}"
+                "{\"thread_id\": \"${JSONObject(jsonObject.getString("message")).getString("@id")}\"," +
+                        "\"connection_id\":\"${connectionObject?.requestId}\"}"
             WalletRecord.add(
                 WalletManager.getWallet,
                 WalletRecordType.PRESENTATION_EXCHANGE_V10,
@@ -627,7 +625,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 )
 
                 EventBus.getDefault()
-                    .post(ReceiveExchangeRequestEvent(connectionObject?.requestId ?: ""))
+                    .post(ReceiveExchangeRequestEvent())
 
                 setNotificationIcon()
             } catch (e: Exception) {
@@ -896,6 +894,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             EventBus.getDefault().post(ReceiveCertificateEvent())
 
             setNotificationIcon()
+
+            SaveConnectionDetailInCertificateTask().execute(connection?.requestId ?: "",credentialId)
         }
 
     }
@@ -1100,7 +1100,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 //                    "Received a new offer credential of the organisation ${connecction.theirLabel}"
                 )
                 EventBus.getDefault()
-                    .post(ReceiveExchangeRequestEvent(connecction?.requestId ?: ""))
+                    .post(ReceiveExchangeRequestEvent())
                 EventBus.getDefault().post(ReceiveOfferEvent(connecction.requestId ?: ""))
 
                 setNotificationIcon()
@@ -1148,7 +1148,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             CREDENTIAL_EXCHANGE_V10,
             uudi,
             WalletManager.getGson.toJson(credentialExchange).toString(),
-            "{\"thread_id\": \"${certificateOffer.id}\"}"
+            "{\"thread_id\": \"${certificateOffer.id}\"," +
+                    "\"connection_id\":\"${connectionRecord?.tags?.get("request_id")}\"}"
         )
     }
 

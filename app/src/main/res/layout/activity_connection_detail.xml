@@ -150,6 +150,19 @@
                         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                         tools:listitem="@layout/item_connection_messaages" />
                 </LinearLayout>
+
+                <TextView
+                    android:id="@+id/tvRemove"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/primary_background"
+                    android:padding="10dp"
+                    android:text="@string/txt_remove_data_card"
+                    android:textSize="@dimen/text_size_medium"
+                    android:textColor="@color/red"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"/>
+
             </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>

@@ -136,6 +136,6 @@
         android:background="#00000000"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:theme="@style/ToolBarStyle"
         app:titleTextColor="@color/Black" />
 </androidx.constraintlayout.widget.ConstraintLayout>

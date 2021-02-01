@@ -26,13 +26,19 @@ import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.ConnectionListAdapter
 import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
+import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
+import io.igrant.mobileagent.events.RefreshConnectionList
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionClickListener
 import io.igrant.mobileagent.models.agentConfig.Invitation
 import io.igrant.mobileagent.qrcode.QrCodeActivity
 import io.igrant.mobileagent.utils.ConnectionUtils
+import io.igrant.mobileagent.utils.DeleteUtils
 import io.igrant.mobileagent.utils.PermissionUtils
 import io.igrant.mobileagent.utils.WalletRecordType
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import org.hyperledger.indy.sdk.non_secrets.WalletSearch
 import org.json.JSONArray
 import org.json.JSONObject
@@ -65,6 +71,10 @@ class ConnectionListActivity : BaseActivity(),
         setUpToolbar()
         initListener()
         getConnectionList()
+        try {
+            EventBus.getDefault().register(this)
+        } catch (e: Exception) {
+        }
     }
 
     private fun setUpToolbar() {
@@ -204,6 +214,8 @@ class ConnectionListActivity : BaseActivity(),
                         Intent(this@ConnectionListActivity, ConnectionDetailActivity::class.java)
                     intent.putExtra(ConnectionDetailActivity.EXTRA_CONNECTION_DATA, connection)
                     startActivity(intent)
+
+//                    DeleteUtils.deleteConnection(connection)
                 }
             })
         rvConnections.layoutManager = GridLayoutManager(this, 3)
@@ -287,4 +299,18 @@ class ConnectionListActivity : BaseActivity(),
     override fun onSuccess(proposal: String, connectionId: String) {
         getConnectionList()
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            EventBus.getDefault().unregister(this)
+        } catch (e: Exception) {
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun refreshList(event: RefreshConnectionList) {
+        getConnectionList()
+    }
+
 }
