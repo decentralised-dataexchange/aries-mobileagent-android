@@ -19,7 +19,7 @@
             android:id="@+id/cvLogo"
             android:layout_width="70dp"
             android:layout_height="70dp"
-            app:cardBackgroundColor="@color/colorAccent"
+            app:cardBackgroundColor="@color/white"
             app:cardCornerRadius="70dp"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">

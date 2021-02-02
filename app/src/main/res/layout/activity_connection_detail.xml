@@ -4,33 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bgColor">
+    android:background="@color/bgColor"
+    android:animateLayoutChanges="true">
 
-    <LinearLayout
-        android:id="@+id/llErrorMessage"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/white"
-        android:gravity="center"
-        android:layout_marginTop="150dp"
-        android:orientation="vertical"
-        android:visibility="gone">
 
-        <ImageView
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:src="@drawable/ic_no_data" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:padding="20dp"
-            android:textColor="@color/textColor"
-            android:text="@string/txt_no_data_avaialable"
-            android:textSize="@dimen/text_size_normal" />
-
-    </LinearLayout>
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -63,7 +40,7 @@
                     android:id="@+id/cvLogo"
                     android:layout_width="80dp"
                     android:layout_height="80dp"
-                    app:cardBackgroundColor="@color/colorAccent"
+                    app:cardBackgroundColor="@color/white"
                     app:cardCornerRadius="60dp">
 
                     <ImageView
@@ -137,6 +114,32 @@
                     android:visibility="gone"/>
 
                 <LinearLayout
+                    android:id="@+id/llErrorMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/bgColor"
+                    android:gravity="center"
+                    android:padding="50dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:src="@drawable/ic_no_data" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:padding="20dp"
+                        android:textColor="@color/textColor"
+                        android:text="@string/txt_no_data_avaialable"
+                        android:textSize="@dimen/text_size_normal" />
+
+                </LinearLayout>
+
+                <LinearLayout
                     android:id="@+id/llUsagePurposes"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
@@ -150,6 +153,7 @@
                         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                         tools:listitem="@layout/item_connection_messaages" />
                 </LinearLayout>
+
 
                 <TextView
                     android:id="@+id/tvRemove"

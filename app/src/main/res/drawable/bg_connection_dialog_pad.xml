@@ -4,6 +4,6 @@
 <inset
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/bg_connection_dailog"
-    android:insetRight="30dp"
-    android:insetLeft="30dp">
+    android:insetRight="60dp"
+    android:insetLeft="60dp">
 </inset>
