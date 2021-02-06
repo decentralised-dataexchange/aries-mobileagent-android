@@ -25,4 +25,8 @@ class UpdateInvitationKey(requestId:String?, myDid:String?, invitationKeys: Stri
     @Expose
     var recipientKey: String? = recipientKeys
 
+    @SerializedName("orgId")
+    @Expose
+    var orgId: String? = ""
+
 }

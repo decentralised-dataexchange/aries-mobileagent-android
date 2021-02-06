@@ -24,7 +24,6 @@ import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EX
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_PROPOSAL
 import io.igrant.mobileagent.activty.RequestActivity
 import io.igrant.mobileagent.adapter.WalletCertificatesAdapter
-import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
 import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.indy.WalletManager

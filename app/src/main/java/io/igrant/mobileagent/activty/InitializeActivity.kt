@@ -8,6 +8,7 @@ import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -517,27 +518,31 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             "{\"recipient_key\":\"$recipientVerKey\"}"
         )
 
-        val mediatorConnectionObject: MediatorConnectionObject =
-            WalletManager.getGson.fromJson(
-                connectionSearch.records?.get(0)?.value,
-                MediatorConnectionObject::class.java
+        if (connectionSearch.totalCount?:0>0) {
+            val mediatorConnectionObject: MediatorConnectionObject =
+                WalletManager.getGson.fromJson(
+                    connectionSearch.records?.get(0)?.value,
+                    MediatorConnectionObject::class.java
+                )
+
+            mediatorConnectionObject.state = CONNECTION_ACTIVE
+
+            val connectionUuid =
+                connectionSearch.records?.get(0)?.id
+
+            val value = WalletManager.getGson.toJson(mediatorConnectionObject)
+
+            WalletRecord.updateValue(
+                WalletManager.getWallet,
+                CONNECTION,
+                connectionUuid,
+                value
             )
 
-        mediatorConnectionObject.state = CONNECTION_ACTIVE
-
-        val connectionUuid =
-            connectionSearch.records?.get(0)?.id
-
-        val value = WalletManager.getGson.toJson(mediatorConnectionObject)
-
-        WalletRecord.updateValue(
-            WalletManager.getWallet,
-            CONNECTION,
-            connectionUuid,
-            value
-        )
-
-        EventBus.getDefault().post(ConnectionSuccessEvent(connectionUuid ?: ""))
+            EventBus.getDefault().post(ConnectionSuccessEvent(connectionUuid ?: ""))
+        }else{
+            Toast.makeText(this,resources.getString(R.string.err_unexpected),Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun updatePresentProofToAck(jsonObject: JSONObject) {

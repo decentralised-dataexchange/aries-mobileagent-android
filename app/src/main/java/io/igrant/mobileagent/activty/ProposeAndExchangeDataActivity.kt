@@ -192,10 +192,6 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     }
 
     private fun initListener() {
-//        btReject.setOnClickListener {
-//            onBackPressed()
-//        }
-
         btAccept.setOnClickListener {
             if (!isInsufficientData) {
                 val connection =
@@ -470,6 +466,21 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
             exchangeData(UUID.randomUUID().toString())
         } else {
             sendProposal()
+        }
+    }
+
+    override fun onExistingConnection(connectionId: String) {
+        val connectionList = SearchUtils.searchWallet(WalletRecordType.CONNECTION,"{\"request_id\":\"$connectionId\"}")
+
+        if (connectionList.totalCount?:0>0){
+            llProgressBar.visibility = View.VISIBLE
+            btAccept.isEnabled = false
+//                    btReject.isEnabled = false
+            if (mPresentationExchange != null) {
+                exchangeData(UUID.randomUUID().toString())
+            } else {
+                sendProposal()
+            }
         }
     }
 }

@@ -7,8 +7,7 @@ interface CommonHandler {
     fun onExchangeDataComplete(serviceEndPoint: String, typedBytes: RequestBody) {}
     fun onSaveConnection(
         typedBytes: RequestBody,
-        connectionRequest: RequestBody,
-        queryFeaturePackedBytes: RequestBody
+        connectionRequest: RequestBody
     ){
     }
     fun onSaveDidComplete(typedBytes:RequestBody,serviceEndPoint:String){
