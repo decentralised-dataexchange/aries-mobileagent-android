@@ -340,8 +340,6 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
                             )
 
                             onSuccessListener.onExistingConnection(connectionObject.requestId ?: "")
-
-
                         }
                         dismiss()
                     }

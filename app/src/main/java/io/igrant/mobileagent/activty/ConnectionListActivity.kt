@@ -13,7 +13,6 @@ import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Base64
-import android.util.Log
 import android.view.MenuItem
 import android.view.View
 import android.widget.EditText
@@ -25,15 +24,15 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.ConnectionListAdapter
+import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
-import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.events.RefreshConnectionList
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionClickListener
 import io.igrant.mobileagent.models.agentConfig.Invitation
+import io.igrant.mobileagent.models.qr.QrDecode
 import io.igrant.mobileagent.qrcode.QrCodeActivity
 import io.igrant.mobileagent.utils.ConnectionUtils
-import io.igrant.mobileagent.utils.DeleteUtils
 import io.igrant.mobileagent.utils.PermissionUtils
 import io.igrant.mobileagent.utils.WalletRecordType
 import org.greenrobot.eventbus.EventBus
@@ -42,6 +41,9 @@ import org.greenrobot.eventbus.ThreadMode
 import org.hyperledger.indy.sdk.non_secrets.WalletSearch
 import org.json.JSONArray
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 
 class ConnectionListActivity : BaseActivity(),
@@ -96,22 +98,6 @@ class ConnectionListActivity : BaseActivity(),
                 onBackPressed()
                 true
             }
-//            R.id.action_new -> {
-//                if (PermissionUtils.hasPermissions(
-//                        this,
-//                        true,
-//                        PICK_IMAGE_REQUEST,
-//                        PERMISSIONS
-//                    )
-//                ) {
-//                    val i = Intent(this, QrCodeActivity::class.java)
-//                    startActivityForResult(
-//                        i,
-//                        REQUEST_CODE_SCAN_INVITATION
-//                    )
-//                }
-//                true
-//            }
             else -> super.onOptionsItemSelected(item)
         }
     }
@@ -129,11 +115,39 @@ class ConnectionListActivity : BaseActivity(),
             if (v != "") {
                 saveConnection(v)
             } else {
-                Toast.makeText(
-                    this,
-                    resources.getString(R.string.err_unexpected),
-                    Toast.LENGTH_SHORT
-                ).show()
+
+                ApiManager.api.getService()?.extractUrl(uri.toString())?.enqueue(object :
+                    Callback<QrDecode> {
+                    override fun onFailure(call: Call<QrDecode>, t: Throwable) {
+                        Toast.makeText(
+                            this@ConnectionListActivity,
+                            resources.getString(R.string.err_unexpected),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                    override fun onResponse(call: Call<QrDecode>, response: Response<QrDecode>) {
+                        if (response.code() == 200 && response.body() != null) {
+                            if (response.body()!!.invitationUrl != null) {
+                                val uri: Uri = try {
+                                    Uri.parse(response.body()!!.invitationUrl)
+                                } catch (e: Exception) {
+                                    Uri.parse("igrant.io")
+                                }
+                                val v: String = uri.getQueryParameter("c_i") ?: ""
+                                if (v != "") {
+                                    saveConnection(v)
+                                } else {
+                                    Toast.makeText(
+                                        this@ConnectionListActivity,
+                                        resources.getString(R.string.err_unexpected),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        }
+                    }
+                })
             }
         }
         super.onActivityResult(requestCode, resultCode, data)

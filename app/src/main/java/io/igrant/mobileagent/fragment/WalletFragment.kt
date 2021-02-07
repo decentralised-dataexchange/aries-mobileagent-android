@@ -5,8 +5,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Handler
-import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Base64
@@ -22,17 +20,16 @@ import io.igrant.mobileagent.activty.ConnectionListActivity
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_INVITATION
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_PROPOSAL
-import io.igrant.mobileagent.activty.RequestActivity
 import io.igrant.mobileagent.adapter.WalletCertificatesAdapter
+import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.events.ReceiveCertificateEvent
-import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.WalletListener
 import io.igrant.mobileagent.models.agentConfig.Invitation
+import io.igrant.mobileagent.models.qr.QrDecode
 import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.qrcode.QrCodeActivity
-import io.igrant.mobileagent.utils.ConnectionUtils
 import io.igrant.mobileagent.utils.PermissionUtils
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.WALLET
@@ -43,6 +40,9 @@ import org.greenrobot.eventbus.ThreadMode
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 class WalletFragment : BaseFragment() {
 
@@ -50,7 +50,8 @@ class WalletFragment : BaseFragment() {
     lateinit var etSearchWallet: EditText
     lateinit var rvCertificates: RecyclerView
     lateinit var llErrorMessage: LinearLayout
-    lateinit var ivAdd:ImageView
+    lateinit var ivAdd: ImageView
+    lateinit var llProgressBar: LinearLayout
 
     lateinit var walletCertificateAdapter: WalletCertificatesAdapter
 
@@ -66,8 +67,6 @@ class WalletFragment : BaseFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
-
         initViews(view)
         initListener()
         setUpCertificateList()
@@ -133,8 +132,10 @@ class WalletFragment : BaseFragment() {
 
     private fun initListener() {
         ivAdd.setOnClickListener {
-            val intent = Intent(context,
-                ConnectionListActivity::class.java)
+            val intent = Intent(
+                context,
+                ConnectionListActivity::class.java
+            )
             startActivity(intent)
         }
 
@@ -150,7 +151,7 @@ class WalletFragment : BaseFragment() {
                     i,
                     REQUEST_CODE_SCAN_INVITATION
                 )
-            }else{
+            } else {
                 requestPermissions(PERMISSIONS, PICK_IMAGE_REQUEST)
             }
         }
@@ -189,8 +190,13 @@ class WalletFragment : BaseFragment() {
             if (data == null) return
 
             try {
-                val uri: Uri =
+
+                val uri: Uri = try {
                     Uri.parse(data.getStringExtra("com.blikoon.qrcodescanner.got_qr_scan_relult"))
+                } catch (e: Exception) {
+                    Uri.parse("igrant.io")
+                }
+
                 val v: String = uri.getQueryParameter("qr_p") ?: ""
                 if (v != "") {
                     val json =
@@ -213,11 +219,71 @@ class WalletFragment : BaseFragment() {
                         ).show()
                     }
                 } else {
-                    Toast.makeText(
-                        context,
-                        resources.getString(R.string.err_unexpected),
-                        Toast.LENGTH_SHORT
-                    ).show()
+
+                    llProgressBar.visibility = View.VISIBLE
+
+                    ApiManager.api.getService()?.extractUrl(uri.toString())?.enqueue(object :
+                        Callback<QrDecode> {
+                        override fun onFailure(call: Call<QrDecode>, t: Throwable) {
+                            llProgressBar.visibility = View.GONE
+                            Toast.makeText(
+                                context,
+                                resources.getString(R.string.err_unexpected),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+
+                        override fun onResponse(
+                            call: Call<QrDecode>,
+                            response: Response<QrDecode>
+                        ) {
+                            llProgressBar.visibility = View.GONE
+                            if (response.code() == 200 && response.body() != null) {
+                                if (response.body()!!.dataExchangeUrl != null) {
+                                    val uri: Uri = try {
+                                        Uri.parse(response.body()!!.dataExchangeUrl)
+                                    } catch (e: Exception) {
+                                        Uri.parse("igrant.io")
+                                    }
+                                    val v: String = uri.getQueryParameter("qr_p") ?: ""
+                                    if (v != "") {
+                                        val json =
+                                            Base64.decode(
+                                                v,
+                                                Base64.URL_SAFE
+                                            ).toString(charset("UTF-8"))
+                                        val data = JSONObject(json)
+                                        if (data.getString("invitation_url") != "") {
+                                            val invitation: String =
+                                                Uri.parse(data.getString("invitation_url"))
+                                                    .getQueryParameter("c_i")
+                                                    ?: ""
+                                            val proofRequest = data.getJSONObject("proof_request")
+                                            saveConnectionAndExchangeData(invitation, proofRequest)
+                                        } else {
+                                            Toast.makeText(
+                                                context,
+                                                resources.getString(R.string.err_unexpected),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            resources.getString(R.string.err_unexpected),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                }
+                            }
+                        }
+                    })
+
+//                    Toast.makeText(
+//                        context,
+//                        resources.getString(R.string.err_unexpected),
+//                        Toast.LENGTH_SHORT
+//                    ).show()
                 }
             } catch (e: Exception) {
                 Toast.makeText(
@@ -289,6 +355,7 @@ class WalletFragment : BaseFragment() {
         rvCertificates = view.findViewById(R.id.rvCertificates)
         llErrorMessage = view.findViewById(R.id.llErrorMessage)
         ivAdd = view.findViewById(R.id.ivAdd)
+        llProgressBar = view.findViewById(R.id.llProgressBar)
     }
 
     companion object {
