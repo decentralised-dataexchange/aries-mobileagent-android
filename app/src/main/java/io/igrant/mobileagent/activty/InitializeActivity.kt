@@ -1807,7 +1807,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
     ): MediatorConnectionObject {
         val connectionObject = MediatorConnectionObject()
         connectionObject.theirLabel = invitation?.label ?: ""
-        connectionObject.theirImageUrl = invitation?.imageUrl ?: ""
+        connectionObject.theirImageUrl = invitation?.image_url ?:invitation?.imageUrl ?: ""
         connectionObject.theirDid = ""
         connectionObject.inboxId = ""
         connectionObject.inboxKey = ""

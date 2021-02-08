@@ -90,9 +90,10 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
             )
         )
         tvName.text = invitation.label ?: "Organisation"
+
         Glide
             .with(ivLogo.context)
-            .load(invitation.imageUrl)
+            .load(invitation?.image_url ?:invitation?.imageUrl ?: "")
             .centerCrop()
             .placeholder(R.drawable.images)
             .into(ivLogo)
