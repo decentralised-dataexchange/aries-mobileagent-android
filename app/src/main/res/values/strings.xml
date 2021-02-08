@@ -48,9 +48,7 @@
     <string name="txt_loading_indy_library">Loading Indy Library...</string>
     <string name="txt_exchange_data">Exchange data</string>
     <string name="txt_add_connection">Add connection</string>
-    <string name="txt_search_wallet">Search wallet...</string>
     <string name="txt_search">Search...</string>
-    <string name="txt_search_connections">Search organisations...</string>
     <string name="txt_creating_pool">Configuring pool...</string>
     <string name="txt_finishing">Finishing...</string>
     <string name="txt_creating_wallet">Configuring wallet...</string>

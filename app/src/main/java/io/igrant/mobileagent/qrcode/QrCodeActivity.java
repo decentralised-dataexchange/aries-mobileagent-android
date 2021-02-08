@@ -34,6 +34,7 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
 import io.igrant.mobileagent.R;
+import io.igrant.mobileagent.activty.BaseActivity;
 import io.igrant.mobileagent.qrcode.camera.CameraManager;
 import io.igrant.mobileagent.qrcode.decode.CaptureActivityHandler;
 import io.igrant.mobileagent.qrcode.decode.DecodeImageCallback;
@@ -42,7 +43,7 @@ import io.igrant.mobileagent.qrcode.decode.DecodeManager;
 import io.igrant.mobileagent.qrcode.decode.InactivityTimer;
 import io.igrant.mobileagent.qrcode.view.QrCodeFinderView;
 
-public class QrCodeActivity extends Activity implements Callback, OnClickListener {
+public class QrCodeActivity extends BaseActivity implements Callback, OnClickListener {
 
     private static final int REQUEST_SYSTEM_PICTURE = 0;
     private static final int REQUEST_PICTURE = 1;
@@ -308,13 +309,12 @@ public class QrCodeActivity extends Activity implements Callback, OnClickListene
 
     @Override
     public void onClick(View v) {
-        if(v.getId() == R.id.qr_code_iv_flash_light)
-        {
+        if (v.getId() == R.id.qr_code_iv_flash_light) {
             if (mNeedFlashLightOpen) {
-                    turnFlashlightOn();
-                } else {
-                    turnFlashLightOff();
-                }
+                turnFlashlightOn();
+            } else {
+                turnFlashLightOff();
+            }
 
         }
 //        else if(v.getId() == R.id.qr_code_header_black_pic)
@@ -360,10 +360,10 @@ public class QrCodeActivity extends Activity implements Callback, OnClickListene
             });
         } else {
             //Got result from scanning QR Code with users camera
-            Log.d(LOGTAG,"Got scan result from user loaded image :"+resultString);
+            Log.d(LOGTAG, "Got scan result from user loaded image :" + resultString);
             Intent data = new Intent();
-            data.putExtra(GOT_RESULT,resultString);
-            setResult(Activity.RESULT_OK,data);
+            data.putExtra(GOT_RESULT, resultString);
+            setResult(Activity.RESULT_OK, data);
             finish();
 
         }
@@ -381,12 +381,12 @@ public class QrCodeActivity extends Activity implements Callback, OnClickListene
             case REQUEST_SYSTEM_PICTURE:
                 Uri uri = data.getData();
                 String imgPath = getPathFromUri(uri);
-                if (imgPath!=null && !TextUtils.isEmpty(imgPath) &&null != mQrCodeExecutor)
-                {
+                if (imgPath != null && !TextUtils.isEmpty(imgPath) && null != mQrCodeExecutor) {
                     mQrCodeExecutor.execute(new DecodeImageThread(imgPath, mDecodeImageCallback));
                 }
                 break;
         }
+        super.onActivityResult(requestCode, resultCode, data);
     }
 
     public String getPathFromUri(Uri uri) {
@@ -409,19 +409,19 @@ public class QrCodeActivity extends Activity implements Callback, OnClickListene
         @Override
         public void decodeSucceed(Result result) {
             //Got scan result from scaning an image loaded by the user
-            Log.d(LOGTAG,"Decoded the image successfully :"+ result.getText());
+            Log.d(LOGTAG, "Decoded the image successfully :" + result.getText());
             Intent data = new Intent();
-            data.putExtra(GOT_RESULT,result.getText());
-            setResult(Activity.RESULT_OK,data);
+            data.putExtra(GOT_RESULT, result.getText());
+            setResult(Activity.RESULT_OK, data);
             finish();
         }
 
         @Override
         public void decodeFail(int type, String reason) {
-            Log.d(LOGTAG,"Something went wrong decoding the image :"+ reason);
+            Log.d(LOGTAG, "Something went wrong decoding the image :" + reason);
             Intent data = new Intent();
-            data.putExtra(ERROR_DECODING_IMAGE,reason);
-            setResult(Activity.RESULT_CANCELED,data);
+            data.putExtra(ERROR_DECODING_IMAGE, reason);
+            setResult(Activity.RESULT_CANCELED, data);
             finish();
         }
     };

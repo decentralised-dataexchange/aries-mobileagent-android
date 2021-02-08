@@ -50,9 +50,7 @@
     <string name="txt_loading_indy_library">Laddar Indy-biblioteket...</string>
     <string name="txt_exchange_data">Dela data</string>
     <string name="txt_add_connection">Lägg till kontakt</string>
-    <string name="txt_search_wallet">Sök i plånbok...</string>
     <string name="txt_search">Sök...</string>
-    <string name="txt_search_connections">Sök organisation...</string>
     <string name="txt_creating_pool">Konfigureringspool...</string>
     <string name="txt_finishing">Slutför...</string>
     <string name="txt_creating_wallet">Konfigurerar plånbok...</string>

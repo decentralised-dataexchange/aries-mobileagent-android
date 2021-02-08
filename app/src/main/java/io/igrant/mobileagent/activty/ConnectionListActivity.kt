@@ -176,7 +176,7 @@ class ConnectionListActivity : BaseActivity(),
                 Handler(Looper.getMainLooper()).postDelayed({
                     val connectionSuccessDialogFragment: ConnectionProgressDailogFragment =
                         ConnectionProgressDailogFragment.newInstance(
-                            "${invitation.label ?: ""} has invited you to connect",
+                            false,
                             invitation,
                             ""
                         )
@@ -310,7 +310,7 @@ class ConnectionListActivity : BaseActivity(),
         ivAdd = findViewById(R.id.ivAdd)
     }
 
-    override fun onSuccess(proposal: String, connectionId: String) {
+    override fun onSuccess(proposal: String, orgId: String) {
         getConnectionList()
     }
 

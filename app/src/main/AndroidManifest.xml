@@ -28,7 +28,8 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".qrcode.QrCodeActivity"/>
+        <activity android:name=".qrcode.QrCodeActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
 
         <activity android:name=".activty.OfferCertificateActivity"
             android:theme="@style/AppTheme.NoActionBar"/>

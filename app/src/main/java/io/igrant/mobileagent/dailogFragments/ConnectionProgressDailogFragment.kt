@@ -47,6 +47,7 @@ import java.util.*
 
 class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
+    private var isFromExchange: Boolean = false
     private var requestId: String? = ""
     private lateinit var invitation: Invitation
     private lateinit var proposal: String
@@ -76,7 +77,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val title = requireArguments().getString("title", "")
+        isFromExchange = requireArguments().getBoolean("isFromExchange", false)
         invitation = requireArguments().getSerializable("invitation") as Invitation
         proposal = requireArguments().getString("proposal", "")
 //        dialog!!.setTitle(title)
@@ -268,11 +269,13 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
                                     MediatorConnectionObject::class.java
                                 )
                                 sendDidToConnection(connectionObject.theirDid)
-                                Toast.makeText(
-                                    context,
-                                    resources.getString(R.string.err_connection_already_added),
-                                    Toast.LENGTH_SHORT
-                                ).show()
+
+                                if (!isFromExchange)
+                                    Toast.makeText(
+                                        context,
+                                        resources.getString(R.string.err_connection_already_added),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
 
                             } else {
                                 pbLoader.visibility = View.GONE
@@ -457,7 +460,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
         Handler(Looper.getMainLooper()).postDelayed({
 
             GetConnectionDetailTask().execute(event.connectionId)
-            onSuccessListener.onSuccess(proposal, event.connectionId ?: "")
+            onSuccessListener.onSuccess(proposal, orgId)
             llSuccess.visibility = View.GONE
             dialog?.dismiss()
         }, 3000)
@@ -495,13 +498,13 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
     companion object {
         fun newInstance(
-            title: String,
+            isFromExchange: Boolean,
             invitation: Invitation,
             proposal: String
         ): ConnectionProgressDailogFragment {
             val fragment = ConnectionProgressDailogFragment()
             val args = Bundle()
-            args.putString("title", title)
+            args.putBoolean("isFromExchange", isFromExchange)
             args.putSerializable("invitation", invitation)
             args.putString("proposal", proposal)
             fragment.arguments = args
