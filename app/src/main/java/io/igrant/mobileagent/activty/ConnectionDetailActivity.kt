@@ -239,26 +239,26 @@ class ConnectionDetailActivity : BaseActivity() {
                 }
             }
 
-            val walletModelTag = "{" +
-                    "\"connection_id\":\"${mConnectionId}\"," +
-                    "\"schema_id\":\"${certificate.schemaId ?: ""}\"" +
-                    "}"
+//            val walletModelTag = "{" +
+//                    "\"connection_id\":\"${mConnectionId}\"," +
+//                    "\"schema_id\":\"${certificate.schemaId ?: ""}\"" +
+//                    "}"
 
-            val walletSearch = SearchUtils.searchWallet(WalletRecordType.WALLET, walletModelTag)
+//            val walletSearch = SearchUtils.searchWallet(WalletRecordType.WALLET, walletModelTag)
 
 
-            if (walletSearch.records != null && walletSearch.totalCount ?: 0 > 0) {
-                try {
-                    val certificate =
-                        WalletManager.getGson.fromJson(
-                            walletSearch.records!![0].value,
-                            WalletModel::class.java
-                        )
-                    tempCer.attributeList =
-                        certificate.credentialProposalDict?.credentialProposal?.attributes!!
-                } catch (e: Exception) {
-                }
-            } else {
+//            if (walletSearch.records != null && walletSearch.totalCount ?: 0 > 0) {
+//                try {
+//                    val certificate =
+//                        WalletManager.getGson.fromJson(
+//                            walletSearch.records!![0].value,
+//                            WalletModel::class.java
+//                        )
+//                    tempCer.attributeList =
+//                        certificate.credentialProposalDict?.credentialProposal?.attributes!!
+//                } catch (e: Exception) {
+//                }
+//            } else {
                 var attributeList: ArrayList<Attributes> = ArrayList()
                 var attribute: Attributes
                 for (string in certificate.schemaAttributes) {
@@ -269,7 +269,7 @@ class ConnectionDetailActivity : BaseActivity() {
                     attributeList.add(attribute)
                 }
                 tempCer.attributeList = attributeList
-            }
+//            }
 
             tempList.add(tempCer)
         }
