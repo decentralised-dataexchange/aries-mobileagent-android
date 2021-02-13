@@ -45,7 +45,7 @@
     <string name="txt_wallet">Plånbok</string>
     <string name="txt_preferences">Preferenser</string>
     <string name="txt_no_connections_avaialable">Inga kontakter tillgängliga</string>
-    <string name="txt_no_data_avaialable">Ingrn data tillgänglig</string>
+    <string name="txt_no_data_avaialable">Ingen data tillgänglig</string>
     <string name="err_connection_already_added">Kontakten finns redan</string>
     <string name="txt_loading_indy_library">Laddar Indy-biblioteket...</string>
     <string name="txt_exchange_data">Dela data</string>
@@ -107,4 +107,5 @@
     <string name="txt_data_request_accepted_successfully">Data erbjudandet accepteras framgångsrikt</string>
     <string name="txt_recieved_exchange_request">Mottagen delningsförfrågan</string>
     <string name="txt_remove_organization">Ta bort organisationen</string>
+    <string name="err_ledger_missmatch">Ogiltigt ledger-nätverk. Du kan välja ledger i inställningar</string>
 </resources>

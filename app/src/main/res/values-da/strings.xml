@@ -39,7 +39,7 @@
     <string name="txt_reject">Afvis</string>
     <string name="txt_accept">Accepter</string>
     <string name="txt_add_certificate">Tilføj Data</string>
-    <string name="txt_Add_certificate_desc">Vælg organisation du vil tilføje data fra</string>
+    <string name="txt_Add_certificate_desc">Vælg organisationen der skal forbindes til din Digitale Pung for at tilføje data. Klik ovenfor for at tilføje nye organisationer.</string>
     <string name="txt_wallet">Pung</string>
     <string name="txt_preferences">Præferencer</string>
     <string name="txt_no_connections_avaialable">Ingen kontakter tilgængelig</string>
@@ -101,4 +101,6 @@
     <string name="txt_data_request_accepted_successfully">Dataudvekslingstilbud accepteret.</string>
     <string name="txt_recieved_exchange_request">Modtog dataudvekslingsforslag.</string>
     <string name="txt_remove_organization">Fjern organisation</string>
+    <string name="err_ledger_missmatch">Ugyldig ledger. Du kan vælge ledger under settings.</string>
+
 </resources>

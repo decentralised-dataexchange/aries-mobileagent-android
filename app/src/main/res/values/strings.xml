@@ -39,7 +39,7 @@
     <string name="txt_reject">Reject</string>
     <string name="txt_accept">Accept</string>
     <string name="txt_add_certificate">Add data</string>
-    <string name="txt_Add_certificate_desc">Choose the organisation to be connected to add data to the wallet or to exchange data</string>
+    <string name="txt_Add_certificate_desc">Choose the organisation to add data to the data wallet. For adding new organisations, click + above</string>
     <string name="txt_wallet">Wallet</string>
     <string name="txt_preferences">Preferences</string>
     <string name="txt_no_connections_avaialable">No connections available</string>
@@ -101,4 +101,5 @@
     <string name="txt_data_request_accepted_successfully">Data offer accepted successfully.</string>
     <string name="txt_recieved_exchange_request">Received Exchange Request</string>
     <string name="txt_remove_organization">Remove Organization</string>
+    <string name="err_ledger_missmatch">Invalid Ledger. You can choose proper ledger from settings</string>
 </resources>

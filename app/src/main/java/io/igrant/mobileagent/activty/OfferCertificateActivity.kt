@@ -105,44 +105,49 @@ class OfferCertificateActivity : BaseActivity() {
             llProgressBar.visibility = View.VISIBLE
             btAccept.isEnabled = false
             RequestCertificateTask(object : RequestCertificateHandler {
-                override fun taskCompleted(requestBody: RequestBody, endPoint: String) {
+                override fun taskCompleted(requestBody: RequestBody?, endPoint: String?) {
 
-                    ApiManager.api.getService()
-                        ?.postDataWithoutData(endPoint, requestBody)
-                        ?.enqueue(object : Callback<ResponseBody> {
-                            override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                                llProgressBar.visibility = View.GONE
-                                btAccept.isEnabled = true
-                            }
+                    if (requestBody==null){
+                        Toast.makeText(this@OfferCertificateActivity,resources.getString(R.string.err_ledger_missmatch),Toast.LENGTH_SHORT).show()
+                        llProgressBar.visibility = View.GONE
+                        btAccept.isEnabled = true
+                    }else {
+                        ApiManager.api.getService()
+                            ?.postDataWithoutData(endPoint?:"", requestBody)
+                            ?.enqueue(object : Callback<ResponseBody> {
+                                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                                    llProgressBar.visibility = View.GONE
+                                    btAccept.isEnabled = true
+                                }
 
-                            override fun onResponse(
-                                call: Call<ResponseBody>,
-                                response: Response<ResponseBody>
-                            ) {
-                                llProgressBar.visibility = View.GONE
-                                btAccept.isEnabled = false
+                                override fun onResponse(
+                                    call: Call<ResponseBody>,
+                                    response: Response<ResponseBody>
+                                ) {
+                                    llProgressBar.visibility = View.GONE
+                                    btAccept.isEnabled = false
 
-                                val tagJson = "{\n" +
-                                        "  \"type\":\"${MessageTypes.TYPE_OFFER_CREDENTIAL}\",\n" +
-                                        "  \"connectionId\":\"${mConnectionId}\",\n" +
-                                        "  \"stat\":\"Processed\"\n" +
-                                        "}"
+                                    val tagJson = "{\n" +
+                                            "  \"type\":\"${MessageTypes.TYPE_OFFER_CREDENTIAL}\",\n" +
+                                            "  \"connectionId\":\"${mConnectionId}\",\n" +
+                                            "  \"stat\":\"Processed\"\n" +
+                                            "}"
 
-                                WalletRecord.updateTags(
-                                    WalletManager.getWallet,
-                                    WalletRecordType.MESSAGE_RECORDS,
-                                    record?.id ?: "",
-                                    tagJson
-                                )
-                                EventBus.getDefault().post(ReceiveOfferEvent(mConnectionId))
-                                EventBus.getDefault()
-                                    .post(ReceiveExchangeRequestEvent())
+                                    WalletRecord.updateTags(
+                                        WalletManager.getWallet,
+                                        WalletRecordType.MESSAGE_RECORDS,
+                                        record?.id ?: "",
+                                        tagJson
+                                    )
+                                    EventBus.getDefault().post(ReceiveOfferEvent(mConnectionId))
+                                    EventBus.getDefault()
+                                        .post(ReceiveExchangeRequestEvent())
 
-                                Toast.makeText(
-                                    this@OfferCertificateActivity, resources.getString(
-                                        R.string.txt_data_request_accepted_successfully
-                                    ), Toast.LENGTH_SHORT
-                                ).show()
+                                    Toast.makeText(
+                                        this@OfferCertificateActivity, resources.getString(
+                                            R.string.txt_data_request_accepted_successfully
+                                        ), Toast.LENGTH_SHORT
+                                    ).show()
 
 //                                AlertDialog.Builder(this@OfferCertificateActivity)
 //                                    .setMessage(
@@ -154,12 +159,13 @@ class OfferCertificateActivity : BaseActivity() {
 //                                    .setPositiveButton(
 //                                        android.R.string.ok,
 //                                        DialogInterface.OnClickListener { dialog, which ->
-                                onBackPressed()
+                                    onBackPressed()
 //                                        }) // A null listener allows the button to dismiss the dialog and take no further action.
 //                                    .show()
 
-                            }
-                        })
+                                }
+                            })
+                    }
                 }
 
                 override fun taskStarted() {
@@ -272,7 +278,7 @@ class OfferCertificateActivity : BaseActivity() {
     ) :
         AsyncTask<Void, Void, Void>() {
 
-        private lateinit var serviceEndPoint: String
+        private var serviceEndPoint: String?= null
         private var typedBytes: RequestBody? = null
 
         override fun doInBackground(vararg p0: Void?): Void? {
@@ -300,128 +306,132 @@ class OfferCertificateActivity : BaseActivity() {
 
             val credDefResponse = Ledger.submitRequest(PoolManager.getPool, credDef).get()
 
-            val parsedCredDefResponse = Ledger.parseGetCredDefResponse(credDefResponse).get()
+            try {
+                val parsedCredDefResponse = Ledger.parseGetCredDefResponse(credDefResponse).get()
 
-            val resultObject =
-                SearchUtils.searchWallet(
-                    WalletRecordType.CONNECTION,
+                val resultObject =
+                    SearchUtils.searchWallet(
+                        WalletRecordType.CONNECTION,
+                        "{\n" +
+                                "  \"request_id\":\"$mConnectionId\"\n" +
+                                "}"
+                    )
+                val connectionObject = WalletManager.getGson.fromJson(
+                    resultObject.records?.get(0)?.value,
+                    MediatorConnectionObject::class.java
+                )
+                val proverDid = connectionObject.myDid
+
+                //get cred offer json:
+                //offer credential base64 parameter value decoded value
+                val credOfferJson = Base64.decode(
+                    mCertificateOffer.offersAttach?.get(0)?.data?.base64,
+                    Base64.URL_SAFE
+                ).toString(charset("UTF-8"))
+
+                val proverResponse = Anoncreds.proverCreateCredentialReq(
+                    WalletManager.getWallet,
+                    proverDid,
+                    credOfferJson,
+                    parsedCredDefResponse.objectJson,
+                    "IGrantMobileAgent-000001"
+                ).get()
+
+                val credentialRequest =
+                    WalletManager.getGson.fromJson(
+                        proverResponse.credentialRequestJson,
+                        CredentialRequest::class.java
+                    )
+                val credentialRequestMetaData =
+                    WalletManager.getGson.fromJson(
+                        proverResponse.credentialRequestMetadataJson,
+                        CredentialRequestMetadata::class.java
+                    )
+                credentialExchangeData.state = CredentialExchangeStates.CREDENTIAL_REQUEST_SENT
+                credentialExchangeData.credentialRequest = credentialRequest
+                credentialExchangeData.credentialRequestMetadata = credentialRequestMetaData
+
+                WalletRecord.updateValue(
+                    WalletManager.getWallet,
+                    WalletRecordType.CREDENTIAL_EXCHANGE_V10,
+                    "${credentialExchangeResponse.records?.get(0)?.id}",
+                    WalletManager.getGson.toJson(credentialExchangeData)
+                )
+
+                //creating model for sending
+                val thread = Thread()
+                thread.thid = mCertificateOffer.id ?: ""
+
+                val v = Base64.encodeToString(
+                    proverResponse.credentialRequestJson.toByteArray(),
+                    Base64.NO_WRAP
+                )
+                v.replace("\\n", "")
+                val offerData = OfferData()
+                offerData.base64 = v
+
+                val requestAttach = OfferAttach()
+                requestAttach.id = "libindy-cred-request-0"
+                requestAttach.mimeType = "application/json"
+                requestAttach.data = offerData
+                thread.thid = mCertificateOffer.id ?: ""
+
+                val requestAttachList = ArrayList<OfferAttach>()
+                requestAttachList.add(requestAttach)
+
+                val certificateOffer = RequestOffer()
+                certificateOffer.type =
+                    "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/request-credential"
+                certificateOffer.id = UUID.randomUUID().toString()
+                certificateOffer.thread = thread
+                certificateOffer.offersAttach = requestAttachList
+
+                val metaString =
+                    Did.getDidWithMeta(WalletManager.getWallet, connectionObject.myDid).get()
+                val metaObject = JSONObject(metaString)
+                val publicKey = metaObject.getString("verkey")
+
+                //get prover did
+                val searchResponse = SearchUtils.searchWallet(
+                    WalletRecordType.DID_KEY,
                     "{\n" +
-                            "  \"request_id\":\"$mConnectionId\"\n" +
+                            "  \"did\":\"${connectionObject.theirDid}\"\n" +
                             "}"
                 )
-            val connectionObject = WalletManager.getGson.fromJson(
-                resultObject.records?.get(0)?.value,
-                MediatorConnectionObject::class.java
-            )
-            val proverDid = connectionObject.myDid
 
-            //get cred offer json:
-            //offer credential base64 parameter value decoded value
-            val credOfferJson = Base64.decode(
-                mCertificateOffer.offersAttach?.get(0)?.data?.base64,
-                Base64.URL_SAFE
-            ).toString(charset("UTF-8"))
+                val packedMessage = Crypto.packMessage(
+                    WalletManager.getWallet,
+                    "[\"${searchResponse.records?.get(0)?.value ?: ""}\"]",
+                    publicKey,
+                    WalletManager.getGson.toJson(certificateOffer).toByteArray()
+                ).get()
 
-            val proverResponse = Anoncreds.proverCreateCredentialReq(
-                WalletManager.getWallet,
-                proverDid,
-                credOfferJson,
-                parsedCredDefResponse.objectJson,
-                "IGrantMobileAgent-000001"
-            ).get()
+                typedBytes = object : RequestBody() {
+                    override fun contentType(): MediaType? {
+                        return "application/ssi-agent-wire".toMediaTypeOrNull()
+                    }
 
-            val credentialRequest =
-                WalletManager.getGson.fromJson(
-                    proverResponse.credentialRequestJson,
-                    CredentialRequest::class.java
-                )
-            val credentialRequestMetaData =
-                WalletManager.getGson.fromJson(
-                    proverResponse.credentialRequestMetadataJson,
-                    CredentialRequestMetadata::class.java
-                )
-            credentialExchangeData.state = CredentialExchangeStates.CREDENTIAL_REQUEST_SENT
-            credentialExchangeData.credentialRequest = credentialRequest
-            credentialExchangeData.credentialRequestMetadata = credentialRequestMetaData
-
-            WalletRecord.updateValue(
-                WalletManager.getWallet,
-                WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-                "${credentialExchangeResponse.records?.get(0)?.id}",
-                WalletManager.getGson.toJson(credentialExchangeData)
-            )
-
-            //creating model for sending
-            val thread = Thread()
-            thread.thid = mCertificateOffer.id ?: ""
-
-            val v = Base64.encodeToString(
-                proverResponse.credentialRequestJson.toByteArray(),
-                Base64.NO_WRAP
-            )
-            v.replace("\\n", "")
-            val offerData = OfferData()
-            offerData.base64 = v
-
-            val requestAttach = OfferAttach()
-            requestAttach.id = "libindy-cred-request-0"
-            requestAttach.mimeType = "application/json"
-            requestAttach.data = offerData
-            thread.thid = mCertificateOffer.id ?: ""
-
-            val requestAttachList = ArrayList<OfferAttach>()
-            requestAttachList.add(requestAttach)
-
-            val certificateOffer = RequestOffer()
-            certificateOffer.type =
-                "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/request-credential"
-            certificateOffer.id = UUID.randomUUID().toString()
-            certificateOffer.thread = thread
-            certificateOffer.offersAttach = requestAttachList
-
-            val metaString =
-                Did.getDidWithMeta(WalletManager.getWallet, connectionObject.myDid).get()
-            val metaObject = JSONObject(metaString)
-            val publicKey = metaObject.getString("verkey")
-
-            //get prover did
-            val searchResponse = SearchUtils.searchWallet(
-                WalletRecordType.DID_KEY,
-                "{\n" +
-                        "  \"did\":\"${connectionObject.theirDid}\"\n" +
-                        "}"
-            )
-
-            val packedMessage = Crypto.packMessage(
-                WalletManager.getWallet,
-                "[\"${searchResponse.records?.get(0)?.value ?: ""}\"]",
-                publicKey,
-                WalletManager.getGson.toJson(certificateOffer).toByteArray()
-            ).get()
-
-            typedBytes = object : RequestBody() {
-                override fun contentType(): MediaType? {
-                    return "application/ssi-agent-wire".toMediaTypeOrNull()
+                    @Throws(IOException::class)
+                    override fun writeTo(sink: BufferedSink) {
+                        sink.write(packedMessage)
+                    }
                 }
 
-                @Throws(IOException::class)
-                override fun writeTo(sink: BufferedSink) {
-                    sink.write(packedMessage)
-                }
+                val connectionInvitaitonObject =
+                    SearchUtils.searchWallet(
+                        WalletRecordType.CONNECTION_INVITATION,
+                        "{\n" +
+                                "  \"connection_id\":\"${resultObject.records?.get(0)?.id}\"\n" +
+                                "}"
+                    )
+
+                serviceEndPoint =
+                    JSONObject(
+                        connectionInvitaitonObject.records?.get(0)?.value ?: ""
+                    ).getString("serviceEndpoint")
+            } catch (e: Exception) {
+                return null
             }
-
-            val connectionInvitaitonObject =
-                SearchUtils.searchWallet(
-                    WalletRecordType.CONNECTION_INVITATION,
-                    "{\n" +
-                            "  \"connection_id\":\"${resultObject.records?.get(0)?.id}\"\n" +
-                            "}"
-                )
-
-            serviceEndPoint =
-                JSONObject(
-                    connectionInvitaitonObject.records?.get(0)?.value ?: ""
-                ).getString("serviceEndpoint")
 
             return null
         }
@@ -433,12 +443,12 @@ class OfferCertificateActivity : BaseActivity() {
 
         override fun onPostExecute(result: Void?) {
             super.onPostExecute(result)
-            commonHandler.taskCompleted(typedBytes!!, serviceEndPoint)
+            commonHandler.taskCompleted(typedBytes, serviceEndPoint)
         }
     }
 
     interface RequestCertificateHandler {
-        fun taskCompleted(requestBody: RequestBody, endPoint: String)
+        fun taskCompleted(requestBody: RequestBody?, endPoint: String?)
         fun taskStarted()
     }
 }
