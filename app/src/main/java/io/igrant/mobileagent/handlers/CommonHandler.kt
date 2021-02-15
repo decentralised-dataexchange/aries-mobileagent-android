@@ -4,7 +4,7 @@ import okhttp3.RequestBody
 
 interface CommonHandler {
     fun taskCompleted(){}
-    fun onExchangeDataComplete(serviceEndPoint: String, typedBytes: RequestBody) {}
+    fun onExchangeDataComplete(serviceEndPoint: String?, typedBytes: RequestBody?) {}
     fun onSaveConnection(
         typedBytes: RequestBody,
         connectionRequest: RequestBody

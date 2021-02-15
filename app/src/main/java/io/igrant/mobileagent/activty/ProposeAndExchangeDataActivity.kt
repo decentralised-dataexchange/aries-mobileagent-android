@@ -65,7 +65,8 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     private lateinit var toolbar: Toolbar
     private lateinit var tvDesc: TextView
     private lateinit var tvHead: TextView
-//    private lateinit var btReject: Button
+
+    //    private lateinit var btReject: Button
     private lateinit var btAccept: Button
     private lateinit var rvAttributes: RecyclerView
     private lateinit var llProgressBar: LinearLayout
@@ -248,12 +249,19 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                 "}"
 
 
-        val connectionList = SearchUtils.searchWallet(WalletRecordType.CONNECTION,"{\"request_id\":\"$mConnectionId\"}")
+        val connectionList = SearchUtils.searchWallet(
+            WalletRecordType.CONNECTION,
+            "{\"request_id\":\"$mConnectionId\"}"
+        )
 
-        if (connectionList.totalCount?:0>0){
-            val connectionObject = WalletManager.getGson.fromJson(connectionList.records?.get(0)?.value,MediatorConnectionObject::class.java)
+        if (connectionList.totalCount ?: 0 > 0) {
+            val connectionObject = WalletManager.getGson.fromJson(
+                connectionList.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
+            )
 
-            val metaString = Did.getDidWithMeta(WalletManager.getWallet, connectionObject?.myDid).get()
+            val metaString =
+                Did.getDidWithMeta(WalletManager.getWallet, connectionObject?.myDid).get()
             val metaObject = JSONObject(metaString)
             val publicKey = metaObject.getString("verkey")
 
@@ -308,7 +316,8 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                         val unpack =
                             Crypto.unpackMessage(
                                 WalletManager.getWallet,
-                                WalletManager.getGson.toJson(response.body()).toString().toByteArray()
+                                WalletManager.getGson.toJson(response.body()).toString()
+                                    .toByteArray()
                             ).get()
 
                         val message = JSONObject(String(unpack)).getString("message")
@@ -353,7 +362,9 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
 
                             if (JSONArray(searchResult).length() > 0) {
                                 val referent =
-                                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject(
+                                        "cred_info"
+                                    )
                                         .getString("referent")
 
                                 credentialValue = CredentialValue()
@@ -401,12 +412,17 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                 "}"
 
 
-        val connectionList = SearchUtils.searchWallet(WalletRecordType.CONNECTION,"{\"orgId\":\"$mConnectionId\"}")
+        val connectionList =
+            SearchUtils.searchWallet(WalletRecordType.CONNECTION, "{\"orgId\":\"$mConnectionId\"}")
 
-        if (connectionList.totalCount?:0>0){
-            val connectionObject = WalletManager.getGson.fromJson(connectionList.records?.get(0)?.value,MediatorConnectionObject::class.java)
+        if (connectionList.totalCount ?: 0 > 0) {
+            val connectionObject = WalletManager.getGson.fromJson(
+                connectionList.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
+            )
 
-            val metaString = Did.getDidWithMeta(WalletManager.getWallet, connectionObject?.myDid).get()
+            val metaString =
+                Did.getDidWithMeta(WalletManager.getWallet, connectionObject?.myDid).get()
             val metaObject = JSONObject(metaString)
             val publicKey = metaObject.getString("verkey")
 
@@ -461,7 +477,8 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                         val unpack =
                             Crypto.unpackMessage(
                                 WalletManager.getWallet,
-                                WalletManager.getGson.toJson(response.body()).toString().toByteArray()
+                                WalletManager.getGson.toJson(response.body()).toString()
+                                    .toByteArray()
                             ).get()
 
                         val message = JSONObject(String(unpack)).getString("message")
@@ -506,7 +523,9 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
 
                             if (JSONArray(searchResult).length() > 0) {
                                 val referent =
-                                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject(
+                                        "cred_info"
+                                    )
                                         .getString("referent")
 
                                 credentialValue = CredentialValue()
@@ -526,58 +545,68 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
 
     }
 
-    private fun exchangeData(threadId:String) {
+    private fun exchangeData(threadId: String) {
         ExchangeDataTask(object : CommonHandler {
             override fun taskStarted() {
 
             }
 
             override fun onExchangeDataComplete(
-                serviceEndPoint: String,
-                typedBytes: RequestBody
+                serviceEndPoint: String?,
+                typedBytes: RequestBody?
             ) {
-                ApiManager.api.getService()
-                    ?.postDataWithoutData(
-                        serviceEndPoint,
-                        typedBytes
-                    )
-                    ?.enqueue(object : Callback<ResponseBody> {
-                        override fun onFailure(
-                            call: Call<ResponseBody>,
-                            t: Throwable
-                        ) {
-                            llProgressBar.visibility = View.GONE
-                            btAccept.isEnabled = true
-//                            btReject.isEnabled = true
-                        }
-
-                        override fun onResponse(
-                            call: Call<ResponseBody>,
-                            response: Response<ResponseBody>
-                        ) {
-                            if (response.code() == 200 && response.body() != null) {
+                if (typedBytes != null) {
+                    ApiManager.api.getService()
+                        ?.postDataWithoutData(
+                            serviceEndPoint ?: "",
+                            typedBytes
+                        )
+                        ?.enqueue(object : Callback<ResponseBody> {
+                            override fun onFailure(
+                                call: Call<ResponseBody>,
+                                t: Throwable
+                            ) {
                                 llProgressBar.visibility = View.GONE
                                 btAccept.isEnabled = true
+//                            btReject.isEnabled = true
+                            }
+
+                            override fun onResponse(
+                                call: Call<ResponseBody>,
+                                response: Response<ResponseBody>
+                            ) {
+                                if (response.code() == 200 && response.body() != null) {
+                                    llProgressBar.visibility = View.GONE
+                                    btAccept.isEnabled = true
 //                                btReject.isEnabled = true
 
-                                EventBus.getDefault().post(GoHomeEvent())
+                                    EventBus.getDefault().post(GoHomeEvent())
 
-                                AlertDialog.Builder(this@ProposeAndExchangeDataActivity)
-                                    .setMessage(
-                                        resources.getString(
-                                            R.string.txt_exchange_successful_without_name
-                                        )
-                                    ) // Specifying a listener allows you to take an action before dismissing the dialog.
-                                    // The dialog is automatically dismissed when a dialog button is clicked.
-                                    .setPositiveButton(
-                                        android.R.string.ok,
-                                        DialogInterface.OnClickListener { dialog, which ->
-                                            onBackPressed()
-                                        }) // A null listener allows the button to dismiss the dialog and take no further action.
-                                    .show()
+                                    AlertDialog.Builder(this@ProposeAndExchangeDataActivity)
+                                        .setMessage(
+                                            resources.getString(
+                                                R.string.txt_exchange_successful_without_name
+                                            )
+                                        ) // Specifying a listener allows you to take an action before dismissing the dialog.
+                                        // The dialog is automatically dismissed when a dialog button is clicked.
+                                        .setPositiveButton(
+                                            android.R.string.ok,
+                                            DialogInterface.OnClickListener { dialog, which ->
+                                                onBackPressed()
+                                            }) // A null listener allows the button to dismiss the dialog and take no further action.
+                                        .show()
+                                }
                             }
-                        }
-                    })
+                        })
+                } else {
+                    Toast.makeText(
+                        this@ProposeAndExchangeDataActivity,
+                        resources.getString(R.string.err_ledger_missmatch),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    llProgressBar.visibility = View.GONE
+                    btAccept.isEnabled = true
+                }
             }
         }, mPresentationExchange, requestedAttributes).execute(
             "",
@@ -619,9 +648,12 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     }
 
     override fun onExistingConnection(connectionId: String) {
-        val connectionList = SearchUtils.searchWallet(WalletRecordType.CONNECTION,"{\"request_id\":\"$connectionId\"}")
+        val connectionList = SearchUtils.searchWallet(
+            WalletRecordType.CONNECTION,
+            "{\"request_id\":\"$connectionId\"}"
+        )
 
-        if (connectionList.totalCount?:0>0){
+        if (connectionList.totalCount ?: 0 > 0) {
             llProgressBar.visibility = View.VISIBLE
             btAccept.isEnabled = false
 //                    btReject.isEnabled = false

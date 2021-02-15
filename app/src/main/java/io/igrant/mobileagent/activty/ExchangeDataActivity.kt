@@ -256,65 +256,71 @@ class ExchangeDataActivity : BaseActivity() {
                     }
 
                     override fun onExchangeDataComplete(
-                        serviceEndPoint: String,
-                        typedBytes: RequestBody
+                        serviceEndPoint: String?,
+                        typedBytes: RequestBody?
                     ) {
-                        ApiManager.api.getService()
-                            ?.postDataWithoutData(
-                                serviceEndPoint,
-                                typedBytes
-                            )
-                            ?.enqueue(object : Callback<ResponseBody> {
-                                override fun onFailure(
-                                    call: Call<ResponseBody>,
-                                    t: Throwable
-                                ) {
-                                    llProgressBar.visibility = View.GONE
-                                    btAccept.isEnabled = true
-//                                    btReject.isEnabled = true
-                                }
-
-                                override fun onResponse(
-                                    call: Call<ResponseBody>,
-                                    response: Response<ResponseBody>
-                                ) {
-                                    if (response.code() == 200 && response.body() != null) {
+                        if (typedBytes!=null) {
+                            ApiManager.api.getService()
+                                ?.postDataWithoutData(
+                                    serviceEndPoint?:"",
+                                    typedBytes
+                                )
+                                ?.enqueue(object : Callback<ResponseBody> {
+                                    override fun onFailure(
+                                        call: Call<ResponseBody>,
+                                        t: Throwable
+                                    ) {
                                         llProgressBar.visibility = View.GONE
                                         btAccept.isEnabled = true
+//                                    btReject.isEnabled = true
+                                    }
+
+                                    override fun onResponse(
+                                        call: Call<ResponseBody>,
+                                        response: Response<ResponseBody>
+                                    ) {
+                                        if (response.code() == 200 && response.body() != null) {
+                                            llProgressBar.visibility = View.GONE
+                                            btAccept.isEnabled = true
 //                                        btReject.isEnabled = true
 
-                                        val tagJson = "{\n" +
-                                                "  \"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
-                                                "  \"connectionId\":\"${mConnectionId}\",\n" +
-                                                "  \"stat\":\"Processed\"\n" +
-                                                "}"
-                                        WalletRecord.updateTags(
-                                            WalletManager.getWallet,
-                                            WalletRecordType.MESSAGE_RECORDS,
-                                            record?.id ?: "",
-                                            tagJson
-                                        )
+                                            val tagJson = "{\n" +
+                                                    "  \"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
+                                                    "  \"connectionId\":\"${mConnectionId}\",\n" +
+                                                    "  \"stat\":\"Processed\"\n" +
+                                                    "}"
+                                            WalletRecord.updateTags(
+                                                WalletManager.getWallet,
+                                                WalletRecordType.MESSAGE_RECORDS,
+                                                record?.id ?: "",
+                                                tagJson
+                                            )
 
-                                        EventBus.getDefault()
-                                            .post(ReceiveExchangeRequestEvent())
+                                            EventBus.getDefault()
+                                                .post(ReceiveExchangeRequestEvent())
 
-                                        AlertDialog.Builder(this@ExchangeDataActivity)
-                                            .setMessage(
-                                                resources.getString(
-                                                    R.string.txt_exchange_successful,
-                                                    connection?.theirLabel ?: ""
-                                                )
-                                            ) // Specifying a listener allows you to take an action before dismissing the dialog.
-                                            // The dialog is automatically dismissed when a dialog button is clicked.
-                                            .setPositiveButton(
-                                                android.R.string.ok,
-                                                DialogInterface.OnClickListener { dialog, which ->
-                                                    onBackPressed()
-                                                }) // A null listener allows the button to dismiss the dialog and take no further action.
-                                            .show()
+                                            AlertDialog.Builder(this@ExchangeDataActivity)
+                                                .setMessage(
+                                                    resources.getString(
+                                                        R.string.txt_exchange_successful,
+                                                        connection?.theirLabel ?: ""
+                                                    )
+                                                ) // Specifying a listener allows you to take an action before dismissing the dialog.
+                                                // The dialog is automatically dismissed when a dialog button is clicked.
+                                                .setPositiveButton(
+                                                    android.R.string.ok,
+                                                    DialogInterface.OnClickListener { dialog, which ->
+                                                        onBackPressed()
+                                                    }) // A null listener allows the button to dismiss the dialog and take no further action.
+                                                .show()
+                                        }
                                     }
-                                }
-                            })
+                                })
+                        }else{
+                            Toast.makeText(this@ExchangeDataActivity,resources.getString(R.string.err_ledger_missmatch),Toast.LENGTH_SHORT).show()
+                            llProgressBar.visibility = View.GONE
+                            btAccept.isEnabled = true
+                        }
                     }
                 }, mPresentationExchange, requestedAttributes).execute(record?.id, mConnectionId)
             } else {

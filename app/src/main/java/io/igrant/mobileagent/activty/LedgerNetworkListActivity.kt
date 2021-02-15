@@ -55,20 +55,20 @@ class LedgerNetworkListActivity : BaseActivity() {
         ledger.type = LedgerNetworkType.SOVRIN_SANDBOX
         list.add(ledger)
 
-        ledger = LedgerItem()
-        ledger.name = "BCovrin Test"
-        ledger.type = LedgerNetworkType.B_COVRIN_TEST
-        list.add(ledger)
-
-        ledger = LedgerItem()
-        ledger.name = "BCovrin Production"
-        ledger.type = LedgerNetworkType.B_COVRIN_PRODUCTION
-        list.add(ledger)
-
-        ledger = LedgerItem()
-        ledger.name = "BCovrin Dev"
-        ledger.type = LedgerNetworkType.B_COVRIN_DEV
-        list.add(ledger)
+//        ledger = LedgerItem()
+//        ledger.name = "BCovrin Test"
+//        ledger.type = LedgerNetworkType.B_COVRIN_TEST
+//        list.add(ledger)
+//
+//        ledger = LedgerItem()
+//        ledger.name = "BCovrin Production"
+//        ledger.type = LedgerNetworkType.B_COVRIN_PRODUCTION
+//        list.add(ledger)
+//
+//        ledger = LedgerItem()
+//        ledger.name = "BCovrin Dev"
+//        ledger.type = LedgerNetworkType.B_COVRIN_DEV
+//        list.add(ledger)
 
         adapter = LedgerNetworkAdapter(
             list,

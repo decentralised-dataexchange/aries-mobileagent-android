@@ -811,102 +811,106 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         val credDefResponse = Ledger.submitRequest(PoolManager.getPool, credDef).get()
 
-        val parsedCredDefResponse = Ledger.parseGetCredDefResponse(credDefResponse).get()
+        try {
+            val parsedCredDefResponse = Ledger.parseGetCredDefResponse(credDefResponse).get()
 
-        val credentialExchangeSearch = WalletSearch.open(
-            WalletManager.getWallet,
-            CREDENTIAL_EXCHANGE_V10,
-            "{\"thread_id\": \"${thid}\"}",
-            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-        ).get()
-
-        val credentialExchangeResponse =
-            WalletSearch.searchFetchNextRecords(
-                WalletManager.getWallet,
-                credentialExchangeSearch,
-                100
-            ).get()
-
-        Log.d(TAG, "credentialExchangeResult: $credentialExchangeResponse")
-        WalletManager.closeSearchHandle(credentialExchangeSearch)
-
-
-        val searchResponse = gson.fromJson(credentialExchangeResponse, SearchResponse::class.java)
-        if (searchResponse.totalCount ?: 0 > 0) {
-            val credentialExchange =
-                gson.fromJson(searchResponse.records?.get(0)?.value, CredentialExchange::class.java)
-
-//            Log.d(
-//                TAG,
-//                "storeCredential: \n credentialRequestMetadata: \n ${gson.toJson(credentialExchange.credentialRequestMetadata)} \n rawCredential: \n ${gson.toJson(
-//                    credentialExchange.rawCredential
-//                )} \n parsedCredDefResponse.objectJson: \n ${parsedCredDefResponse.objectJson}"
-//            )
-            val uuid = UUID.randomUUID().toString()
-            val credentialId = Anoncreds.proverStoreCredential(
-                WalletManager.getWallet,
-                uuid,
-                gson.toJson(credentialExchange.credentialRequestMetadata),
-                gson.toJson(credentialExchange.rawCredential),
-                parsedCredDefResponse.objectJson,
-                null
-            ).get()
-
-            credentialExchange.state = CREDENTIAL_CREDENTIAL_ACK
-
-            WalletRecord.updateValue(
+            val credentialExchangeSearch = WalletSearch.open(
                 WalletManager.getWallet,
                 CREDENTIAL_EXCHANGE_V10,
-                "${searchResponse.records?.get(0)?.id}",
-                gson.toJson(credentialExchange)
-            )
-
-            WalletRecord.delete(
-                WalletManager.getWallet,
-                MESSAGE_RECORDS,
-                thid
+                "{\"thread_id\": \"${thid}\"}",
+                "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
             ).get()
 
-            WalletRecord.delete(
-                WalletManager.getWallet,
-                CREDENTIAL_EXCHANGE_V10,
-                "${searchResponse.records?.get(0)?.id}"
-            ).get()
+            val credentialExchangeResponse =
+                WalletSearch.searchFetchNextRecords(
+                    WalletManager.getWallet,
+                    credentialExchangeSearch,
+                    100
+                ).get()
 
-            val walletModel = WalletModel()
-            walletModel.connection = connection
-            walletModel.credentialId = credentialId
-            walletModel.rawCredential = credentialExchange.rawCredential
-            walletModel.credentialProposalDict = credentialExchange.credentialProposalDict
+            Log.d(TAG, "credentialExchangeResult: $credentialExchangeResponse")
+            WalletManager.closeSearchHandle(credentialExchangeSearch)
 
-            val walletModelTag = "{" +
-                    "\"connection_id\":\"${connection?.requestId ?: ""}\"," +
-                    "\"credential_id\":\"$credentialId\"," +
-                    "\"schema_id\":\"${credentialExchange.rawCredential?.schemaId ?: ""}\"" +
-                    "}"
 
-            WalletRecord.add(
-                WalletManager.getWallet,
-                WalletRecordType.WALLET,
-                credentialId,
-                WalletManager.getGson.toJson(walletModel),
-                walletModelTag
-            ).get()
+            val searchResponse = gson.fromJson(credentialExchangeResponse, SearchResponse::class.java)
+            if (searchResponse.totalCount ?: 0 > 0) {
+                val credentialExchange =
+                    gson.fromJson(searchResponse.records?.get(0)?.value, CredentialExchange::class.java)
 
-            NotificationUtils.showNotification(
-                this,
-                TYPE_ISSUE_CREDENTIAL,
-                "Received Data",
-                resources.getString(R.string.txt_data_added_success_desc)
-            )
-            EventBus.getDefault().post(ReceiveCertificateEvent())
+    //            Log.d(
+    //                TAG,
+    //                "storeCredential: \n credentialRequestMetadata: \n ${gson.toJson(credentialExchange.credentialRequestMetadata)} \n rawCredential: \n ${gson.toJson(
+    //                    credentialExchange.rawCredential
+    //                )} \n parsedCredDefResponse.objectJson: \n ${parsedCredDefResponse.objectJson}"
+    //            )
+                val uuid = UUID.randomUUID().toString()
+                val credentialId = Anoncreds.proverStoreCredential(
+                    WalletManager.getWallet,
+                    uuid,
+                    gson.toJson(credentialExchange.credentialRequestMetadata),
+                    gson.toJson(credentialExchange.rawCredential),
+                    parsedCredDefResponse.objectJson,
+                    null
+                ).get()
 
-            setNotificationIcon()
+                credentialExchange.state = CREDENTIAL_CREDENTIAL_ACK
 
-            SaveConnectionDetailInCertificateTask().execute(
-                connection?.requestId ?: "",
-                credentialId
-            )
+                WalletRecord.updateValue(
+                    WalletManager.getWallet,
+                    CREDENTIAL_EXCHANGE_V10,
+                    "${searchResponse.records?.get(0)?.id}",
+                    gson.toJson(credentialExchange)
+                )
+
+                WalletRecord.delete(
+                    WalletManager.getWallet,
+                    MESSAGE_RECORDS,
+                    thid
+                ).get()
+
+                WalletRecord.delete(
+                    WalletManager.getWallet,
+                    CREDENTIAL_EXCHANGE_V10,
+                    "${searchResponse.records?.get(0)?.id}"
+                ).get()
+
+                val walletModel = WalletModel()
+                walletModel.connection = connection
+                walletModel.credentialId = credentialId
+                walletModel.rawCredential = credentialExchange.rawCredential
+                walletModel.credentialProposalDict = credentialExchange.credentialProposalDict
+
+                val walletModelTag = "{" +
+                        "\"connection_id\":\"${connection?.requestId ?: ""}\"," +
+                        "\"credential_id\":\"$credentialId\"," +
+                        "\"schema_id\":\"${credentialExchange.rawCredential?.schemaId ?: ""}\"" +
+                        "}"
+
+                WalletRecord.add(
+                    WalletManager.getWallet,
+                    WalletRecordType.WALLET,
+                    credentialId,
+                    WalletManager.getGson.toJson(walletModel),
+                    walletModelTag
+                ).get()
+
+                NotificationUtils.showNotification(
+                    this,
+                    TYPE_ISSUE_CREDENTIAL,
+                    "Received Data",
+                    resources.getString(R.string.txt_data_added_success_desc)
+                )
+                EventBus.getDefault().post(ReceiveCertificateEvent())
+
+                setNotificationIcon()
+
+                SaveConnectionDetailInCertificateTask().execute(
+                    connection?.requestId ?: "",
+                    credentialId
+                )
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this@InitializeActivity,resources.getString(R.string.err_ledger_missmatch),Toast.LENGTH_SHORT).show()
         }
 
     }
