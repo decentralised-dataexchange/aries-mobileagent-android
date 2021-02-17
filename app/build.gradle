@@ -10,8 +10,8 @@ android {
         applicationId "io.igrant.mobileagent"
         minSdkVersion 21
         targetSdkVersion 30
-        versionCode 4
-        versionName "1.2.9"
+        versionCode 5
+        versionName "1.2.10"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
