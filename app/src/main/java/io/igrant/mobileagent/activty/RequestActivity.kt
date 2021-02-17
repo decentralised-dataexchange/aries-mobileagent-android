@@ -64,6 +64,7 @@ class RequestActivity : BaseActivity() {
         val toolbar: Toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
         supportActionBar!!.title = resources.getString(R.string.txt_notification)
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 

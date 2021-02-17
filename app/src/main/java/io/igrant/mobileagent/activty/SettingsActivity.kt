@@ -13,6 +13,7 @@ import io.igrant.mobileagent.indy.LedgerNetworkType
 import io.igrant.mobileagent.utils.LanguageUtils
 import io.igrant.mobileagent.utils.LanguageUtils.LANG_ENGLISH
 import io.igrant.mobileagent.utils.LocaleHelper
+import org.w3c.dom.Text
 
 
 class SettingsActivity : BaseActivity() {
@@ -21,6 +22,7 @@ class SettingsActivity : BaseActivity() {
     lateinit var tvLanguage: TextView
     lateinit var clNetwork: ConstraintLayout
     lateinit var tvNetwork: TextView
+    lateinit var clAboutApp:ConstraintLayout
     lateinit var tvVersion:TextView
     private lateinit var toolbar: Toolbar
 
@@ -70,6 +72,14 @@ class SettingsActivity : BaseActivity() {
             )
             startActivity(intent)
         }
+
+        clAboutApp.setOnClickListener {
+            val intent = Intent(
+                this,
+                AboutAppActivity::class.java
+            )
+            startActivity(intent)
+        }
     }
 
     private fun initView() {
@@ -77,6 +87,7 @@ class SettingsActivity : BaseActivity() {
         tvLanguage = findViewById(R.id.tvLanguage)
         clNetwork = findViewById(R.id.clNetwork)
         tvNetwork = findViewById(R.id.tvLedgerNetwork)
+        clAboutApp = findViewById(R.id.clAboutApp)
         tvVersion = findViewById(R.id.tvVersion)
         toolbar = findViewById(R.id.toolbar)
     }
@@ -84,6 +95,7 @@ class SettingsActivity : BaseActivity() {
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar!!.title = resources.getString(R.string.txt_settings)
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 

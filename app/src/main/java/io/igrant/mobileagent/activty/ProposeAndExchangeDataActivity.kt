@@ -1,5 +1,6 @@
 package io.igrant.mobileagent.activty
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -11,17 +12,18 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
-import io.igrant.mobileagent.adapter.RequestAttributeAdapter
+import io.igrant.mobileagent.adapter.ExchangeRequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
 import io.igrant.mobileagent.events.GoHomeEvent
-import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
+import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.agentConfig.Invitation
 import io.igrant.mobileagent.models.connectionRequest.DidDoc
@@ -63,14 +65,15 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     private lateinit var toolbar: Toolbar
     private lateinit var tvDesc: TextView
     private lateinit var tvHead: TextView
-//    private lateinit var btReject: Button
+
+    //    private lateinit var btReject: Button
     private lateinit var btAccept: Button
     private lateinit var rvAttributes: RecyclerView
     private lateinit var llProgressBar: LinearLayout
 
     private var mPresentationExchange: PresentationExchange? = null
 
-    private lateinit var adapter: RequestAttributeAdapter
+    private lateinit var adapter: ExchangeRequestAttributeAdapter
 
     private var attributelist: ArrayList<ExchangeAttributes> = ArrayList()
 
@@ -101,6 +104,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
         tvDesc.text =
             resources.getString(R.string.txt_exchange_data_desc, invitation.label ?: "")
 
+        tvHead.text = (proposalData.name ?: "").toUpperCase()
         val searchHandle = CredentialsSearchForProofReq.open(
             WalletManager.getWallet,
             WalletManager.getGson.toJson(proposalData),
@@ -147,7 +151,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
 
         searchHandle.closeSearch()
 
-        adapter = RequestAttributeAdapter(
+        adapter = ExchangeRequestAttributeAdapter(
             attributelist
         )
         rvAttributes.layoutManager = LinearLayoutManager(this)
@@ -162,7 +166,8 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
 
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
-        supportActionBar!!.title = resources.getString(R.string.txt_exchange_data)
+        supportActionBar!!.title = resources.getString(R.string.txt_data_agreement)
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
@@ -189,10 +194,6 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     }
 
     private fun initListener() {
-//        btReject.setOnClickListener {
-//            onBackPressed()
-//        }
-
         btAccept.setOnClickListener {
             if (!isInsufficientData) {
                 val connection =
@@ -203,9 +204,9 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                     btAccept.isEnabled = false
 //                    btReject.isEnabled = false
                     if (mPresentationExchange != null) {
-                        exchangeData()
+                        exchangeData(UUID.randomUUID().toString())
                     } else {
-                        sendProposal()
+                        sendProposal(mConnectionId)
                     }
                 } else {
                     saveConnection(invitation)
@@ -220,10 +221,11 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
         }
     }
 
-    private fun sendProposal() {
+    private fun sendProposal(mConnectionId: String) {
+        val threadId = UUID.randomUUID().toString()
         var data = "{\n" +
                 "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/propose-presentation\",\n" +
-                "  \"@id\": \"${UUID.randomUUID()}\",\n" +
+                "  \"@id\": \"$threadId\",\n" +
                 "  \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
                 "    },\n" +
@@ -247,176 +249,364 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                 "}"
 
 
-        val connectionObject =
-            ConnectionUtils.getConnectionWithInvitationKey(invitation.recipientKeys!![0])
-//            SearchUtils.searchWallet(
-//                WalletRecordType.CONNECTION,
-//                "{\"request_id\":\"$mConnectionId\"}"
-//            )
-
-//        var connectionObject = WalletManager.getGson.fromJson(
-//            connection.records?.get(0)?.value,
-//            MediatorConnectionObject::class.java
-//        )
-
-        val metaString = Did.getDidWithMeta(WalletManager.getWallet, connectionObject?.myDid).get()
-        val metaObject = JSONObject(metaString)
-        val publicKey = metaObject.getString("verkey")
-
-        val didDocSearch = SearchUtils.searchWallet(
-            WalletRecordType.DID_DOC,
-            "{\"did\":\"${connectionObject?.theirDid}\"}"
+        val connectionList = SearchUtils.searchWallet(
+            WalletRecordType.CONNECTION,
+            "{\"request_id\":\"$mConnectionId\"}"
         )
 
-        var serviceEndPoint = ""
-        var recipient = ""
-        if (didDocSearch.totalCount ?: 0 > 0) {
-            val didDoc = WalletManager.getGson.fromJson(
-                didDocSearch.records?.get(0)?.value,
-                DidDoc::class.java
+        if (connectionList.totalCount ?: 0 > 0) {
+            val connectionObject = WalletManager.getGson.fromJson(
+                connectionList.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
             )
 
-            serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
-            recipient = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
-        }
+            val metaString =
+                Did.getDidWithMeta(WalletManager.getWallet, connectionObject?.myDid).get()
+            val metaObject = JSONObject(metaString)
+            val publicKey = metaObject.getString("verkey")
 
-        Log.d(TAG, "sendProposal: $recipient \n $publicKey \n $data")
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"$recipient\"]",
-            publicKey,
-            data.toByteArray()
-        ).get()
+            val didDocSearch = SearchUtils.searchWallet(
+                WalletRecordType.DID_DOC,
+                "{\"did\":\"${connectionObject?.theirDid}\"}"
+            )
 
-        val typedBytes: RequestBody = object : RequestBody() {
-            override fun contentType(): MediaType? {
-                return "application/ssi-agent-wire".toMediaTypeOrNull()
+            var serviceEndPoint = ""
+            var recipient = ""
+            if (didDocSearch.totalCount ?: 0 > 0) {
+                val didDoc = WalletManager.getGson.fromJson(
+                    didDocSearch.records?.get(0)?.value,
+                    DidDoc::class.java
+                )
+
+                serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
+                recipient = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
             }
 
-            @Throws(IOException::class)
-            override fun writeTo(sink: BufferedSink) {
-                sink.write(packedMessage)
-            }
-        }
+            Log.d(TAG, "sendProposal: $recipient \n $publicKey \n $data")
+            val packedMessage = Crypto.packMessage(
+                WalletManager.getWallet,
+                "[\"$recipient\"]",
+                publicKey,
+                data.toByteArray()
+            ).get()
 
-        ApiManager.api.getService()?.postData(serviceEndPoint, typedBytes)
-            ?.enqueue(object : Callback<ConfigPostResponse> {
-                override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
-                    llProgressBar.visibility = View.GONE
+            val typedBytes: RequestBody = object : RequestBody() {
+                override fun contentType(): MediaType? {
+                    return "application/ssi-agent-wire".toMediaTypeOrNull()
                 }
 
-                override fun onResponse(
-                    call: Call<ConfigPostResponse>,
-                    response: Response<ConfigPostResponse>
-                ) {
-                    Log.d(TAG, "onResponse: " + response.body())
+                @Throws(IOException::class)
+                override fun writeTo(sink: BufferedSink) {
+                    sink.write(packedMessage)
+                }
+            }
 
-                    val unpack =
-                        Crypto.unpackMessage(
+            ApiManager.api.getService()?.postData(serviceEndPoint, typedBytes)
+                ?.enqueue(object : Callback<ConfigPostResponse> {
+                    override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
+                        llProgressBar.visibility = View.GONE
+                    }
+
+                    override fun onResponse(
+                        call: Call<ConfigPostResponse>,
+                        response: Response<ConfigPostResponse>
+                    ) {
+                        Log.d(TAG, "onResponse: " + response.body())
+
+                        val unpack =
+                            Crypto.unpackMessage(
+                                WalletManager.getWallet,
+                                WalletManager.getGson.toJson(response.body()).toString()
+                                    .toByteArray()
+                            ).get()
+
+                        val message = JSONObject(String(unpack)).getString("message")
+
+                        val presentationRequestBase64 =
+                            JSONObject(
+                                JSONObject(message).getJSONArray("request_presentations~attach")
+                                    .get(0).toString()
+                            ).getJSONObject("data").getString("base64")
+                        val presentationRequest = WalletManager.getGson.fromJson(
+                            Base64.decode(presentationRequestBase64, Base64.URL_SAFE)
+                                .toString(charset("UTF-8")), PresentationRequest::class.java
+                        )
+
+                        val presentationExchange = PresentationExchange()
+                        presentationExchange.threadId =
+                            JSONObject(message).getJSONObject("~thread").getString("thid")
+                        presentationExchange.createdAt = "2020-11-25 12:17:53.491756Z"
+                        presentationExchange.updatedAt = "2020-11-25 12:17:53.491756Z"
+                        presentationExchange.connectionId = connectionObject?.requestId
+                        presentationExchange.initiator = "external"
+                        presentationExchange.presentationProposalDict = null
+                        presentationExchange.presentationRequest = presentationRequest
+                        presentationExchange.role = "prover"
+                        presentationExchange.state = PresentationExchangeStates.REQUEST_RECEIVED
+                        presentationExchange.comment =
+                            JSONObject(message).getString("comment")
+
+                        mPresentationExchange = presentationExchange
+
+                        val searchHandle2 = CredentialsSearchForProofReq.open(
                             WalletManager.getWallet,
-                            WalletManager.getGson.toJson(response.body()).toString().toByteArray()
+                            WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest),
+                            "{}"
                         ).get()
 
-                    val message = JSONObject(String(unpack)).getString("message")
+                        requestedAttributes = HashMap()
+                        attributelist.clear()
+                        var credentialValue: CredentialValue
+                        mPresentationExchange?.presentationRequest?.requestedAttributes?.forEach { (key, value) ->
+                            val searchResult = searchHandle2.fetchNextCredentials(key, 100).get()
 
-                    val presentationRequestBase64 =
-                        JSONObject(
-                            JSONObject(message).getJSONArray("request_presentations~attach")
-                                .get(0).toString()
-                        ).getJSONObject("data").getString("base64")
-                    val presentationRequest = WalletManager.getGson.fromJson(
-                        Base64.decode(presentationRequestBase64, Base64.URL_SAFE)
-                            .toString(charset("UTF-8")), PresentationRequest::class.java
-                    )
+                            if (JSONArray(searchResult).length() > 0) {
+                                val referent =
+                                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject(
+                                        "cred_info"
+                                    )
+                                        .getString("referent")
 
-                    val presentationExchange = PresentationExchange()
-                    presentationExchange.threadId =
-                        JSONObject(message).getString("@id")
-                    presentationExchange.createdAt = "2020-11-25 12:17:53.491756Z"
-                    presentationExchange.updatedAt = "2020-11-25 12:17:53.491756Z"
-                    presentationExchange.connectionId = connectionObject?.requestId
-                    presentationExchange.initiator = "external"
-                    presentationExchange.presentationProposalDict = null
-                    presentationExchange.presentationRequest = presentationRequest
-                    presentationExchange.role = "prover"
-                    presentationExchange.state = PresentationExchangeStates.REQUEST_RECEIVED
-                    presentationExchange.comment =
-                        JSONObject(message).getString("comment")
+                                credentialValue = CredentialValue()
+                                credentialValue.credId = referent
+                                credentialValue.revealed = true
 
-                    mPresentationExchange = presentationExchange
+                                requestedAttributes[key] = credentialValue
 
-                    val searchHandle2 = CredentialsSearchForProofReq.open(
-                        WalletManager.getWallet,
-                        WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest),
-                        "{}"
-                    ).get()
-
-                    requestedAttributes = HashMap()
-                    attributelist.clear()
-                    var credentialValue: CredentialValue
-                    mPresentationExchange?.presentationRequest?.requestedAttributes?.forEach { (key, value) ->
-                        val searchResult = searchHandle2.fetchNextCredentials(key, 100).get()
-
-                        if (JSONArray(searchResult).length() > 0) {
-                            val referent =
-                                JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-                                    .getString("referent")
-
-                            credentialValue = CredentialValue()
-                            credentialValue.credId = referent
-                            credentialValue.revealed = true
-
-                            requestedAttributes[key] = credentialValue
-
-                        } else {
-                            isInsufficientData = true
+                            } else {
+                                isInsufficientData = true
+                            }
                         }
+                        exchangeData(threadId)
                     }
-                    exchangeData()
-                }
-            })
+                })
+        }
+
     }
 
-    private fun exchangeData() {
+    private fun sendProposalWithOrgId(mConnectionId: String) {
+        val threadId = UUID.randomUUID().toString()
+        var data = "{\n" +
+                "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/propose-presentation\",\n" +
+                "  \"@id\": \"$threadId\",\n" +
+                "  \"~transport\": {\n" +
+                "        \"return_route\": \"all\"\n" +
+                "    },\n" +
+                "  \"presentation_proposal\": {\n" +
+                "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview\",\n" +
+                "    \"attributes\": [\n"
+        for (attribute in attributelist) {
+            data = data + "{\n" +
+                    "        \"name\": \"${attribute.name}\",\n" +
+                    "        \"cred_def_id\": \"${attribute.credDefId}\",\n" +
+                    "        \"value\": \"${attribute.value}\",\n" +
+                    "        \"referent\": \"${attribute.referent}\"\n" +
+                    "      },\n"
+        }
+        data = data.substring(0, data.length - 2)
+        data = data +
+                "    ],\n" +
+                "    \"predicates\": []\n" +
+                "  },\n" +
+                "  \"comment\": \"Proposing credentials\"\n" +
+                "}"
+
+
+        val connectionList =
+            SearchUtils.searchWallet(WalletRecordType.CONNECTION, "{\"orgId\":\"$mConnectionId\"}")
+
+        if (connectionList.totalCount ?: 0 > 0) {
+            val connectionObject = WalletManager.getGson.fromJson(
+                connectionList.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
+            )
+
+            val metaString =
+                Did.getDidWithMeta(WalletManager.getWallet, connectionObject?.myDid).get()
+            val metaObject = JSONObject(metaString)
+            val publicKey = metaObject.getString("verkey")
+
+            val didDocSearch = SearchUtils.searchWallet(
+                WalletRecordType.DID_DOC,
+                "{\"did\":\"${connectionObject?.theirDid}\"}"
+            )
+
+            var serviceEndPoint = ""
+            var recipient = ""
+            if (didDocSearch.totalCount ?: 0 > 0) {
+                val didDoc = WalletManager.getGson.fromJson(
+                    didDocSearch.records?.get(0)?.value,
+                    DidDoc::class.java
+                )
+
+                serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
+                recipient = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
+            }
+
+            Log.d(TAG, "sendProposal: $recipient \n $publicKey \n $data")
+            val packedMessage = Crypto.packMessage(
+                WalletManager.getWallet,
+                "[\"$recipient\"]",
+                publicKey,
+                data.toByteArray()
+            ).get()
+
+            val typedBytes: RequestBody = object : RequestBody() {
+                override fun contentType(): MediaType? {
+                    return "application/ssi-agent-wire".toMediaTypeOrNull()
+                }
+
+                @Throws(IOException::class)
+                override fun writeTo(sink: BufferedSink) {
+                    sink.write(packedMessage)
+                }
+            }
+
+            ApiManager.api.getService()?.postData(serviceEndPoint, typedBytes)
+                ?.enqueue(object : Callback<ConfigPostResponse> {
+                    override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
+                        llProgressBar.visibility = View.GONE
+                    }
+
+                    override fun onResponse(
+                        call: Call<ConfigPostResponse>,
+                        response: Response<ConfigPostResponse>
+                    ) {
+                        Log.d(TAG, "onResponse: " + response.body())
+
+                        val unpack =
+                            Crypto.unpackMessage(
+                                WalletManager.getWallet,
+                                WalletManager.getGson.toJson(response.body()).toString()
+                                    .toByteArray()
+                            ).get()
+
+                        val message = JSONObject(String(unpack)).getString("message")
+
+                        val presentationRequestBase64 =
+                            JSONObject(
+                                JSONObject(message).getJSONArray("request_presentations~attach")
+                                    .get(0).toString()
+                            ).getJSONObject("data").getString("base64")
+                        val presentationRequest = WalletManager.getGson.fromJson(
+                            Base64.decode(presentationRequestBase64, Base64.URL_SAFE)
+                                .toString(charset("UTF-8")), PresentationRequest::class.java
+                        )
+
+                        val presentationExchange = PresentationExchange()
+                        presentationExchange.threadId =
+                            JSONObject(message).getJSONObject("~thread").getString("thid")
+                        presentationExchange.createdAt = "2020-11-25 12:17:53.491756Z"
+                        presentationExchange.updatedAt = "2020-11-25 12:17:53.491756Z"
+                        presentationExchange.connectionId = connectionObject?.requestId
+                        presentationExchange.initiator = "external"
+                        presentationExchange.presentationProposalDict = null
+                        presentationExchange.presentationRequest = presentationRequest
+                        presentationExchange.role = "prover"
+                        presentationExchange.state = PresentationExchangeStates.REQUEST_RECEIVED
+                        presentationExchange.comment =
+                            JSONObject(message).getString("comment")
+
+                        mPresentationExchange = presentationExchange
+
+                        val searchHandle2 = CredentialsSearchForProofReq.open(
+                            WalletManager.getWallet,
+                            WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest),
+                            "{}"
+                        ).get()
+
+                        requestedAttributes = HashMap()
+                        attributelist.clear()
+                        var credentialValue: CredentialValue
+                        mPresentationExchange?.presentationRequest?.requestedAttributes?.forEach { (key, value) ->
+                            val searchResult = searchHandle2.fetchNextCredentials(key, 100).get()
+
+                            if (JSONArray(searchResult).length() > 0) {
+                                val referent =
+                                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject(
+                                        "cred_info"
+                                    )
+                                        .getString("referent")
+
+                                credentialValue = CredentialValue()
+                                credentialValue.credId = referent
+                                credentialValue.revealed = true
+
+                                requestedAttributes[key] = credentialValue
+
+                            } else {
+                                isInsufficientData = true
+                            }
+                        }
+                        exchangeData(threadId)
+                    }
+                })
+        }
+
+    }
+
+    private fun exchangeData(threadId: String) {
         ExchangeDataTask(object : CommonHandler {
             override fun taskStarted() {
 
             }
 
             override fun onExchangeDataComplete(
-                serviceEndPoint: String,
-                typedBytes: RequestBody
+                serviceEndPoint: String?,
+                typedBytes: RequestBody?
             ) {
-                ApiManager.api.getService()
-                    ?.postDataWithoutData(
-                        serviceEndPoint,
-                        typedBytes
-                    )
-                    ?.enqueue(object : Callback<ResponseBody> {
-                        override fun onFailure(
-                            call: Call<ResponseBody>,
-                            t: Throwable
-                        ) {
-                            llProgressBar.visibility = View.GONE
-                            btAccept.isEnabled = true
-//                            btReject.isEnabled = true
-                        }
-
-                        override fun onResponse(
-                            call: Call<ResponseBody>,
-                            response: Response<ResponseBody>
-                        ) {
-                            if (response.code() == 200 && response.body() != null) {
+                if (typedBytes != null) {
+                    ApiManager.api.getService()
+                        ?.postDataWithoutData(
+                            serviceEndPoint ?: "",
+                            typedBytes
+                        )
+                        ?.enqueue(object : Callback<ResponseBody> {
+                            override fun onFailure(
+                                call: Call<ResponseBody>,
+                                t: Throwable
+                            ) {
                                 llProgressBar.visibility = View.GONE
                                 btAccept.isEnabled = true
+//                            btReject.isEnabled = true
+                            }
+
+                            override fun onResponse(
+                                call: Call<ResponseBody>,
+                                response: Response<ResponseBody>
+                            ) {
+                                if (response.code() == 200 && response.body() != null) {
+                                    llProgressBar.visibility = View.GONE
+                                    btAccept.isEnabled = true
 //                                btReject.isEnabled = true
 
-                                EventBus.getDefault().post(GoHomeEvent())
+                                    EventBus.getDefault().post(GoHomeEvent())
 
-                                onBackPressed()
+                                    AlertDialog.Builder(this@ProposeAndExchangeDataActivity)
+                                        .setMessage(
+                                            resources.getString(
+                                                R.string.txt_exchange_successful_without_name
+                                            )
+                                        ) // Specifying a listener allows you to take an action before dismissing the dialog.
+                                        // The dialog is automatically dismissed when a dialog button is clicked.
+                                        .setPositiveButton(
+                                            android.R.string.ok,
+                                            DialogInterface.OnClickListener { dialog, which ->
+                                                onBackPressed()
+                                            }) // A null listener allows the button to dismiss the dialog and take no further action.
+                                        .show()
+                                }
                             }
-                        }
-                    })
+                        })
+                } else {
+                    Toast.makeText(
+                        this@ProposeAndExchangeDataActivity,
+                        resources.getString(R.string.err_ledger_missmatch),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    llProgressBar.visibility = View.GONE
+                    btAccept.isEnabled = true
+                }
             }
         }, mPresentationExchange, requestedAttributes).execute(
             "",
@@ -437,7 +627,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
             Handler(Looper.getMainLooper()).postDelayed({
                 val connectionSuccessDialogFragment: ConnectionProgressDailogFragment =
                     ConnectionProgressDailogFragment.newInstance(
-                        "You are not connected to ${invitation.label}. Please connect before sharing data.",
+                        true,
                         invitation,
                         ""
                     )
@@ -446,14 +636,32 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
         }
     }
 
-    override fun onSuccess(proposal: String, connectionId: String) {
+    override fun onSuccess(proposal: String, orgId: String) {
         llProgressBar.visibility = View.VISIBLE
         btAccept.isEnabled = false
 //        btReject.isEnabled = false
         if (mPresentationExchange != null) {
-            exchangeData()
+            exchangeData(UUID.randomUUID().toString())
         } else {
-            sendProposal()
+            sendProposalWithOrgId(orgId)
+        }
+    }
+
+    override fun onExistingConnection(connectionId: String) {
+        val connectionList = SearchUtils.searchWallet(
+            WalletRecordType.CONNECTION,
+            "{\"request_id\":\"$connectionId\"}"
+        )
+
+        if (connectionList.totalCount ?: 0 > 0) {
+            llProgressBar.visibility = View.VISIBLE
+            btAccept.isEnabled = false
+//                    btReject.isEnabled = false
+            if (mPresentationExchange != null) {
+                exchangeData(UUID.randomUUID().toString())
+            } else {
+                sendProposal(connectionId)
+            }
         }
     }
 }

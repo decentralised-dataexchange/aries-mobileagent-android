@@ -13,6 +13,7 @@ import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.WalletListener
 import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.models.walletSearch.Record
+import okhttp3.internal.wait
 
 class WalletCertificatesAdapter(
     private val credentialList: ArrayList<Record>,
@@ -23,7 +24,7 @@ class WalletCertificatesAdapter(
             itemView.findViewById<View>(R.id.tvCertificateName) as TextView
         var tvCompanyName: TextView =
             itemView.findViewById<View>(R.id.tvCompanyName) as TextView
-        var ivDelete: ImageView = itemView.findViewById<View>(R.id.ivDelete) as ImageView
+        var tvLocation: TextView = itemView.findViewById(R.id.tvLocation) as TextView
         var ivLogo: ImageView = itemView.findViewById(R.id.ivLogo)
         var cvItem: CardView = itemView.findViewById(R.id.cvItem)
     }
@@ -44,9 +45,9 @@ class WalletCertificatesAdapter(
             WalletManager.getGson.fromJson(credentialList[position].value, WalletModel::class.java)
         val lst = certificate.rawCredential?.schemaId?.split(":")
         holder.tvCertificateName.text = (lst?.get(2) ?: "").toUpperCase()
-        holder.ivDelete.setOnClickListener {
-            listener.onDelete(certificate.credentialId ?: "", position)
-        }
+//        holder.ivDelete.setOnClickListener {
+//            listener.onDelete(certificate.credentialId ?: "", position)
+//        }
         holder.tvCompanyName.text = certificate.connection?.theirLabel ?: ""
         try {
             Glide
@@ -58,7 +59,14 @@ class WalletCertificatesAdapter(
         } catch (e: Exception) {
         }
         holder.cvItem.setOnClickListener {
+            if (certificate.organization!=null)
             listener.onItemClick(certificate)
+        }
+
+        if (certificate.organization!=null && certificate.organization?.location!=null){
+            holder.tvLocation.text =  certificate.organization?.location?:""
+        }else{
+            holder.tvLocation.text = ""
         }
     }
 }

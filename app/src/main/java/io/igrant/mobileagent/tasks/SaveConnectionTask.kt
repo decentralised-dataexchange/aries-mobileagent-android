@@ -14,8 +14,6 @@ import io.igrant.mobileagent.utils.ConnectionStates
 import io.igrant.mobileagent.utils.DeviceUtils
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
-import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
-import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION_INVITATION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.MEDIATOR_DID_DOC
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -31,17 +29,27 @@ import java.util.*
 class SaveConnectionTask(
     private val commonHandler: CommonHandler,
     private val invitation: Invitation
-) :
-    AsyncTask<Void, Void, Void>() {
+) : AsyncTask<String, Void, Void>() {
 
-    private lateinit var queryFeaturePackedBytes: RequestBody
     private lateinit var connectionRequestTypedBytes: RequestBody
     private lateinit var typedBytes: RequestBody
     private val TAG = "SaveConnectionTask"
 
-    override fun doInBackground(vararg p0: Void?): Void? {
+    override fun doInBackground(vararg p0: String?): Void? {
+
+        val myDid = p0[0] ?: ""
+        val key = p0[1] ?: ""
+        val orgId = p0[2] ?: ""
+        val requestId = p0[3] ?: ""
+
         val connectionValue =
-            WalletManager.getGson.toJson(setUpMediatorConnectionObject(invitation, null, null))
+            WalletManager.getGson.toJson(
+                setUpMediatorConnectionObject(
+                    invitation,
+                    null,
+                    null
+                )
+            )
         val connectionUuid = UUID.randomUUID().toString()
 
         val connectionTag = ConnectionTags()
@@ -53,88 +61,57 @@ class SaveConnectionTask(
 
         WalletRecord.add(
             WalletManager.getWallet,
-            CONNECTION,
+            WalletRecordType.CONNECTION,
             connectionUuid,
             connectionValue.toString(),
             connectionTagJson.toString()
         )
 
-        val connectionInvitationTagJson = WalletManager.getGson.toJson(ConnectionId(connectionUuid))
+        val connectionInvitationTagJson =
+            WalletManager.getGson.toJson(ConnectionId(connectionUuid))
         val connectionInvitationUuid = UUID.randomUUID().toString()
 
         WalletRecord.add(
             WalletManager.getWallet,
-            CONNECTION_INVITATION,
+            WalletRecordType.CONNECTION_INVITATION,
             connectionInvitationUuid,
             WalletManager.getGson.toJson(invitation),
             connectionInvitationTagJson
         )
 
-        val myDidResult =
-            Did.createAndStoreMyDid(WalletManager.getWallet, "{}").get()
-        val myDid = myDidResult.did
-
-        val requestId = UUID.randomUUID().toString()
+        var connectionObject = setUpMediatorConnectionObject(
+            invitation,
+            requestId,
+            myDid
+        )
+        connectionObject.orgId = orgId
         val value = WalletManager.getGson.toJson(
-            setUpMediatorConnectionObject(
-                invitation,
-                requestId,
-                myDid
-            )
+            connectionObject
         )
 
         WalletRecord.updateValue(
             WalletManager.getWallet,
-            CONNECTION,
+            WalletRecordType.CONNECTION,
             connectionUuid,
             value
         )
 
-        val metaString = Did.getDidWithMeta(WalletManager.getWallet, myDid).get()
-        val metaObject = JSONObject(metaString)
-        val key = metaObject.getString("verkey")
-
-        val queryFeatureData = "{\n" +
-                "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/discover-features/1.0/query\",\n" +
-                "    \"@id\": \"${UUID.randomUUID()}\",\n" +
-                "    \"query\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/*\",\n" +
-                "    \"comment\": \"Querying features available.\",\n" +
-                "    \"~transport\": {\n" +
-                "        \"return_route\": \"all\"\n" +
-                "    }\n" +
-                "}"
-
-        val queryFeaturePacked = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
-            key,
-            queryFeatureData.toByteArray()
-        ).get()
-
-        queryFeaturePackedBytes = object : RequestBody() {
-            override fun contentType(): MediaType? {
-                return "application/ssi-agent-wire".toMediaTypeOrNull()
-            }
-
-            @Throws(IOException::class)
-            override fun writeTo(sink: BufferedSink) {
-                sink.write(queryFeaturePacked)
-            }
-        }
-
+        var invitationKey = UpdateInvitationKey(
+            requestId,
+            myDid,
+            invitation.recipientKeys!![0],
+            null,
+            null
+        )
+        invitationKey.orgId = orgId
         val tagJson =
             WalletManager.getGson.toJson(
-                UpdateInvitationKey(
-                    requestId,
-                    myDid,
-                    invitation.recipientKeys!![0],
-                    null,
-                    null
-                )
+                invitationKey
             )
+
         WalletRecord.updateTags(
             WalletManager.getWallet,
-            CONNECTION,
+            WalletRecordType.CONNECTION,
             connectionUuid,
             tagJson
         )
@@ -286,8 +263,7 @@ class SaveConnectionTask(
         super.onPostExecute(result)
         commonHandler.onSaveConnection(
             typedBytes,
-            connectionRequestTypedBytes,
-            queryFeaturePackedBytes
+            connectionRequestTypedBytes
         )
     }
 
@@ -298,7 +274,7 @@ class SaveConnectionTask(
     ): MediatorConnectionObject {
         val connectionObject = MediatorConnectionObject()
         connectionObject.theirLabel = invitation?.label ?: ""
-        connectionObject.theirImageUrl = invitation?.imageUrl ?: ""
+        connectionObject.theirImageUrl = invitation?.image_url ?:invitation?.imageUrl ?: ""
         connectionObject.theirDid = ""
         connectionObject.inboxId = ""
         connectionObject.inboxKey = ""
@@ -319,5 +295,4 @@ class SaveConnectionTask(
 
         return connectionObject
     }
-
 }

@@ -1,5 +1,6 @@
 package io.igrant.mobileagent.activty
 
+import android.content.DialogInterface
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -8,13 +9,14 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
-import io.igrant.mobileagent.adapter.RequestAttributeAdapter
+import io.igrant.mobileagent.adapter.ExchangeRequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
-import io.igrant.mobileagent.events.GoHomeEvent
+import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
@@ -31,6 +33,7 @@ import io.igrant.mobileagent.utils.WalletRecordType
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.greenrobot.eventbus.EventBus
+import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
 import org.json.JSONArray
@@ -38,6 +41,10 @@ import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.util.*
+import kotlin.collections.ArrayList
+import kotlin.collections.HashMap
+
 
 class ExchangeDataActivity : BaseActivity() {
 
@@ -50,12 +57,13 @@ class ExchangeDataActivity : BaseActivity() {
     private lateinit var toolbar: Toolbar
     private lateinit var tvDesc: TextView
     private lateinit var tvHead: TextView
-//    private lateinit var btReject: Button
+
+    //    private lateinit var btReject: Button
     private lateinit var btAccept: Button
     private lateinit var rvAttributes: RecyclerView
     private lateinit var llProgressBar: LinearLayout
 
-    private lateinit var adapter: RequestAttributeAdapter
+    private lateinit var adapter: ExchangeRequestAttributeAdapter
 
     private var attributelist: ArrayList<ExchangeAttributes> = ArrayList()
 
@@ -85,9 +93,12 @@ class ExchangeDataActivity : BaseActivity() {
     }
 
     private fun initValues() {
-        if (connection!=null) {
+        if (connection != null) {
             tvDesc.text =
-                resources.getString(R.string.txt_exchange_data_desc, connection?.theirLabel?:resources.getString(R.string.txt_organisations))
+                resources.getString(
+                    R.string.txt_exchange_data_desc,
+                    connection?.theirLabel ?: resources.getString(R.string.txt_organisations)
+                )
         }
 
         tvHead.text = (mPresentationExchange?.presentationRequest?.name ?: "").toUpperCase()
@@ -138,7 +149,7 @@ class ExchangeDataActivity : BaseActivity() {
 
         searchHandle.closeSearch()
 
-        adapter = RequestAttributeAdapter(
+        adapter = ExchangeRequestAttributeAdapter(
             attributelist
         )
         rvAttributes.layoutManager = LinearLayoutManager(this)
@@ -155,7 +166,8 @@ class ExchangeDataActivity : BaseActivity() {
 
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
-        supportActionBar!!.title = resources.getString(R.string.txt_exchange_data)
+        supportActionBar!!.title = resources.getString(R.string.txt_data_agreement)
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
@@ -165,30 +177,50 @@ class ExchangeDataActivity : BaseActivity() {
                 onBackPressed()
             }
             R.id.action_delete -> {
-                WalletRecord.delete(
-                    WalletManager.getWallet,
-                    WalletRecordType.MESSAGE_RECORDS,
-                    mPresentationExchange?.threadId ?: ""
-                ).get()
+                AlertDialog.Builder(this@ExchangeDataActivity)
+                    .setTitle(resources.getString(R.string.txt_confirmation))
+                    .setMessage(
+                        resources.getString(
+                            R.string.txt_exchange_request_delete_confirmation
+                        )
+                    ) // Specifying a listener allows you to take an action before dismissing the dialog.
+                    // The dialog is automatically dismissed when a dialog button is clicked.
+                    .setPositiveButton(
+                        android.R.string.ok,
+                        DialogInterface.OnClickListener { dialog, which ->
+                            WalletRecord.delete(
+                                WalletManager.getWallet,
+                                WalletRecordType.MESSAGE_RECORDS,
+                                mPresentationExchange?.threadId ?: ""
+                            ).get()
 
-                val credentialExchangeResponse =
-                    SearchUtils.searchWallet(
-                        WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-                        "{\"thread_id\": \"${mPresentationExchange?.threadId}\"}"
-                    )
+                            val credentialExchangeResponse =
+                                SearchUtils.searchWallet(
+                                    WalletRecordType.CREDENTIAL_EXCHANGE_V10,
+                                    "{\"thread_id\": \"${mPresentationExchange?.threadId}\"}"
+                                )
 
-                if (credentialExchangeResponse.totalCount ?: 0 > 0) {
-                    WalletRecord.delete(
-                        WalletManager.getWallet,
-                        WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-                        "${credentialExchangeResponse.records?.get(0)?.id}"
-                    ).get()
-                }
+                            if (credentialExchangeResponse.totalCount ?: 0 > 0) {
+                                WalletRecord.delete(
+                                    WalletManager.getWallet,
+                                    WalletRecordType.CREDENTIAL_EXCHANGE_V10,
+                                    "${credentialExchangeResponse.records?.get(0)?.id}"
+                                ).get()
+                            }
 
-                EventBus.getDefault()
-                    .post(ReceiveExchangeRequestEvent(mConnectionId))
+                            EventBus.getDefault()
+                                .post(ReceiveExchangeRequestEvent())
 
-                onBackPressed()
+                            onBackPressed()
+                        }) // A null listener allows the button to dismiss the dialog and take no further action.
+                    .setNegativeButton(
+                        android.R.string.cancel,
+                        DialogInterface.OnClickListener { dialog, which ->
+
+                        })
+                    .show()
+
+
             }
             else -> {
 
@@ -224,52 +256,71 @@ class ExchangeDataActivity : BaseActivity() {
                     }
 
                     override fun onExchangeDataComplete(
-                        serviceEndPoint: String,
-                        typedBytes: RequestBody
+                        serviceEndPoint: String?,
+                        typedBytes: RequestBody?
                     ) {
-                        ApiManager.api.getService()
-                            ?.postDataWithoutData(
-                                serviceEndPoint,
-                                typedBytes
-                            )
-                            ?.enqueue(object : Callback<ResponseBody> {
-                                override fun onFailure(
-                                    call: Call<ResponseBody>,
-                                    t: Throwable
-                                ) {
-                                    llProgressBar.visibility = View.GONE
-                                    btAccept.isEnabled = true
-//                                    btReject.isEnabled = true
-                                }
-
-                                override fun onResponse(
-                                    call: Call<ResponseBody>,
-                                    response: Response<ResponseBody>
-                                ) {
-                                    if (response.code() == 200 && response.body() != null) {
+                        if (typedBytes!=null) {
+                            ApiManager.api.getService()
+                                ?.postDataWithoutData(
+                                    serviceEndPoint?:"",
+                                    typedBytes
+                                )
+                                ?.enqueue(object : Callback<ResponseBody> {
+                                    override fun onFailure(
+                                        call: Call<ResponseBody>,
+                                        t: Throwable
+                                    ) {
                                         llProgressBar.visibility = View.GONE
                                         btAccept.isEnabled = true
+//                                    btReject.isEnabled = true
+                                    }
+
+                                    override fun onResponse(
+                                        call: Call<ResponseBody>,
+                                        response: Response<ResponseBody>
+                                    ) {
+                                        if (response.code() == 200 && response.body() != null) {
+                                            llProgressBar.visibility = View.GONE
+                                            btAccept.isEnabled = true
 //                                        btReject.isEnabled = true
 
-                                        val tagJson = "{\n" +
-                                                "  \"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
-                                                "  \"connectionId\":\"${mConnectionId}\",\n" +
-                                                "  \"stat\":\"Processed\"\n" +
-                                                "}"
-                                        WalletRecord.updateTags(
-                                            WalletManager.getWallet,
-                                            WalletRecordType.MESSAGE_RECORDS,
-                                            record?.id ?: "",
-                                            tagJson
-                                        )
+                                            val tagJson = "{\n" +
+                                                    "  \"type\":\"${MessageTypes.TYPE_REQUEST_PRESENTATION}\",\n" +
+                                                    "  \"connectionId\":\"${mConnectionId}\",\n" +
+                                                    "  \"stat\":\"Processed\"\n" +
+                                                    "}"
+                                            WalletRecord.updateTags(
+                                                WalletManager.getWallet,
+                                                WalletRecordType.MESSAGE_RECORDS,
+                                                record?.id ?: "",
+                                                tagJson
+                                            )
 
-                                        EventBus.getDefault()
-                                            .post(ReceiveExchangeRequestEvent(mConnectionId))
+                                            EventBus.getDefault()
+                                                .post(ReceiveExchangeRequestEvent())
 
-                                        onBackPressed()
+                                            AlertDialog.Builder(this@ExchangeDataActivity)
+                                                .setMessage(
+                                                    resources.getString(
+                                                        R.string.txt_exchange_successful,
+                                                        connection?.theirLabel ?: ""
+                                                    )
+                                                ) // Specifying a listener allows you to take an action before dismissing the dialog.
+                                                // The dialog is automatically dismissed when a dialog button is clicked.
+                                                .setPositiveButton(
+                                                    android.R.string.ok,
+                                                    DialogInterface.OnClickListener { dialog, which ->
+                                                        onBackPressed()
+                                                    }) // A null listener allows the button to dismiss the dialog and take no further action.
+                                                .show()
+                                        }
                                     }
-                                }
-                            })
+                                })
+                        }else{
+                            Toast.makeText(this@ExchangeDataActivity,resources.getString(R.string.err_ledger_missmatch),Toast.LENGTH_SHORT).show()
+                            llProgressBar.visibility = View.GONE
+                            btAccept.isEnabled = true
+                        }
                     }
                 }, mPresentationExchange, requestedAttributes).execute(record?.id, mConnectionId)
             } else {

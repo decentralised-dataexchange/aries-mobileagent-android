@@ -2,6 +2,7 @@ package io.igrant.mobileagent.communication
 
 import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.agentConfig.ConfigResponse
+import io.igrant.mobileagent.models.qr.QrDecode
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Call
@@ -32,4 +33,7 @@ interface APIService {
 
     @GET
     fun getGenesis(@Url url:String): Call<ResponseBody>
+
+    @POST
+    fun extractUrl(@Url url:String): Call<QrDecode>
 }

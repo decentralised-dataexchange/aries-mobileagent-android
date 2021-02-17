@@ -5,12 +5,12 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.Html
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.TextView
+import android.widget.*
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.bumptech.glide.Glide
 import com.kusu.loadingbutton.LoadingButton
 import io.igrant.mobileagent.R
@@ -18,32 +18,55 @@ import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.events.ConnectionSuccessEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.indy.WalletManager
+import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.agentConfig.Invitation
+import io.igrant.mobileagent.models.connection.Connection
+import io.igrant.mobileagent.tasks.GetConnectionDetailTask
 import io.igrant.mobileagent.tasks.SaveConnectionTask
 import io.igrant.mobileagent.tasks.SaveDidDocTask
-import kotlinx.android.synthetic.main.dailog_fragment_connection_progress.*
+import io.igrant.mobileagent.utils.PackingUtils
+import io.igrant.mobileagent.utils.SearchUtils
+import io.igrant.mobileagent.utils.WalletRecordType
+import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
+import okio.BufferedSink
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import org.greenrobot.eventbus.ThreadMode
 import org.hyperledger.indy.sdk.crypto.Crypto
+import org.hyperledger.indy.sdk.did.Did
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
+import java.io.IOException
+import java.util.*
 
 class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
+    private var isFromExchange: Boolean = false
+    private var requestId: String? = ""
     private lateinit var invitation: Invitation
     private lateinit var proposal: String
     lateinit var btnConnect: LoadingButton
     lateinit var ivClose: ImageView
     lateinit var tvDesc: TextView
     lateinit var ivLogo: ImageView
+    lateinit var tvName: TextView
     lateinit var llSuccess: LinearLayout
+    lateinit var clItem: ConstraintLayout
+    lateinit var pbLoader: ProgressBar
+    lateinit var clConnection: ConstraintLayout
     lateinit var ivSuccess: ImageView
+
+    var myDid = ""
+    var myKey = ""
+    var isIGrantEnabled = false
+    var orgId = ""
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -54,20 +77,279 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        val title = requireArguments().getString("title", "")
+        isFromExchange = requireArguments().getBoolean("isFromExchange", false)
         invitation = requireArguments().getSerializable("invitation") as Invitation
         proposal = requireArguments().getString("proposal", "")
 //        dialog!!.setTitle(title)
 
         initViews(view)
-        tvDesc.text = Html.fromHtml(resources.getString(R.string.txt_allow_connection_query,invitation.label?:"Organisation"))
+        tvDesc.text = Html.fromHtml(
+            resources.getString(
+                R.string.txt_allow_connection_query,
+                invitation.label ?: "Organisation"
+            )
+        )
+        tvName.text = invitation.label ?: "Organisation"
+
         Glide
             .with(ivLogo.context)
-            .load(invitation.imageUrl)
+            .load(invitation?.image_url ?:invitation?.imageUrl ?: "")
             .centerCrop()
             .placeholder(R.drawable.images)
             .into(ivLogo)
+
+        checkIfConnectionExisting()
         initListener(view)
+    }
+
+    /**
+     * Function to check whether the connection is existing or not
+     */
+    private fun checkIfConnectionExisting() {
+
+        val myDidResult =
+            Did.createAndStoreMyDid(WalletManager.getWallet, "{}").get()
+        myDid = myDidResult.did
+        myKey = myDidResult.verkey
+
+        val queryFeatureData = "{\n" +
+                "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/discover-features/1.0/query\",\n" +
+                "    \"@id\": \"${UUID.randomUUID()}\",\n" +
+                "    \"query\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/*\",\n" +
+                "    \"comment\": \"Querying features available.\",\n" +
+                "    \"~transport\": {\n" +
+                "        \"return_route\": \"all\"\n" +
+                "    }\n" +
+                "}"
+
+        val queryFeaturePacked =
+            if (invitation.routingKeys != null && invitation.routingKeys?.size ?: 0 > 0) {
+                PackingUtils.packMessage(
+                    "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
+                    WalletManager.getGson.toJson(invitation.routingKeys),
+                    myKey,
+                    queryFeatureData
+                )
+            } else {
+                PackingUtils.packMessage(
+                    "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
+                    myKey,
+                    queryFeatureData
+                )
+            }
+
+        val queryFeaturePackedBytes = object : RequestBody() {
+            override fun contentType(): MediaType? {
+                return "application/ssi-agent-wire".toMediaTypeOrNull()
+            }
+
+            @Throws(IOException::class)
+            override fun writeTo(sink: BufferedSink) {
+                sink.write(queryFeaturePacked)
+            }
+        }
+
+        ApiManager.api.getService()
+            ?.postData(invitation.serviceEndpoint ?: "", queryFeaturePackedBytes)
+            ?.enqueue(object : Callback<ConfigPostResponse> {
+                override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
+
+                }
+
+                override fun onResponse(
+                    call: Call<ConfigPostResponse>,
+                    response: Response<ConfigPostResponse>
+                ) {
+                    if (response.code() == 200 && response.body() != null) {
+                        isIGrantEnabled = false
+                        val unpack =
+                            Crypto.unpackMessage(
+                                WalletManager.getWallet,
+                                WalletManager.getGson.toJson(response.body()).toString()
+                                    .toByteArray()
+                            ).get()
+
+                        val dataArray =
+                            JSONObject(JSONObject(String(unpack)).getString("message")).getJSONArray(
+                                "protocols"
+                            )
+
+                        for (n in 0 until dataArray.length()) {
+                            val obj = dataArray.getJSONObject(n)
+                            if (obj.getString("pid").contains(
+                                    "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator",
+                                    ignoreCase = true
+                                )
+                            ) {
+                                isIGrantEnabled = true
+                            }
+                        }
+
+                        getOrganizationDetailsIfNeeded()
+                    }
+                }
+            })
+
+    }
+
+    private fun getOrganizationDetailsIfNeeded() {
+        if (isIGrantEnabled) {
+
+            requestId = UUID.randomUUID().toString()
+
+            val orgData =
+                "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"$requestId\" , \"~transport\": {" +
+                        "\"return_route\": \"all\"}\n}"
+
+            val orgDetailPacked = Crypto.packMessage(
+                WalletManager.getWallet,
+                "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
+                myKey,
+                orgData.toByteArray()
+            ).get()
+
+            val orgDetailTypedArray = object : RequestBody() {
+                override fun contentType(): MediaType? {
+                    return "application/ssi-agent-wire".toMediaTypeOrNull()
+                }
+
+                @Throws(IOException::class)
+                override fun writeTo(sink: BufferedSink) {
+                    sink.write(orgDetailPacked)
+                }
+            }
+
+            ApiManager.api.getService()
+                ?.postData(invitation.serviceEndpoint ?: "", orgDetailTypedArray)
+                ?.enqueue(object :
+                    Callback<ConfigPostResponse> {
+                    override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
+                        Log.d("https", "onFailure: ")
+                        pbLoader.visibility = View.GONE
+                        Toast.makeText(
+                            context,
+                            resources.getString(R.string.err_unexpected),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                        dismiss()
+                    }
+
+                    override fun onResponse(
+                        call: Call<ConfigPostResponse>,
+                        response: Response<ConfigPostResponse>
+                    ) {
+                        if (response.code() == 200 && response.body() != null) {
+                            val unpack =
+                                Crypto.unpackMessage(
+                                    WalletManager.getWallet,
+                                    WalletManager.getGson.toJson(response.body()).toString()
+                                        .toByteArray()
+                                ).get()
+
+                            Log.d(
+                                "milan",
+                                "onResponse: ${JSONObject(String(unpack)).getString("message")}"
+                            )
+                            val connectionData = WalletManager.getGson.fromJson(
+                                JSONObject(String(unpack)).getString("message"),
+                                Connection::class.java
+                            )
+
+                            orgId = connectionData.orgId ?: ""
+
+                            var connectionListSearch =
+                                SearchUtils.searchWallet(
+                                    WalletRecordType.CONNECTION,
+                                    "{\"orgId\":\"$orgId\"}"
+                                )
+
+                            if (connectionListSearch.totalCount ?: 0 > 0) {
+
+                                val connectionObject = WalletManager.getGson.fromJson(
+                                    connectionListSearch.records?.get(0)?.value,
+                                    MediatorConnectionObject::class.java
+                                )
+                                sendDidToConnection(connectionObject.theirDid)
+
+                                if (!isFromExchange)
+                                    Toast.makeText(
+                                        context,
+                                        resources.getString(R.string.err_connection_already_added),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+
+                            } else {
+                                pbLoader.visibility = View.GONE
+                                clConnection.visibility = View.VISIBLE
+                            }
+                        }
+                    }
+                })
+        } else {
+            pbLoader.visibility = View.GONE
+            clConnection.visibility = View.VISIBLE
+        }
+    }
+
+    private fun sendDidToConnection(theirDid: String?) {
+        val data = "{\n" +
+                "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/org-multiple-connections\",\n" +
+                "  \"@id\": \"${UUID.randomUUID()}\",\n" +
+                "  \"theirdid\": \"${theirDid ?: ""}\"\n" +
+                "}\n"
+
+        val orgDetailPacked = Crypto.packMessage(
+            WalletManager.getWallet,
+            "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
+            myKey,
+            data.toByteArray()
+        ).get()
+
+        val orgDetailTypedArray = object : RequestBody() {
+            override fun contentType(): MediaType? {
+                return "application/ssi-agent-wire".toMediaTypeOrNull()
+            }
+
+            @Throws(IOException::class)
+            override fun writeTo(sink: BufferedSink) {
+                sink.write(orgDetailPacked)
+            }
+        }
+
+        ApiManager.api.getService()
+            ?.postDataWithoutData(invitation.serviceEndpoint ?: "", orgDetailTypedArray)
+            ?.enqueue(object :
+                Callback<ResponseBody> {
+                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                    dismiss()
+                }
+
+                override fun onResponse(
+                    call: Call<ResponseBody>,
+                    response: Response<ResponseBody>
+                ) {
+                    if (response.code() == 200 && response.body() != null) {
+
+                        var connectionListSearch =
+                            SearchUtils.searchWallet(
+                                WalletRecordType.CONNECTION,
+                                "{\"orgId\":\"$orgId\"}"
+                            )
+
+                        if (connectionListSearch.totalCount ?: 0 > 0) {
+
+                            val connectionObject = WalletManager.getGson.fromJson(
+                                connectionListSearch.records?.get(0)?.value,
+                                MediatorConnectionObject::class.java
+                            )
+
+                            onSuccessListener.onExistingConnection(connectionObject.requestId ?: "")
+                        }
+                        dismiss()
+                    }
+                }
+
+            })
     }
 
     private fun initListener(view: View) {
@@ -77,7 +359,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
         }
 
         btnConnect.setOnClickListener {
-
+            btnConnect.isEnabled = false
             btnConnect.showLoading()
 
             SaveConnectionTask(object : CommonHandler {
@@ -87,137 +369,99 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
                 override fun onSaveConnection(
                     typedBytes: RequestBody,
-                    connectionRequest: RequestBody,
-                    queryFeaturePackedBytes: RequestBody
+                    connectionRequest: RequestBody
                 ) {
-                    ApiManager.api.getService()
-                        ?.postData(invitation.serviceEndpoint ?: "", queryFeaturePackedBytes)
-                        ?.enqueue(object : Callback<ConfigPostResponse> {
-                            override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
+
+                    ApiManager.api.getService()?.cloudConnection(typedBytes)
+                        ?.enqueue(object : Callback<ResponseBody> {
+                            override fun onFailure(
+                                call: Call<ResponseBody>,
+                                t: Throwable
+                            ) {
 
                             }
 
                             override fun onResponse(
-                                call: Call<ConfigPostResponse>,
-                                response: Response<ConfigPostResponse>
+                                call: Call<ResponseBody>,
+                                response: Response<ResponseBody>
                             ) {
                                 if (response.code() == 200 && response.body() != null) {
-                                    var isIGrantEnabled = false
-                                    val unpack =
-                                        Crypto.unpackMessage(
-                                            WalletManager.getWallet,
-                                            WalletManager.getGson.toJson(response.body()).toString()
-                                                .toByteArray()
-                                        ).get()
-
-                                    val dataArray =
-                                        JSONObject(JSONObject(String(unpack)).getString("message")).getJSONArray(
-                                            "protocols"
+                                    ApiManager.api.getService()
+                                        ?.postData(
+                                            invitation.serviceEndpoint ?: "",
+                                            connectionRequest
                                         )
-
-                                    for (n in 0 until dataArray.length()) {
-                                        val obj = dataArray.getJSONObject(n)
-                                        if (obj.getString("pid").contains(
-                                                "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator",
-                                                ignoreCase = true
-                                            )
-                                        ) {
-                                            isIGrantEnabled = true
-                                        }
-                                    }
-                                    ApiManager.api.getService()?.cloudConnection(typedBytes)
-                                        ?.enqueue(object : Callback<ResponseBody> {
+                                        ?.enqueue(object :
+                                            Callback<ConfigPostResponse> {
                                             override fun onFailure(
-                                                call: Call<ResponseBody>,
+                                                call: Call<ConfigPostResponse>,
                                                 t: Throwable
                                             ) {
 
                                             }
 
                                             override fun onResponse(
-                                                call: Call<ResponseBody>,
-                                                response: Response<ResponseBody>
+                                                call: Call<ConfigPostResponse>,
+                                                response: Response<ConfigPostResponse>
                                             ) {
                                                 if (response.code() == 200 && response.body() != null) {
-                                                    ApiManager.api.getService()
-                                                        ?.postData(
-                                                            invitation.serviceEndpoint ?: "",
-                                                            connectionRequest
-                                                        )
-                                                        ?.enqueue(object :
-                                                            Callback<ConfigPostResponse> {
-                                                            override fun onFailure(
-                                                                call: Call<ConfigPostResponse>,
-                                                                t: Throwable
-                                                            ) {
+                                                    SaveDidDocTask(
+                                                        object : CommonHandler {
+                                                            override fun taskStarted() {
 
                                                             }
 
-                                                            override fun onResponse(
-                                                                call: Call<ConfigPostResponse>,
-                                                                response: Response<ConfigPostResponse>
+                                                            override fun onSaveDidComplete(
+                                                                typedBytes: RequestBody,
+                                                                serviceEndPoint: String
                                                             ) {
-                                                                if (response.code() == 200 && response.body() != null) {
-                                                                    SaveDidDocTask(
-                                                                        object : CommonHandler {
-                                                                            override fun taskStarted() {
+                                                                ApiManager.api.getService()
+                                                                    ?.postDataWithoutData(
+                                                                        serviceEndPoint,
+                                                                        typedBytes
+                                                                    )
+                                                                    ?.enqueue(object :
+                                                                        Callback<ResponseBody> {
+                                                                        override fun onFailure(
+                                                                            call: Call<ResponseBody>,
+                                                                            t: Throwable
+                                                                        ) {
 
+                                                                        }
 
-                                                                            }
+                                                                        override fun onResponse(
+                                                                            call: Call<ResponseBody>,
+                                                                            response: Response<ResponseBody>
+                                                                        ) {
 
-                                                                            override fun onSaveDidComplete(
-                                                                                typedBytes: RequestBody,
-                                                                                serviceEndPoint: String
-                                                                            ) {
-                                                                                ApiManager.api.getService()
-                                                                                    ?.postDataWithoutData(
-                                                                                        serviceEndPoint,
-                                                                                        typedBytes
-                                                                                    )
-                                                                                    ?.enqueue(object :
-                                                                                        Callback<ResponseBody> {
-                                                                                        override fun onFailure(
-                                                                                            call: Call<ResponseBody>,
-                                                                                            t: Throwable
-                                                                                        ) {
-
-                                                                                        }
-
-                                                                                        override fun onResponse(
-                                                                                            call: Call<ResponseBody>,
-                                                                                            response: Response<ResponseBody>
-                                                                                        ) {
-
-                                                                                        }
-                                                                                    })
-                                                                            }
-                                                                        },
-                                                                        WalletManager.getGson.toJson(
-                                                                            response.body()
-                                                                        ), isIGrantEnabled
-                                                                    ).execute()
-                                                                }
+                                                                        }
+                                                                    })
                                                             }
-                                                        })
+                                                        },
+                                                        WalletManager.getGson.toJson(
+                                                            response.body()
+                                                        ), isIGrantEnabled
+                                                    ).execute()
                                                 }
                                             }
                                         })
                                 }
-
                             }
-
                         })
                 }
-            }, invitation).execute()
+            }, invitation).execute(myDid, myKey, orgId, requestId)
         }
     }
 
-    @Subscribe( threadMode = ThreadMode.MAIN)
+    @Subscribe(threadMode = ThreadMode.MAIN)
     fun onConnectionSuccessEvent(event: ConnectionSuccessEvent) {
         btnConnect.hideLoading()
+        btnConnect.isEnabled = true
         llSuccess.visibility = View.VISIBLE
         Handler(Looper.getMainLooper()).postDelayed({
-            onSuccessListener.onSuccess(proposal, event.connectionId ?: "")
+
+            GetConnectionDetailTask().execute(event.connectionId)
+            onSuccessListener.onSuccess(proposal, orgId)
             llSuccess.visibility = View.GONE
             dialog?.dismiss()
         }, 3000)
@@ -245,19 +489,23 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
         ivClose = view.findViewById(R.id.ivClose)
         tvDesc = view.findViewById(R.id.tvDesc)
         ivLogo = view.findViewById(R.id.ivLogo)
+        tvName = view.findViewById(R.id.tvName)
         llSuccess = view.findViewById(R.id.llSuccess)
         ivSuccess = view.findViewById(R.id.ivSuccess)
+        pbLoader = view.findViewById(R.id.pbLoader)
+        clItem = view.findViewById(R.id.clItem)
+        clConnection = view.findViewById(R.id.clConnection)
     }
 
     companion object {
         fun newInstance(
-            title: String,
+            isFromExchange: Boolean,
             invitation: Invitation,
             proposal: String
         ): ConnectionProgressDailogFragment {
             val fragment = ConnectionProgressDailogFragment()
             val args = Bundle()
-            args.putString("title", title)
+            args.putBoolean("isFromExchange", isFromExchange)
             args.putSerializable("invitation", invitation)
             args.putString("proposal", proposal)
             fragment.arguments = args
@@ -277,5 +525,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
     interface OnConnectionSuccess {
         fun onSuccess(proposal: String, connectionId: String)
+        fun onExistingConnection(connectionId: String) {}
     }
+
 }

@@ -14,13 +14,17 @@ class Invitation:Serializable {
     @Expose
     var imageUrl: String? = null
 
+    @SerializedName("image_url")
+    @Expose
+    var image_url: String? = null
+
     @SerializedName("serviceEndpoint")
     @Expose
     var serviceEndpoint: String? = null
 
     @SerializedName("routingKeys")
     @Expose
-    var routingKeys: String? = null
+    var routingKeys: ArrayList<String>? = null
 
     @SerializedName("recipientKeys")
     @Expose

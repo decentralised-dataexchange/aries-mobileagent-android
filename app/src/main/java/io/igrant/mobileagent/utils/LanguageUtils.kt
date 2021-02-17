@@ -8,9 +8,11 @@ import java.util.*
 object LanguageUtils {
     const val LANG_ENGLISH = "en"
     const val LANG_SWEDISH = "sv"
+    const val LANG_DANISH = "da"
     const val LANG_PORTUGUESE = "pt"
     private const val LANG_ENGLISH_STRING = "English"
     private const val LANG_SWIDISH_STRING = "Svenska"
+    private const val LANG_DANISH_STRING = "dansk"
     private const val LANG_PORTUGUESE_STRING = "Português"
     private const val KEY_USER_LANGUAGE = "key_user_app_language"
 
@@ -31,6 +33,12 @@ object LanguageUtils {
         language.isChecked = lang == LANG_SWEDISH
         languages.add(language)
 
+        language = Language()
+        language.language = LANG_DANISH_STRING
+        language.languageCode = LANG_DANISH
+        language.isChecked = lang == LANG_DANISH
+        languages.add(language)
+
         return languages
     }
 
@@ -43,6 +51,9 @@ object LanguageUtils {
             LANG_SWEDISH->{
                 return LANG_SWIDISH_STRING
             }
+            LANG_SWEDISH->{
+                return LANG_DANISH_STRING
+            }
             else->{
                 return LANG_ENGLISH_STRING
             }
@@ -50,12 +61,18 @@ object LanguageUtils {
     }
 
     fun setLanguageValue(tvLanguageName: TextView, context: Context?) {
-        if (LocaleHelper.getCurrentLocale(context!!).language
-                .equals(LANG_ENGLISH)
-        ) {
-            tvLanguageName.text = LANG_ENGLISH_STRING
-        } else {
-            tvLanguageName.text = LANG_SWIDISH_STRING
+        when {
+            LocaleHelper.getCurrentLocale(context!!).language
+                .equals(LANG_ENGLISH) -> {
+                tvLanguageName.text = LANG_ENGLISH_STRING
+            }
+            LocaleHelper.getCurrentLocale(context!!).language
+                .equals(LANG_SWEDISH) -> {
+                tvLanguageName.text = LANG_SWIDISH_STRING
+            }
+            else -> {
+                tvLanguageName.text = LANG_DANISH_STRING
+            }
         }
     }
 }

@@ -12,15 +12,24 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
-        android:drawableEnd="@drawable/ic_add_circle_black"
-        android:drawablePadding="10dp"
         android:gravity="center"
         android:padding="5dp"
-        android:textSize="@dimen/text_size_x_large"
+        android:textSize="@dimen/text_size_xx_large"
         android:text="@string/txt_data_wallet"
         android:textColor="@color/Black"
+        android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <ImageView
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        app:layout_constraintStart_toEndOf="@+id/tvDataWallet"
+        app:layout_constraintTop_toTopOf="@+id/tvDataWallet"
+        app:layout_constraintBottom_toBottomOf="@+id/tvDataWallet"
+        android:id="@+id/ivAdd"
+        android:src="@drawable/ic_add_circle_black"
+        android:padding="8dp"/>
 
     <EditText
         android:id="@+id/etSearch"
@@ -30,7 +39,7 @@
         android:layout_marginTop="15dp"
         android:layout_marginEnd="5dp"
         android:background="@drawable/primary_edittext_background"
-        android:hint="@string/txt_search_wallet"
+        android:hint="@string/txt_search"
         android:inputType="text"
         android:drawablePadding="10dp"
         android:drawableStart="@drawable/ic_search_grey"
@@ -74,8 +83,26 @@
             android:layout_height="wrap_content"
             android:padding="10dp"
             android:text="@string/txt_no_data_avaialable"
+            android:textColor="@color/textColor"
             android:textSize="@dimen/text_size_normal" />
 
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/llProgressBar"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
     </LinearLayout>
 
 

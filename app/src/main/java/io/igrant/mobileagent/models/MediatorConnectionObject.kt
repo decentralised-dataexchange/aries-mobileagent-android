@@ -22,6 +22,10 @@ class MediatorConnectionObject :Serializable{
     @Expose
     var isIGrantEnabled: Boolean? = false
 
+    @SerializedName("orgId")
+    @Expose
+    var orgId: String? = ""
+
     @SerializedName("request_id")
     @Expose
     var requestId: String? = ""
@@ -81,6 +85,10 @@ class MediatorConnectionObject :Serializable{
     @SerializedName("their_image_url")
     @Expose
     var theirImageUrl: String? = null
+
+    @SerializedName("location")
+    @Expose
+    var location: String? = ""
 
     @SerializedName("state")
     @Expose

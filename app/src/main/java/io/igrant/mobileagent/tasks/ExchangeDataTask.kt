@@ -38,8 +38,8 @@ class ExchangeDataTask(
 ) :
     AsyncTask<String, Void, Void>() {
 
-    private lateinit var typedBytes: RequestBody
-    private lateinit var serviceEndPoint: String
+    private var typedBytes: RequestBody? = null
+    private var serviceEndPoint: String? = null
     private val TAG = "ExchangeDataTask"
 
     override fun doInBackground(vararg params: String?): Void? {
@@ -50,6 +50,7 @@ class ExchangeDataTask(
 
         val schemaParsedList: ArrayList<LedgerResults.ParseResponseResult> = ArrayList()
         val credParsedList: ArrayList<LedgerResults.ParseResponseResult> = ArrayList()
+        var ledgerFailed: Boolean = false
         requestedAttributes.forEach() { (key, value) ->
             val proverCred =
                 Anoncreds.proverGetCredential(WalletManager.getWallet, value.credId).get()
@@ -61,157 +62,167 @@ class ExchangeDataTask(
                     .get()
             val requestResponse =
                 Ledger.submitRequest(PoolManager.getPool, schemaResponse).get()
-            val schemaParsed = Ledger.parseGetSchemaResponse(requestResponse).get()
-            if (!schemaParsedList.contains(schemaParsed))
-                schemaParsedList.add(schemaParsed)
+            try {
+                val schemaParsed = Ledger.parseGetSchemaResponse(requestResponse).get()
+                if (!schemaParsedList.contains(schemaParsed))
+                    schemaParsedList.add(schemaParsed)
 
-            val credDefResponse =
-                Ledger.buildGetCredDefRequest(
-                    null,
-                    JSONObject(proverCred).getString("cred_def_id")
-                )
-                    .get()
+                val credDefResponse =
+                    Ledger.buildGetCredDefRequest(
+                        null,
+                        JSONObject(proverCred).getString("cred_def_id")
+                    )
+                        .get()
 
-            val credDefSubmitResponse =
-                Ledger.submitRequest(PoolManager.getPool, credDefResponse).get()
+                val credDefSubmitResponse =
+                    Ledger.submitRequest(PoolManager.getPool, credDefResponse).get()
 
-            val creedDefParsed = Ledger.parseGetCredDefResponse(credDefSubmitResponse).get()
-            if (!credParsedList.contains(creedDefParsed))
-                credParsedList.add(creedDefParsed)
+                val creedDefParsed = Ledger.parseGetCredDefResponse(credDefSubmitResponse).get()
+                if (!credParsedList.contains(creedDefParsed))
+                    credParsedList.add(creedDefParsed)
+            } catch (e: Exception) {
+                ledgerFailed = true
+            }
         }
 
-        val requestCredential = RequestCredential()
-        requestCredential.requestedAttributes = requestedAttributes
-        requestCredential.requestedPredicates = Object()
-        requestCredential.selfAttestedAttributes = Object()
+        if (!ledgerFailed) {
+
+            val requestCredential = RequestCredential()
+            requestCredential.requestedAttributes = requestedAttributes
+            requestCredential.requestedPredicates = Object()
+            requestCredential.selfAttestedAttributes = Object()
 
 
-        val schemaMap = convertArrayListToHashMap(schemaParsedList)
-        var schema = "{\n"
-        schemaMap?.forEach { (s, jsonObject) ->
-            schema += " \"${s}\": $jsonObject ,\n"
-        }
-        schema = schema.substring(0, schema.length - 2)
-        schema += "}"
+            val schemaMap = convertArrayListToHashMap(schemaParsedList)
+            var schema = "{\n"
+            schemaMap?.forEach { (s, jsonObject) ->
+                schema += " \"${s}\": $jsonObject ,\n"
+            }
+            schema = schema.substring(0, schema.length - 2)
+            schema += "}"
 
-        val credMap = convertArrayListToHashMap(credParsedList)
-        var credDef = "{\n"
-        credMap?.forEach { (s, jsonObject) ->
-            credDef += " \"${s}\": $jsonObject ,\n"
-        }
-        credDef = credDef.substring(0, credDef.length - 2)
-        credDef += "}"
+            val credMap = convertArrayListToHashMap(credParsedList)
+            var credDef = "{\n"
+            credMap?.forEach { (s, jsonObject) ->
+                credDef += " \"${s}\": $jsonObject ,\n"
+            }
+            credDef = credDef.substring(0, credDef.length - 2)
+            credDef += "}"
 
-        val pr = WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest)
-        val te = WalletManager.getGson.toJson(
-            requestCredential
-        )
-        Log.d(
-            TAG,
-            "doInBackground: \n ${WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest)} \n ${WalletManager.getGson.toJson(
+            val pr = WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest)
+            val te = WalletManager.getGson.toJson(
                 requestCredential
-            )} \n $schema \n $credDef"
-        )
-        val proverProofResponse = Anoncreds.proverCreateProof(
-            WalletManager.getWallet,
-            WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest),
-            WalletManager.getGson.toJson(requestCredential),
-            "IGrantMobileAgent-000001",
-            schema,
-            credDef,
-            "{}"
-        ).get()
+            )
+            Log.d(
+                TAG,
+                "doInBackground: \n ${WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest)} \n ${WalletManager.getGson.toJson(
+                    requestCredential
+                )} \n $schema \n $credDef"
+            )
+            val proverProofResponse = Anoncreds.proverCreateProof(
+                WalletManager.getWallet,
+                WalletManager.getGson.toJson(mPresentationExchange?.presentationRequest),
+                WalletManager.getGson.toJson(requestCredential),
+                "IGrantMobileAgent-000001",
+                schema,
+                credDef,
+                "{}"
+            ).get()
 
-        mPresentationExchange?.presentation = JSONObject(proverProofResponse)
-        mPresentationExchange?.state = PresentationExchangeStates.PRESENTATION_SENT
+            mPresentationExchange?.presentation = JSONObject(proverProofResponse)
+            mPresentationExchange?.state = PresentationExchangeStates.PRESENTATION_SENT
 
-        Log.d(
-            TAG,
-            "initListener: ${WalletManager.getGson.toJson(mPresentationExchange)}"
-        )
-
-        if (recordId != "")
-            WalletRecord.updateValue(
-                WalletManager.getWallet, WalletRecordType.PRESENTATION_EXCHANGE_V10,
-                recordId, WalletManager.getGson.toJson(mPresentationExchange)
+            Log.d(
+                TAG,
+                "initListener: ${WalletManager.getGson.toJson(mPresentationExchange)}"
             )
 
-        val connectionObjectRecord =
-            SearchUtils.searchWallet(
-                WalletRecordType.CONNECTION,
-                "{\n" +
-                        "  \"request_id\":\"${mConnectionId}\"\n" +
-                        "}"
+            if (recordId != "")
+                WalletRecord.updateValue(
+                    WalletManager.getWallet, WalletRecordType.PRESENTATION_EXCHANGE_V10,
+                    recordId, WalletManager.getGson.toJson(mPresentationExchange)
+                )
+
+            val connectionObjectRecord =
+                SearchUtils.searchWallet(
+                    WalletRecordType.CONNECTION,
+                    "{\n" +
+                            "  \"request_id\":\"${mPresentationExchange?.connectionId}\"\n" +
+                            "}"
+                )
+
+            val connectionObject = WalletManager.getGson.fromJson(
+                connectionObjectRecord.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
             )
+            val metaString =
+                Did.getDidWithMeta(WalletManager.getWallet, connectionObject.myDid).get()
+            val metaObject = JSONObject(metaString)
+            val publicKey = metaObject.getString("verkey")
 
-        val connectionObject = WalletManager.getGson.fromJson(
-            connectionObjectRecord.records?.get(0)?.value,
-            MediatorConnectionObject::class.java
-        )
-        val metaString =
-            Did.getDidWithMeta(WalletManager.getWallet, connectionObject.myDid).get()
-        val metaObject = JSONObject(metaString)
-        val publicKey = metaObject.getString("verkey")
-
-        //get prover did
-        val searchResponse = SearchUtils.searchWallet(
-            WalletRecordType.DID_KEY,
-            "{\n" +
-                    "  \"did\":\"${connectionObject.theirDid}\"\n" +
-                    "}"
-        )
-
-        val base64 = Base64.encodeToString(
-            proverProofResponse.toByteArray(),
-            Base64.NO_WRAP
-        )
-
-        val data = "{\n" +
-                "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation\",\n" +
-                "  \"@id\": \"${UUID.randomUUID()}\",\n" +
-                "  \"~thread\": {\n" +
-                "    \"thid\": \"${mPresentationExchange?.threadId}\"\n" +
-                "  },\n" +
-                "  \"presentations~attach\": [\n" +
-                "    {\n" +
-                "      \"@id\": \"libindy-presentation-0\",\n" +
-                "      \"mime-type\": \"application/json\",\n" +
-                "      \"data\": {\n" +
-                "        \"base64\": \"$base64\"\n" +
-                "      }\n" +
-                "    }\n" +
-                "  ],\n" +
-                "  \"comment\": \"auto-presented for proof request nonce=1234567890\"\n" +
-                "}"
-        val didDocObject =
-            SearchUtils.searchWallet(
-                WalletRecordType.DID_DOC,
+            //get prover did
+            val searchResponse = SearchUtils.searchWallet(
+                WalletRecordType.DID_KEY,
                 "{\n" +
                         "  \"did\":\"${connectionObject.theirDid}\"\n" +
                         "}"
             )
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"${searchResponse.records?.get(0)?.value ?: ""}\"]",
-            publicKey,
-            data.toByteArray()
-        ).get()
+            val base64 = Base64.encodeToString(
+                proverProofResponse.toByteArray(),
+                Base64.NO_WRAP
+            )
 
-        typedBytes = object : RequestBody() {
-            override fun contentType(): MediaType? {
-                return "application/ssi-agent-wire".toMediaTypeOrNull()
-            }
+            val data = "{\n" +
+                    "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation\",\n" +
+                    "  \"@id\": \"${UUID.randomUUID()}\",\n" +
+                    "  \"~thread\": {\n" +
+                    "    \"thid\": \"${mPresentationExchange?.threadId}\"\n" +
+                    "  },\n" +
+                    "  \"presentations~attach\": [\n" +
+                    "    {\n" +
+                    "      \"@id\": \"libindy-presentation-0\",\n" +
+                    "      \"mime-type\": \"application/json\",\n" +
+                    "      \"data\": {\n" +
+                    "        \"base64\": \"$base64\"\n" +
+                    "      }\n" +
+                    "    }\n" +
+                    "  ],\n" +
+                    "  \"comment\": \"auto-presented for proof request nonce=1234567890\"\n" +
+                    "}"
+            val didDocObject =
+                SearchUtils.searchWallet(
+                    WalletRecordType.DID_DOC,
+                    "{\n" +
+                            "  \"did\":\"${connectionObject.theirDid}\"\n" +
+                            "}"
+                )
 
-            @Throws(IOException::class)
-            override fun writeTo(sink: BufferedSink) {
-                sink.write(packedMessage)
+            val packedMessage = Crypto.packMessage(
+                WalletManager.getWallet,
+                "[\"${searchResponse.records?.get(0)?.value ?: ""}\"]",
+                publicKey,
+                data.toByteArray()
+            ).get()
+
+            typedBytes = object : RequestBody() {
+                override fun contentType(): MediaType? {
+                    return "application/ssi-agent-wire".toMediaTypeOrNull()
+                }
+
+                @Throws(IOException::class)
+                override fun writeTo(sink: BufferedSink) {
+                    sink.write(packedMessage)
+                }
             }
+            val didDoc =
+                WalletManager.getGson.fromJson(
+                    didDocObject.records?.get(0)?.value,
+                    DidDoc::class.java
+                )
+            serviceEndPoint =
+                didDoc.service?.get(0)?.serviceEndpoint ?: ""
         }
-        val didDoc =
-            WalletManager.getGson.fromJson(didDocObject.records?.get(0)?.value, DidDoc::class.java)
-        serviceEndPoint =
-            didDoc.service?.get(0)?.serviceEndpoint ?: ""
         return null
     }
 

@@ -1,0 +1,106 @@
+<resources>
+    <string name="app_name">Digital Pung</string>
+    <string name="action_settings">Indstillinger</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+
+    //qr code
+    <string name="qc_code_close">Luk</string>
+    <string name="qr_code_open_flash_light">Tænd lommelygten</string>
+    <string name="qr_code_close_flash_light">Sluk lommelygten</string>
+    <string name="qr_code_auto_scan_notification">Scan QR kode</string>
+    <string name="qr_code_notification">Besked</string>
+    <string name="qr_code_camera_not_open">Kunne ikke åbne kamera</string>
+    <string name="qr_code_positive_button_know">OK</string>
+    <string name="qr_code_positive_button_confirm">Bekræft</string>
+    <string name="qr_code_could_not_read_qr_code_from_picture">Kunne ikke læse dit billede. Prøv igen.</string>
+    <string name="qr_code_could_not_read_qr_code_from_scanner">Kunne ikke åbne scannet indhold. Prøv igen.</string>
+    <string name="qr_code_camera_not_found">Kunne ikke aktivere kamera. Kontroller mobilens indstillinger.</string>
+
+    <string name="txt_scan">Scan</string>
+    <string name="txt_create">Opret</string>
+    <string name="txt_create_wallet">Create Wallet</string>
+    <string name="txt_share">Share</string>
+    <string name="txt_send">Send</string>
+    <string name="txt_recieve">Receive</string>
+    <string name="txt_certificates">Data</string>
+    <string name="txt_data_agreement">Dataaftale</string>
+    <string name="txt_connections">Kontakter</string>
+    <string name="no">Nej</string>
+    <string name="yes">Ja</string>
+    <string name="txt_certificates_desc">Du har bedt om at følgende data bliver til et digitalt certifikat. Ved at vælge \'accepter\' lægges certifikatet i din Digitale Pung.</string>
+    <string name="txt_certificates_head">Covid 19 test certificates</string>
+    <string name="txt_reject">Afvis</string>
+    <string name="txt_accept">Accepter</string>
+    <string name="txt_add_certificate">Tilføj Data</string>
+    <string name="txt_Add_certificate_desc">Vælg organisationen der skal forbindes til din Digitale Pung for at tilføje data. Klik ovenfor for at tilføje nye organisationer.</string>
+    <string name="txt_wallet">Pung</string>
+    <string name="txt_preferences">Præferencer</string>
+    <string name="txt_no_connections_avaialable">Ingen kontakter tilgængelig</string>
+    <string name="txt_no_data_avaialable">Ingen data tilgængelig</string>
+    <string name="err_connection_already_added">Kontakten findes allerede</string>
+    <string name="txt_loading_indy_library">Loader Indy biblioteket...</string>
+    <string name="txt_exchange_data">Del Data</string>
+    <string name="txt_add_connection">Tilføj kontakt</string>
+    <string name="txt_search">Søg...</string>
+    <string name="txt_creating_pool">Konfigurerer Pool ...</string>
+    <string name="txt_finishing">Afslutter ...</string>
+    <string name="txt_creating_wallet">Konfigurerer Digital Pung ...</string>
+    <string name="txt_organisations">Organisationer</string>
+    <string name="txt_logo">Logo</string>
+    <string name="txt_exchange">Dele</string>
+    <string name="title_connection_list">Vælg organisation</string>
+    <string name="title_offer_detail">Dataaftale</string>
+    <string name="err_insufficient_data">Utilstrækkelig data</string>
+    <string name="txt_requests">Forespørgsler</string>
+    <string name="txt_connection_success_message">Forbindelse etableret</string>
+    <string name="notification_channel_success_messages" translatable="false">Success messages</string>
+    <string name="notification_channel_success" translatable="false">success_messages</string>
+    <string name="default_notification_channel_id" translatable="false">NotificationChannel</string>
+    <string name="txt_org_overview">Overblik</string>
+    <string name="txt_delete">Slet</string>
+    <string name="txt_version_detail">"Version : %1$s"</string>
+    <string name="err_unexpected">Uventet fejl. Prøv igen.</string>
+    <string name="txt_exchange_data_desc">Ved at vælge \'del\' accepterer du at dele det efterspurgte data med %1$s</string>
+    <string name="txt_allow_connection_query">Tillad <b>%1$s</b> at forbinde til dig / din Digitale Pung?</string>
+    <string name="txt_language">Sprog</string>
+    <string name="txt_ledger_network">Ledger-netværk</string>
+    <string name="txt_settings">Indstillinger</string>
+    <string name="txt_network">Netværk</string>
+    <string name="txt_powered_by">Drives af iGrant.io, Sweden</string>
+    <string name="txt_data_wallet">Digital Pung</string>
+    <string name="txt_data_exchange">Dataudveksling</string>
+    <string name="txt_notification">Beskeder</string>
+    <string name="txt_remove_data_card">Fjern digitalt certifikat.</string>
+    <string name="txt_exchange_successful">Data er delt med %1$s</string>
+    <string name="txt_exchange_successful_without_name">Data er delt</string>
+    <string name="txt_certificate_delete_confirmation">Vil du slette det digitale certifikat?</string>
+    <string name="txt_confirmation">Bekræftelse</string>
+    <string name="txt_exchange_request_delete_confirmation">Afbryd datadelingen?</string>
+    <string name="txt_read_more">Se mere</string>
+    <string name="txt_read_less">.. Se mindre</string>
+    <string name="txt_no_notifications_available">Ingen nye beskeder</string>
+    <string name="txt_language_caps">Sprog</string>
+    <string name="txt_ledger_network_caps">ledgernetværk</string>
+    <string name="txt_data_added_success_desc">Digitalt certifikat tilføjet din digitale pung</string>
+    <string name="title_about_this_app">Om denne app</string>
+    <string name="txt_about">Om</string>
+    <string name="txt_privacy_policy">Privatlivspolitik</string>
+    <string name="txt_terms_and_conditions">Vilkår for anvendelse</string>
+    <string name="txt_aries_interoperatable_protocols">Aries Interoperabilitetsprotokoller</string>
+    <string name="txt_supported_protocols">Protokoller understøttet</string>
+    <string name="txt_received_offer_credential_desc">Modtog bevis for dataudvekslingstilbud fra Organisationer</string>
+    <string name="txt_received_offer">Modtog bevis for dataudvekslingstilbud.</string>
+    <string name="txt_offer_credential_delete_confirmation">Vil du fjerne beviset for dataudvekslingstilbudet?</string>
+    <string name="txt_data_request_accepted_successfully">Dataudvekslingstilbud accepteret.</string>
+    <string name="txt_recieved_exchange_request">Modtog dataudvekslingsforslag.</string>
+    <string name="txt_remove_organization">Fjern organisation</string>
+    <string name="err_ledger_missmatch">Ugyldig ledger. Du kan vælge ledger under settings.</string>
+
+</resources>

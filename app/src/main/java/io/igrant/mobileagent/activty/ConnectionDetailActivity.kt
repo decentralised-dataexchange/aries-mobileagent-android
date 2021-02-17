@@ -18,23 +18,21 @@ import com.google.gson.Gson
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.ConnectionMessageAdapter
 import io.igrant.mobileagent.communication.ApiManager
-import io.igrant.mobileagent.events.ConnectionSuccessEvent
 import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionMessageListener
 import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.Notification
 import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
-import io.igrant.mobileagent.models.certificateOffer.CertificateOffer
+import io.igrant.mobileagent.models.certificateOffer.Attributes
 import io.igrant.mobileagent.models.connection.Certificate
 import io.igrant.mobileagent.models.connection.Connection
 import io.igrant.mobileagent.models.connection.ConnectionCerListResponse
 import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.credentialExchange.RawCredential
+import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.models.walletSearch.Record
-import io.igrant.mobileagent.utils.MessageTypes
-import io.igrant.mobileagent.utils.SearchUtils
-import io.igrant.mobileagent.utils.WalletRecordType
+import io.igrant.mobileagent.utils.*
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.DID_DOC
 import okhttp3.MediaType
@@ -69,6 +67,7 @@ class ConnectionDetailActivity : BaseActivity() {
     private lateinit var tvName: TextView
     private lateinit var tvLocation: TextView
     private lateinit var tvDescription: TextView
+    private lateinit var tvRemove: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -137,7 +136,7 @@ class ConnectionDetailActivity : BaseActivity() {
                     ?.enqueue(object :
                         Callback<ConfigPostResponse> {
                         override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
-
+                            Log.d("https", "onFailure: ")
                         }
 
                         override fun onResponse(
@@ -188,7 +187,7 @@ class ConnectionDetailActivity : BaseActivity() {
                     ?.enqueue(object :
                         Callback<ConfigPostResponse> {
                         override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
-
+                            Log.d("https", "onFailure: ")
                         }
 
                         override fun onResponse(
@@ -239,8 +238,42 @@ class ConnectionDetailActivity : BaseActivity() {
                     tempCer.record = cer
                 }
             }
+
+//            val walletModelTag = "{" +
+//                    "\"connection_id\":\"${mConnectionId}\"," +
+//                    "\"schema_id\":\"${certificate.schemaId ?: ""}\"" +
+//                    "}"
+
+//            val walletSearch = SearchUtils.searchWallet(WalletRecordType.WALLET, walletModelTag)
+
+
+//            if (walletSearch.records != null && walletSearch.totalCount ?: 0 > 0) {
+//                try {
+//                    val certificate =
+//                        WalletManager.getGson.fromJson(
+//                            walletSearch.records!![0].value,
+//                            WalletModel::class.java
+//                        )
+//                    tempCer.attributeList =
+//                        certificate.credentialProposalDict?.credentialProposal?.attributes!!
+//                } catch (e: Exception) {
+//                }
+//            } else {
+                var attributeList: ArrayList<Attributes> = ArrayList()
+                var attribute: Attributes
+                for (string in certificate.schemaAttributes) {
+                    attribute = Attributes()
+                    attribute.name = string
+                    attribute.value = ""
+
+                    attributeList.add(attribute)
+                }
+                tempCer.attributeList = attributeList
+//            }
+
             tempList.add(tempCer)
         }
+
         dataCertificateTypes.clear()
         dataCertificateTypes.addAll(tempList)
         llErrorMessage.visibility = if (dataCertificateTypes.size > 0) View.GONE else View.VISIBLE
@@ -259,10 +292,11 @@ class ConnectionDetailActivity : BaseActivity() {
             .with(ivCoverUrl.context)
             .load(connectionData?.coverImageUrl)
             .centerCrop()
-            .placeholder(R.drawable.images)
+//            .placeholder(R.drawable.images)
             .into(ivCoverUrl)
 
         tvDescription.text = connectionData?.description
+        TextUtils.makeTextViewResizable(tvDescription, 3, resources.getString(R.string.txt_read_more), true);
         tvName.text = connectionData?.name
         tvLocation.text = connectionData?.location
     }
@@ -275,6 +309,7 @@ class ConnectionDetailActivity : BaseActivity() {
         tvName = findViewById(R.id.tvName)
         tvLocation = findViewById(R.id.tvLocation)
         tvDescription = findViewById(R.id.tvDescription)
+        tvRemove = findViewById(R.id.tvRemove)
     }
 
     private fun getIntentData() {
@@ -287,6 +322,7 @@ class ConnectionDetailActivity : BaseActivity() {
         val toolbar: Toolbar = findViewById(R.id.toolBarCommon)
         setSupportActionBar(toolbar)
         supportActionBar!!.title = ""
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_back_bg)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
@@ -303,13 +339,16 @@ class ConnectionDetailActivity : BaseActivity() {
     }
 
     private fun initListener() {
-
+        tvRemove.setOnClickListener {
+            DeleteUtils.deleteConnection(mConnectionId)
+            finish()
+        }
     }
 
     private fun setUpAdapter() {
         connectionMessageAdapter =
             ConnectionMessageAdapter(dataCertificateTypes, object : ConnectionMessageListener {
-                override fun onConnectionMessageClick(record: Record,name:String) {
+                override fun onConnectionMessageClick(record: Record, name: String) {
                     val intent =
                         Intent(this@ConnectionDetailActivity, OfferCertificateActivity::class.java)
                     intent.putExtra(
@@ -341,7 +380,7 @@ class ConnectionDetailActivity : BaseActivity() {
                 WalletRecordType.MESSAGE_RECORDS,
                 "{\"connectionId\": \"${mConnectionId}\"," +
                         "\"type\":\"${MessageTypes.TYPE_OFFER_CREDENTIAL}\",\n" +
-                        "\"stat\":\"Active\"\n"+
+                        "\"stat\":\"Active\"\n" +
                         "}"
             )
         if (connectionMessageResponse.totalCount ?: 0 > 0) {
@@ -353,7 +392,7 @@ class ConnectionDetailActivity : BaseActivity() {
     @Subscribe(threadMode = ThreadMode.MAIN)
     fun onConnectionSuccessEvent(event: ReceiveOfferEvent) {
         setUpConnectionMessagesList()
-        if (connectionCertList!=null)
+        if (connectionCertList != null)
             initList()
     }
 

@@ -138,7 +138,8 @@ class SaveDidDocTask(
                 "  \"request_id\": \"$requestId\",\n" +
                 "  \"my_did\": \"$myDid\",\n" +
                 "  \"invitation_key\": \"$recipientKey\",\n" +
-                "  \"recipient_key\": \"$recipient\"\n" +
+                "  \"recipient_key\": \"$recipient\",\n" +
+                "  \"orgId\": \"${mediatorConnectionObject.orgId}\"\n" +
                 "}"
 
         WalletRecord.updateTags(

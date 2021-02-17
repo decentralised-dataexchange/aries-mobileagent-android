@@ -9,11 +9,11 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="50dp"
-        android:background="@color/Black"
+        android:background="@color/bgColor"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        app:titleTextColor="@color/white" />
+        app:theme="@style/ThemeOverlay.AppCompat.ActionBar"
+        app:titleTextColor="@color/Black" />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvRequests"
@@ -46,7 +46,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"
             android:padding="20dp"
-            android:text="@string/txt_no_data_avaialable"
+            android:text="@string/txt_no_notifications_available"
             android:textSize="@dimen/text_size_normal" />
 
     </LinearLayout>

@@ -15,8 +15,8 @@ open class BaseActivity :AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        val lang: String = LocaleHelper.getLanguage(applicationContext) ?: "en"
-        LocaleHelper.setLocale(applicationContext, lang)
+        val lang: String = LocaleHelper.getLanguage(this) ?: "en"
+        LocaleHelper.setLocale(this, lang)
 //        window.decorView.layoutDirection = if (lang.equals(
 //                "ar",
 //                ignoreCase = true

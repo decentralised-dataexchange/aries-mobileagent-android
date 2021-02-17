@@ -4,32 +4,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bgColor">
+    android:background="@color/bgColor"
+    android:animateLayoutChanges="true">
 
-    <LinearLayout
-        android:id="@+id/llErrorMessage"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/white"
-        android:gravity="center"
-        android:layout_marginTop="150dp"
-        android:orientation="vertical"
-        android:visibility="gone">
 
-        <ImageView
-            android:layout_width="60dp"
-            android:layout_height="60dp"
-            android:src="@drawable/ic_no_data" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="10dp"
-            android:padding="20dp"
-            android:text="@string/txt_no_data_avaialable"
-            android:textSize="@dimen/text_size_normal" />
-
-    </LinearLayout>
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -46,7 +24,6 @@
                 android:layout_height="120dp"
                 android:fitsSystemWindows="true"
                 android:scaleType="centerCrop"
-                android:src="@drawable/images"
                 app:layout_collapseMode="parallax" />
 
             <LinearLayout
@@ -63,7 +40,7 @@
                     android:id="@+id/cvLogo"
                     android:layout_width="80dp"
                     android:layout_height="80dp"
-                    app:cardBackgroundColor="@color/colorAccent"
+                    app:cardBackgroundColor="@color/white"
                     app:cardCornerRadius="60dp">
 
                     <ImageView
@@ -83,7 +60,7 @@
                     android:text="----------"
                     android:textColor="@color/Black"
                     android:textSize="@dimen/text_size_large"
-                    android:textStyle="bold" />
+                    android:textStyle="normal" />
 
                 <TextView
                     android:id="@+id/tvLocation"
@@ -118,9 +95,7 @@
                         android:layout_gravity="start"
                         android:layout_marginTop="5dp"
                         android:text="----------"
-                        android:lines="3"
                         android:justificationMode="inter_word"
-                        android:ellipsize="end"
                         android:textAlignment="viewStart"
                         android:textColor="@color/textColor"
                         android:textSize="@dimen/text_size_medium" />
@@ -135,7 +110,34 @@
                     android:textAllCaps="true"
                     android:layout_marginBottom="10dp"
                     android:textColor="@color/Black"
-                    android:textSize="@dimen/text_size_normal" />
+                    android:textSize="@dimen/text_size_normal"
+                    android:visibility="gone"/>
+
+                <LinearLayout
+                    android:id="@+id/llErrorMessage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@color/bgColor"
+                    android:gravity="center"
+                    android:padding="50dp"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <ImageView
+                        android:layout_width="60dp"
+                        android:layout_height="60dp"
+                        android:src="@drawable/ic_no_data" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:padding="20dp"
+                        android:textColor="@color/textColor"
+                        android:text="@string/txt_no_data_avaialable"
+                        android:textSize="@dimen/text_size_normal" />
+
+                </LinearLayout>
 
                 <LinearLayout
                     android:id="@+id/llUsagePurposes"
@@ -151,6 +153,20 @@
                         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                         tools:listitem="@layout/item_connection_messaages" />
                 </LinearLayout>
+
+
+                <TextView
+                    android:id="@+id/tvRemove"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/primary_background"
+                    android:padding="10dp"
+                    android:text="@string/txt_remove_organization"
+                    android:textSize="@dimen/text_size_medium"
+                    android:textColor="@color/red"
+                    android:layout_marginTop="10dp"
+                    android:gravity="center"/>
+
             </LinearLayout>
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
@@ -180,44 +196,4 @@
             android:layout_height="wrap_content" />
     </LinearLayout>
 
-</RelativeLayout><!--<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"-->
-    <!--    xmlns:app="http://schemas.android.com/apk/res-auto"-->
-    <!--    xmlns:tools="http://schemas.android.com/tools"-->
-    <!--    android:layout_width="match_parent"-->
-    <!--    android:layout_height="match_parent"-->
-    <!--    android:background="@color/bgColor"-->
-    <!--    android:padding="10dp">-->
-
-    <!--    <androidx.recyclerview.widget.RecyclerView-->
-    <!--        android:id="@+id/rvConnectionMessages"-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="match_parent"-->
-    <!--        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"-->
-    <!--        app:layout_constraintStart_toStartOf="parent"-->
-    <!--        app:layout_constraintTop_toTopOf="parent"-->
-    <!--        tools:listitem="@layout/item_connection_messaages" />-->
-
-    <!--    <LinearLayout-->
-    <!--        android:layout_width="match_parent"-->
-    <!--        android:layout_height="match_parent"-->
-    <!--        android:id="@+id/llErrorMessage"-->
-    <!--        android:orientation="vertical"-->
-    <!--        android:gravity="center"-->
-    <!--        android:background="@color/bgColor"-->
-    <!--        android:visibility="gone">-->
-
-    <!--        <ImageView-->
-    <!--            android:layout_width="60dp"-->
-    <!--            android:layout_height="60dp"-->
-    <!--            android:src="@drawable/ic_no_data"/>-->
-
-    <!--        <TextView-->
-    <!--            android:layout_width="wrap_content"-->
-    <!--            android:layout_height="wrap_content"-->
-    <!--            android:padding="20dp"-->
-    <!--            android:text="@string/txt_no_data_avaialable"-->
-    <!--            android:textSize="@dimen/text_size_normal"-->
-    <!--            android:layout_marginTop="10dp"/>-->
-
-    <!--    </LinearLayout>-->
-    <!--</androidx.constraintlayout.widget.ConstraintLayout>-->
+</RelativeLayout>

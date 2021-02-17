@@ -5,6 +5,7 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
@@ -12,11 +13,10 @@ import android.os.Looper
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.Base64
-import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.appcompat.widget.Toolbar
@@ -24,20 +24,30 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.ConnectionListAdapter
+import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.dailogFragments.ConnectionProgressDailogFragment
+import io.igrant.mobileagent.events.RefreshConnectionList
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.listeners.ConnectionClickListener
 import io.igrant.mobileagent.models.agentConfig.Invitation
+import io.igrant.mobileagent.models.qr.QrDecode
 import io.igrant.mobileagent.qrcode.QrCodeActivity
 import io.igrant.mobileagent.utils.ConnectionUtils
 import io.igrant.mobileagent.utils.PermissionUtils
 import io.igrant.mobileagent.utils.WalletRecordType
+import org.greenrobot.eventbus.EventBus
+import org.greenrobot.eventbus.Subscribe
+import org.greenrobot.eventbus.ThreadMode
 import org.hyperledger.indy.sdk.non_secrets.WalletSearch
 import org.json.JSONArray
 import org.json.JSONObject
+import retrofit2.Call
+import retrofit2.Callback
+import retrofit2.Response
 
 
-class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.OnConnectionSuccess {
+class ConnectionListActivity : BaseActivity(),
+    ConnectionProgressDailogFragment.OnConnectionSuccess {
 
     private lateinit var connectionRecords: JSONArray
     private lateinit var connectionRecordsCopy: JSONArray
@@ -46,14 +56,16 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
     private lateinit var llErrorMessage: LinearLayout
     private lateinit var etSearch: EditText
     private lateinit var toolbar: Toolbar
+    private lateinit var ivAdd: ImageView
 
-    companion object{
+    companion object {
         private const val PICK_IMAGE_REQUEST = 101
         val PERMISSIONS =
             arrayOf(Manifest.permission.CAMERA)
         private const val REQUEST_CODE_SCAN_INVITATION = 202
 
     }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_connection_list)
@@ -61,39 +73,29 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
         setUpToolbar()
         initListener()
         getConnectionList()
+        try {
+            EventBus.getDefault().register(this)
+        } catch (e: Exception) {
+        }
     }
 
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
-        supportActionBar!!.title = resources.getString(R.string.title_connection_list)
+//        supportActionBar!!.title = resources.getString(R.string.title_connection_list)
+        supportActionBar!!.title = ""
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu)
-        return true
-    }
+//    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+//        menuInflater.inflate(R.menu.main_menu, menu)
+//        return true
+//    }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         return when (item.itemId) {
             android.R.id.home -> {
                 onBackPressed()
-                true
-            }
-            R.id.action_new -> {
-                if (PermissionUtils.hasPermissions(
-                        this,
-                        true,
-                        PICK_IMAGE_REQUEST,
-                        PERMISSIONS
-                    )
-                ) {
-                    val i = Intent(this, QrCodeActivity::class.java)
-                    startActivityForResult(
-                        i,
-                        REQUEST_CODE_SCAN_INVITATION
-                    )
-                }
                 true
             }
             else -> super.onOptionsItemSelected(item)
@@ -113,11 +115,39 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
             if (v != "") {
                 saveConnection(v)
             } else {
-                Toast.makeText(
-                    this,
-                    resources.getString(R.string.err_unexpected),
-                    Toast.LENGTH_SHORT
-                ).show()
+
+                ApiManager.api.getService()?.extractUrl(uri.toString())?.enqueue(object :
+                    Callback<QrDecode> {
+                    override fun onFailure(call: Call<QrDecode>, t: Throwable) {
+                        Toast.makeText(
+                            this@ConnectionListActivity,
+                            resources.getString(R.string.err_unexpected),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+
+                    override fun onResponse(call: Call<QrDecode>, response: Response<QrDecode>) {
+                        if (response.code() == 200 && response.body() != null) {
+                            if (response.body()!!.invitationUrl != null) {
+                                val uri: Uri = try {
+                                    Uri.parse(response.body()!!.invitationUrl)
+                                } catch (e: Exception) {
+                                    Uri.parse("igrant.io")
+                                }
+                                val v: String = uri.getQueryParameter("c_i") ?: ""
+                                if (v != "") {
+                                    saveConnection(v)
+                                } else {
+                                    Toast.makeText(
+                                        this@ConnectionListActivity,
+                                        resources.getString(R.string.err_unexpected),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                        }
+                    }
+                })
             }
         }
         super.onActivityResult(requestCode, resultCode, data)
@@ -146,7 +176,7 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
                 Handler(Looper.getMainLooper()).postDelayed({
                     val connectionSuccessDialogFragment: ConnectionProgressDailogFragment =
                         ConnectionProgressDailogFragment.newInstance(
-                            "${invitation.label ?: ""} has invited you to connect",
+                            false,
                             invitation,
                             ""
                         )
@@ -194,9 +224,12 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
                         getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager?
                     val clip = ClipData.newPlainText("DID", did)
                     clipboard?.setPrimaryClip(clip)
-                    val intent = Intent(this@ConnectionListActivity,ConnectionDetailActivity::class.java)
-                    intent.putExtra(ConnectionDetailActivity.EXTRA_CONNECTION_DATA,connection)
+                    val intent =
+                        Intent(this@ConnectionListActivity, ConnectionDetailActivity::class.java)
+                    intent.putExtra(ConnectionDetailActivity.EXTRA_CONNECTION_DATA, connection)
                     startActivity(intent)
+
+//                    DeleteUtils.deleteConnection(connection)
                 }
             })
         rvConnections.layoutManager = GridLayoutManager(this, 3)
@@ -204,6 +237,21 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
     }
 
     private fun initListener() {
+        ivAdd.setOnClickListener {
+            if (PermissionUtils.hasPermissions(
+                    this,
+                    true,
+                    PICK_IMAGE_REQUEST,
+                    PERMISSIONS
+                )
+            ) {
+                val i = Intent(this, QrCodeActivity::class.java)
+                startActivityForResult(
+                    i,
+                    REQUEST_CODE_SCAN_INVITATION
+                )
+            }
+        }
 
         etSearch.addTextChangedListener(object : TextWatcher {
             override fun afterTextChanged(s: Editable?) {
@@ -216,6 +264,21 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
                 filterList(s)
             }
         })
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            val i = Intent(this, QrCodeActivity::class.java)
+            startActivityForResult(
+                i,
+                REQUEST_CODE_SCAN_INVITATION
+            )
+        }
     }
 
     private fun filterList(s: CharSequence?) {
@@ -244,9 +307,24 @@ class ConnectionListActivity : BaseActivity(),ConnectionProgressDailogFragment.O
         rvConnections = findViewById(R.id.rvConnections)
         llErrorMessage = findViewById(R.id.llErrorMessage)
         etSearch = findViewById(R.id.etSearch)
+        ivAdd = findViewById(R.id.ivAdd)
     }
 
-    override fun onSuccess(proposal: String, connectionId: String) {
+    override fun onSuccess(proposal: String, orgId: String) {
         getConnectionList()
     }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            EventBus.getDefault().unregister(this)
+        } catch (e: Exception) {
+        }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    fun refreshList(event: RefreshConnectionList) {
+        getConnectionList()
+    }
+
 }

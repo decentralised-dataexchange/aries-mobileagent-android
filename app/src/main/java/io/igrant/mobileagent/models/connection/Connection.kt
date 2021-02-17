@@ -25,6 +25,10 @@ class Connection {
     @Expose
     var orgType: String? = ""
 
+    @SerializedName("org_id")
+    @Expose
+    var orgId: String? = ""
+
     @SerializedName("logo_image_url")
     @Expose
     var logoImageUrl: String? = ""

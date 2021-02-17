@@ -55,6 +55,21 @@ class LedgerNetworkListActivity : BaseActivity() {
         ledger.type = LedgerNetworkType.SOVRIN_SANDBOX
         list.add(ledger)
 
+//        ledger = LedgerItem()
+//        ledger.name = "BCovrin Test"
+//        ledger.type = LedgerNetworkType.B_COVRIN_TEST
+//        list.add(ledger)
+//
+//        ledger = LedgerItem()
+//        ledger.name = "BCovrin Production"
+//        ledger.type = LedgerNetworkType.B_COVRIN_PRODUCTION
+//        list.add(ledger)
+//
+//        ledger = LedgerItem()
+//        ledger.name = "BCovrin Dev"
+//        ledger.type = LedgerNetworkType.B_COVRIN_DEV
+//        list.add(ledger)
+
         adapter = LedgerNetworkAdapter(
             list,
             LedgerNetworkType.getSelectedNetwork(this),
@@ -98,6 +113,7 @@ class LedgerNetworkListActivity : BaseActivity() {
     private fun setUpToolbar() {
         setSupportActionBar(toolbar)
         supportActionBar!!.title = resources.getString(R.string.txt_network)
+        supportActionBar!!.setHomeAsUpIndicator(R.drawable.ic_arrow_back_black)
         supportActionBar!!.setDisplayHomeAsUpEnabled(true)
     }
 
