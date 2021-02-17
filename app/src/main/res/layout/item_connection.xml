@@ -1,73 +1,68 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:cardBackgroundColor="@color/white"
-    app:cardCornerRadius="5dp"
-    android:elevation="5dp"
-    android:layout_margin="5dp">
+    android:id="@+id/clItem"
+    android:padding="10dp">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:padding="10dp">
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cvLogo"
+        android:layout_width="60dp"
+        android:layout_height="60dp"
+        app:cardBackgroundColor="@color/colorAccent"
+        app:cardCornerRadius="60dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <androidx.cardview.widget.CardView
-            android:id="@+id/cvLogo"
+        <ImageView
+            android:id="@+id/ivLogo"
             android:layout_width="60dp"
+            android:contentDescription="@string/txt_logo"
             android:layout_height="60dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:cardCornerRadius="60dp"
-            app:cardBackgroundColor="@color/colorAccent">
-            <ImageView
-                android:layout_width="60dp"
-                android:layout_height="60dp"
-                android:id="@+id/ivLogo"
-                android:src="@drawable/images"
-                />
-        </androidx.cardview.widget.CardView>
+            android:src="@drawable/images" />
+    </androidx.cardview.widget.CardView>
 
 
-        <TextView
-            android:id="@+id/tvConnection"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textSize="16dp"
-            android:lines="1"
-            android:text="Connection1"
-            android:textColor="#000"
-            app:layout_constraintStart_toEndOf="@+id/cvLogo"
-            android:layout_marginStart="5dp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent" />
+    <TextView
+        android:id="@+id/tvConnection"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="5dp"
+        android:maxLines="2"
+        android:ellipsize="end"
+        android:textColor="@color/textColor"
+        android:textSize="@dimen/text_size_medium"
+        android:textStyle="bold"
+        android:textAlignment="center"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/cvLogo" />
 
-        <TextView
-            android:id="@+id/tvConnectionLocation"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textSize="14dp"
-            android:text="Stockhom, Sweden"
-            app:layout_constraintStart_toEndOf="@+id/cvLogo"
-            android:layout_marginStart="5dp"
-            android:textStyle="bold"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvConnection" />
+<!--    <TextView-->
+<!--        android:id="@+id/tvConnectionLocation"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginStart="5dp"-->
+<!--        android:text="Stockhom, Sweden"-->
+<!--        android:textSize="14dp"-->
+<!--        android:textStyle="bold"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toEndOf="@+id/cvLogo"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/tvConnection" />-->
 
-        <TextView
-            android:id="@+id/tvConnectionType"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:textSize="14dp"
-            android:text="Health"
-            android:textColor="#000"
-            app:layout_constraintStart_toEndOf="@+id/cvLogo"
-            android:layout_marginStart="5dp"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvConnectionLocation" />
+<!--    <TextView-->
+<!--        android:id="@+id/tvConnectionType"-->
+<!--        android:layout_width="0dp"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginStart="5dp"-->
+<!--        android:text="Health"-->
+<!--        android:textColor="#000"-->
+<!--        android:textIsSelectable="true"-->
+<!--        android:textSize="14dp"-->
+<!--        app:layout_constraintEnd_toEndOf="parent"-->
+<!--        app:layout_constraintStart_toEndOf="@+id/cvLogo"-->
+<!--        app:layout_constraintTop_toBottomOf="@+id/tvConnectionLocation" />-->
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</androidx.cardview.widget.CardView>
+</androidx.constraintlayout.widget.ConstraintLayout>

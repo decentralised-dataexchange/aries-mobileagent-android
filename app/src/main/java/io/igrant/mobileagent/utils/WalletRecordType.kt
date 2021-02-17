@@ -14,5 +14,9 @@ class WalletRecordType {
         const val CREDENTIAL_EXCHANGE_V10 = "credential_exchange_v10"
 
         const val MESSAGE_RECORDS = "inbox_messages"
+
+        const val PRESENTATION_EXCHANGE_V10 = "presentation_exchange_v10"
+
+        const val WALLET ="wallet"
     }
 }

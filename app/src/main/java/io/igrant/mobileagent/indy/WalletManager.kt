@@ -1,7 +1,9 @@
 package io.igrant.mobileagent.indy
 
+import android.os.Build
 import android.util.Log
 import com.google.gson.Gson
+import io.igrant.mobileagent.utils.DeviceUtils
 import org.hyperledger.indy.sdk.IndyException
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.non_secrets.WalletSearch
@@ -36,7 +38,7 @@ object WalletManager {
         get() {
             if (wallet == null) {
                 try {
-                    walletName = "Milan"
+                    walletName = DeviceUtils.getDeviceName()?:""
                     type = "default"
                     walletCredentials = JSONObject()
                         .put("key", "key")
@@ -47,13 +49,13 @@ object WalletManager {
                         .toString()
                     try {
                         Wallet.createWallet(walletConfig, walletCredentials).get()
-                    } catch (e: ExecutionException) {
-                        Log.d(TAG, "${e.message}")
-                        if (e.message!!.indexOf("WalletExistsException") >= 0) {
-                            // ignore
-                        } else {
-                            throw RuntimeException(e)
-                        }
+                    } catch (e: Exception) {
+//                        Log.d(TAG, "${e.message}")
+//                        if (e.message!!.indexOf("WalletExistsException") >= 0) {
+//                            // ignore
+//                        } else {
+//                            throw RuntimeException(e)
+//                        }
                     }
                     wallet = Wallet.openWallet(walletConfig, walletCredentials).get()
 
@@ -88,6 +90,7 @@ object WalletManager {
             if (wallet != null) {
                 try {
                     wallet!!.closeWallet().get()
+                    wallet = null
                 } catch (e: Exception) {
                     e.printStackTrace()
                 }

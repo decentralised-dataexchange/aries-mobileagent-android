@@ -1,44 +1,50 @@
 package io.igrant.mobileagent.activty
 
-import android.Manifest
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Base64
 import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
-import android.widget.Toast
-import androidx.appcompat.widget.Toolbar
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.viewpager.widget.ViewPager
-import com.google.android.material.snackbar.Snackbar
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import io.igrant.mobileagent.R
-import io.igrant.mobileagent.adapter.HomePagerAdapter
 import io.igrant.mobileagent.communication.ApiManager
+import io.igrant.mobileagent.events.ConnectionSuccessEvent
+import io.igrant.mobileagent.events.ReceiveCertificateEvent
+import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
+import io.igrant.mobileagent.events.ReceiveOfferEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.handlers.PoolHandler
 import io.igrant.mobileagent.handlers.SearchHandler
+import io.igrant.mobileagent.indy.LedgerNetworkType
 import io.igrant.mobileagent.indy.PoolManager
 import io.igrant.mobileagent.indy.WalletManager
+import io.igrant.mobileagent.listeners.InitialActivityFunctions
 import io.igrant.mobileagent.models.MediatorConnectionObject
+import io.igrant.mobileagent.models.Notification
+import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.agentConfig.ConfigResponse
 import io.igrant.mobileagent.models.agentConfig.Invitation
 import io.igrant.mobileagent.models.certificateOffer.Base64Extracted
 import io.igrant.mobileagent.models.certificateOffer.CertificateOffer
 import io.igrant.mobileagent.models.connectionRequest.*
-import io.igrant.mobileagent.models.credentialExchange.*
+import io.igrant.mobileagent.models.credentialExchange.CredentialExchange
+import io.igrant.mobileagent.models.credentialExchange.CredentialProposalDict
+import io.igrant.mobileagent.models.credentialExchange.IssueCredential
+import io.igrant.mobileagent.models.credentialExchange.RawCredential
 import io.igrant.mobileagent.models.did.DidResult
+import io.igrant.mobileagent.models.presentationExchange.PresentationExchange
+import io.igrant.mobileagent.models.presentationExchange.PresentationRequest
 import io.igrant.mobileagent.models.tagJsons.ConnectionId
 import io.igrant.mobileagent.models.tagJsons.ConnectionTags
 import io.igrant.mobileagent.models.tagJsons.UpdateInvitationKey
+import io.igrant.mobileagent.models.wallet.WalletModel
+import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.models.walletSearch.SearchResponse
-import io.igrant.mobileagent.qrcode.QrCodeActivity
 import io.igrant.mobileagent.tasks.LoadLibIndyTask
 import io.igrant.mobileagent.tasks.OpenWalletTask
 import io.igrant.mobileagent.tasks.PoolTask
@@ -54,6 +60,8 @@ import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_CONNECTION_RESPON
 import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_ISSUE_CREDENTIAL
 import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_OFFER_CREDENTIAL
 import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_PING_RESPONSE
+import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_REQUEST_PRESENTATION
+import io.igrant.mobileagent.utils.MessageTypes.Companion.TYPE_REQUEST_PRESENTATION_ACK
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CREDENTIAL_EXCHANGE_V10
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.DID_DOC
@@ -69,6 +77,7 @@ import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import okio.BufferedSink
 import org.apache.commons.io.IOUtils
+import org.greenrobot.eventbus.EventBus
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.crypto.Crypto
 import org.hyperledger.indy.sdk.did.Did
@@ -85,14 +94,10 @@ import java.io.IOException
 import java.util.*
 import kotlin.collections.ArrayList
 
-class InitializeActivity : BaseActivity() {
+class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
     companion object {
         private const val TAG = "InitializeActivity"
-        private const val PICK_IMAGE_REQUEST = 101
-        val PERMISSIONS =
-            arrayOf(Manifest.permission.CAMERA)
-        private const val REQUEST_CODE_SCAN_INVITATION = 202
 
         var deviceId = ""
     }
@@ -100,31 +105,52 @@ class InitializeActivity : BaseActivity() {
     //views
     private lateinit var llProgressBar: LinearLayout
     private lateinit var clLoading: ConstraintLayout
-    private lateinit var tvConnections: TextView
-    private lateinit var tvCertificates: TextView
+
     private lateinit var tvLoadingStatus: TextView
-    private lateinit var toolbar: Toolbar
+//    private lateinit var toolbar: Toolbar
+    private lateinit var ivSettings:ImageView
+    private lateinit var ivNotifications:ImageView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_initialize)
         initViews()
-        initToolbar()
+        initListener()
+//        initToolbar()
         initLibIndy()
     }
 
-    private fun initToolbar() {
-        val toolbar: Toolbar = findViewById(R.id.toolbar)
-        setSupportActionBar(toolbar)
-        supportActionBar!!.title = "Data Wallet"
-        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+    private fun initListener() {
+        ivSettings.setOnClickListener {
+            val intent = Intent(
+                    this,
+                    SettingsActivity::class.java
+                )
+                startActivity(intent)
+        }
+
+        ivNotifications.setOnClickListener {
+            startActivity(
+                Intent(
+                    this,
+                    RequestActivity::class.java
+                )
+            )
+        }
     }
+
+//    private fun initToolbar() {
+//        val toolbar: Toolbar = findViewById(R.id.toolbar)
+//        setSupportActionBar(toolbar)
+//        supportActionBar!!.title = ""
+////        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
+//    }
 
     private fun initLibIndy() {
         LoadLibIndyTask(object : CommonHandler {
             override fun taskCompleted() {
                 loadPool()
-                tvLoadingStatus.text = "Creating Pool..."
+                tvLoadingStatus.text = resources.getString(R.string.txt_creating_pool)
             }
 
             override fun taskStarted() {
@@ -137,7 +163,7 @@ class InitializeActivity : BaseActivity() {
         OpenWalletTask(object : CommonHandler {
             override fun taskCompleted() {
                 getMediatorConfig()
-                tvLoadingStatus.text = "Finishing..."
+                tvLoadingStatus.text = resources.getString(R.string.txt_finishing)
             }
 
             override fun taskStarted() {
@@ -151,97 +177,54 @@ class InitializeActivity : BaseActivity() {
             override fun taskCompleted(pool: Pool) {
                 PoolManager.setPool(pool)
                 openWallet()
-                tvLoadingStatus.text = "Creating Wallet..."
+                tvLoadingStatus.text = resources.getString(R.string.txt_creating_wallet)
             }
 
             override fun taskStarted() {
 
             }
-        }).execute()
+        },LedgerNetworkType.getSelectedNetwork(this)).execute()
     }
 
     private fun initViews() {
         llProgressBar = findViewById(R.id.llProgressBar)
         clLoading = findViewById(R.id.clLoadingScreen)
-        tvConnections = findViewById(R.id.tvConnections)
         tvLoadingStatus = findViewById(R.id.tvLoadingStatus)
-        tvCertificates = findViewById(R.id.tvCertificates)
+        ivSettings = findViewById(R.id.ivSettings)
+        ivNotifications = findViewById(R.id.ivNotification)
         llProgressBar.visibility = View.VISIBLE
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.main_menu, menu);
-        return true;
-    }
+//    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+//        menuInflater.inflate(R.menu.menu_settings, menu)
+//        return true
+//    }
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        return when (item.itemId) {
-            android.R.id.home -> {
-                onBackPressed()
-                true
-            }
-            R.id.action_new -> {
-                if (PermissionUtils.hasPermissions(
-                        this,
-                        true,
-                        PICK_IMAGE_REQUEST,
-                        PERMISSIONS
-                    )
-                ) {
-                    val i = Intent(this, QrCodeActivity::class.java)
-                    startActivityForResult(
-                        i,
-                        REQUEST_CODE_SCAN_INVITATION
-                    )
-                }
-                true
-            }
-            else -> super.onOptionsItemSelected(item)
-        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        if (requestCode == REQUEST_CODE_SCAN_INVITATION) {
-            if (data == null) return
-
-            val uri: Uri =
-                Uri.parse(data.getStringExtra("com.blikoon.qrcodescanner.got_qr_scan_relult"))
-            val v: String = uri.getQueryParameter("c_i") ?: ""
-            if (v != "") {
-                saveConnection(v)
-            } else {
-                Toast.makeText(this, "Unexpected error", Toast.LENGTH_SHORT).show()
-            }
-        }
-        super.onActivityResult(requestCode, resultCode, data)
-    }
-
-    private fun saveConnection(data: String) {
-        val json =
-            Base64.decode(
-                data,
-                Base64.URL_SAFE
-            ).toString(charset("UTF-8"))
-
-        val gson = Gson()
-        val invitation: Invitation = gson.fromJson(json, Invitation::class.java)
-        if (ConnectionUtils.checkIfConnectionAvailable(invitation?.recipientKeys!![0])) {
-            Toast.makeText(
-                this,
-                resources.getString(R.string.err_connection_already_added),
-                Toast.LENGTH_SHORT
-            ).show()
-        } else {
-            val snackbar: Snackbar = Snackbar.make(
-                findViewById(android.R.id.content),
-                "Connecting to connection. Will update when the connection is active...",
-                Snackbar.LENGTH_LONG
-            )
-            snackbar.show()
-
-            saveConnectionRecord(invitation, false)
-        }
-    }
+//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+//        return when (item.itemId) {
+//            android.R.id.home -> {
+//                onBackPressed()
+//                true
+//            }
+//            R.id.action_settings->{
+//                val intent = Intent(
+//                    this,
+//                    SettingsActivity::class.java
+//                )
+//                startActivity(intent)
+//                true
+//            }
+////            R.id.action_add_data -> {
+////                val intent = Intent(
+////                    this,
+////                    ConnectionListActivity::class.java
+////                )
+////                startActivity(intent)
+////                true
+////            }
+//            else -> super.onOptionsItemSelected(item)
+//        }
+//    }
 
     private fun getMediatorConfig() {
         WalletSearchTask(object : SearchHandler {
@@ -263,8 +246,8 @@ class InitializeActivity : BaseActivity() {
                             }
                         })
                 } else {
-                    var connectionData: JSONObject =
-                        JSONObject(searchResponse.records?.get(0)?.value)
+                    val connectionData =
+                        JSONObject(searchResponse.records?.get(0)?.value ?: "")
 
                     when (connectionData.getString("state")) {
                         CONNECTION_REQUEST, CONNECTION_INVITATION -> {
@@ -281,7 +264,7 @@ class InitializeActivity : BaseActivity() {
                             llProgressBar.visibility = View.GONE
                             val myDid: String = connectionData.getString("my_did")
                             pollMessagesInThread(myDid)
-                            initPagerAdapter()
+                            initFragment()
 
                             clLoading.visibility = View.GONE
                         }
@@ -298,10 +281,8 @@ class InitializeActivity : BaseActivity() {
         )
     }
 
-    private fun initPagerAdapter() {
-        val vpPager: ViewPager = findViewById<View>(R.id.vpPager) as ViewPager
-        val adapterViewPager = HomePagerAdapter(supportFragmentManager)
-        vpPager.adapter = adapterViewPager
+    private fun initFragment() {
+        NavigationUtils.showWalletFragment(supportFragmentManager, false)
     }
 
     private fun deleteReadMessage(inboxItemId: String, myDid: String) {
@@ -340,7 +321,7 @@ class InitializeActivity : BaseActivity() {
         Log.d(TAG, "did doc 2: $didDoc")
         val test = gson.fromJson(didDoc, DidDoc::class.java)
 
-        var packedMessage = Crypto.packMessage(
+        val packedMessage = Crypto.packMessage(
             WalletManager.getWallet,
             "[\"${test.publicKey!![0].publicKeyBase58}\"]",
             key,
@@ -367,9 +348,7 @@ class InitializeActivity : BaseActivity() {
                     call: Call<ResponseBody>,
                     response: Response<ResponseBody>
                 ) {
-                    if (response.code() == 200 && response.body() != null) {
 
-                    }
                 }
             })
     }
@@ -408,7 +387,7 @@ class InitializeActivity : BaseActivity() {
         Log.d(TAG, "did doc 2: $didDoc")
         val test = gson.fromJson(didDoc, DidDoc::class.java)
 
-        var packedMessage = Crypto.packMessage(
+        val packedMessage = Crypto.packMessage(
             WalletManager.getWallet,
             "[\"${test.publicKey?.get(0)?.publicKeyBase58}\"]",
             key,
@@ -480,57 +459,7 @@ class InitializeActivity : BaseActivity() {
                     unPackSigMessage(o, false)
                 }
                 TYPE_PING_RESPONSE -> {
-                    val search = WalletSearch.open(
-                        WalletManager.getWallet,
-                        CONNECTION,
-                        "{}",
-                        "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-                    ).get()
-
-                    val connection =
-                        WalletSearch.searchFetchNextRecords(WalletManager.getWallet, search, 100)
-                            .get()
-
-                    WalletManager.closeSearchHandle(search)
-
-                    val data = JSONObject(connection)
-
-                    var connectionRecords = JSONArray(data.get("records").toString())
-                    val gson = Gson()
-
-                    val mediatorConnectionObject: MediatorConnectionObject =
-                        gson.fromJson(
-                            connectionRecords.getJSONObject(0).getString("value"),
-                            MediatorConnectionObject::class.java
-                        )
-
-                    mediatorConnectionObject.state = CONNECTION_ACTIVE
-
-                    var connectionUuid =
-                        connectionRecords.getJSONObject(0).getString("id")
-
-                    val value = gson.toJson(mediatorConnectionObject)
-
-                    WalletRecord.updateValue(
-                        WalletManager.getWallet,
-                        CONNECTION,
-                        connectionUuid,
-                        value
-                    )
-
-                    val snackbar: Snackbar = Snackbar.make(
-                        findViewById(android.R.id.content),
-                        "Connection is now active",
-                        Snackbar.LENGTH_LONG
-                    )
-                    snackbar.show()
-
-//                    Snackbar.make(findViewById(android.R.id.content), "Connection is now active", Snackbar.LENGTH_LONG)
-//                        .setAction("Show") {
-//                            NavigationUtils.showConnectionListFragment(supportFragmentManager)
-//                        }
-//                        .setActionTextColor(resources.getColor(R.color.primaryBlue))
-//                        .show()
+                    processPingResponse(JSONObject(String(unpack)))
                 }
                 TYPE_OFFER_CREDENTIAL -> {
                     unPackOfferCredential(JSONObject(String(unpack)))
@@ -538,6 +467,139 @@ class InitializeActivity : BaseActivity() {
                 TYPE_ISSUE_CREDENTIAL -> {
                     unPackIssueCredential(JSONObject(String(unpack)))
                 }
+                TYPE_REQUEST_PRESENTATION -> {
+                    unPackRequestPresentation(JSONObject(String(unpack)))
+                }
+                TYPE_REQUEST_PRESENTATION_ACK -> {
+                    updatePresentProofToAck(JSONObject(String(unpack)))
+                }
+            }
+        }
+    }
+
+    private fun processPingResponse(jsonObject: JSONObject) {
+        val recipientVerKey = jsonObject.getString("sender_verkey")
+        val connectionSearch = SearchUtils.searchWallet(
+            CONNECTION,
+            "{\"recipient_key\":\"$recipientVerKey\"}"
+        )
+
+        val mediatorConnectionObject: MediatorConnectionObject =
+            WalletManager.getGson.fromJson(
+                connectionSearch.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
+            )
+
+        mediatorConnectionObject.state = CONNECTION_ACTIVE
+
+        val connectionUuid =
+            connectionSearch.records?.get(0)?.id
+
+        val value = WalletManager.getGson.toJson(mediatorConnectionObject)
+
+        WalletRecord.updateValue(
+            WalletManager.getWallet,
+            CONNECTION,
+            connectionUuid,
+            value
+        )
+
+        EventBus.getDefault().post(ConnectionSuccessEvent(connectionUuid ?: ""))
+    }
+
+    private fun updatePresentProofToAck(jsonObject: JSONObject) {
+        WalletRecord.delete(
+            WalletManager.getWallet,
+            MESSAGE_RECORDS,
+            JSONObject(jsonObject.getString("message")).getJSONObject("~thread").getString("thid")
+        ).get()
+
+        val presentationExchange = SearchUtils.searchWallet(
+            WalletRecordType.PRESENTATION_EXCHANGE_V10,
+            "{\"thread_id\":\"${JSONObject(jsonObject.getString("message")).getJSONObject("~thread")
+                .getString("thid")}\"}"
+        )
+//
+        WalletRecord.delete(
+            WalletManager.getWallet,
+            WalletRecordType.PRESENTATION_EXCHANGE_V10,
+            "${presentationExchange.records?.get(0)?.id}"
+        ).get()
+    }
+
+    private fun unPackRequestPresentation(jsonObject: JSONObject) {
+        val connectionObject = ConnectionUtils.getConnection(jsonObject.getString("sender_verkey"))
+
+        val p = SearchUtils.searchWallet(
+            WalletRecordType.PRESENTATION_EXCHANGE_V10,
+            "{\"thread_id\":\"${JSONObject(jsonObject.getString("message")).getString("@id")}\"}"
+        )
+
+        val presentationRequestBase64 =
+            JSONObject(
+                JSONObject(jsonObject.getString("message")).getJSONArray("request_presentations~attach")
+                    .get(0).toString()
+            )
+                .getJSONObject("data").getString("base64")
+        val presentationRequest = WalletManager.getGson.fromJson(
+            Base64.decode(presentationRequestBase64, Base64.URL_SAFE)
+                .toString(charset("UTF-8")), PresentationRequest::class.java
+        )
+        if (p.totalCount ?: 0 == 0) {
+            val presentationExchange = PresentationExchange()
+            presentationExchange.threadId =
+                JSONObject(jsonObject.getString("message")).getString("@id")
+            presentationExchange.createdAt = DateUtils.getIndyFormattedDate()
+            presentationExchange.updatedAt = DateUtils.getIndyFormattedDate()
+            presentationExchange.connectionId = connectionObject?.requestId
+            presentationExchange.initiator = "external"
+            presentationExchange.presentationProposalDict = null
+            presentationExchange.presentationRequest = presentationRequest
+            presentationExchange.role = "prover"
+            presentationExchange.state = PresentationExchangeStates.REQUEST_RECEIVED
+            presentationExchange.comment =
+                JSONObject(jsonObject.getString("message")).getString("comment")
+
+            val id = UUID.randomUUID().toString()
+            val tag =
+                "{\"thread_id\": \"${JSONObject(jsonObject.getString("message")).getString("@id")}\"}"
+            WalletRecord.add(
+                WalletManager.getWallet,
+                WalletRecordType.PRESENTATION_EXCHANGE_V10,
+                id,
+                WalletManager.getGson.toJson(presentationExchange),
+                tag
+            )
+
+            val notification=Notification()
+            notification.type = TYPE_REQUEST_PRESENTATION
+            notification.presentation = presentationExchange
+            notification.connection = connectionObject
+            notification.date = DateUtils.getIndyFormattedDate()
+
+            WalletRecord.add(
+                WalletManager.getWallet,
+                MESSAGE_RECORDS,
+                JSONObject(jsonObject.getString("message")).getString("@id"),
+                WalletManager.getGson.toJson(notification),
+                "{\n" +
+                        "  \"type\":\"$TYPE_REQUEST_PRESENTATION\",\n" +
+                        "  \"connectionId\":\"${connectionObject?.requestId}\",\n" +
+                        "  \"stat\":\"Active\"\n" +
+                        "}"
+            )
+
+            try {
+                NotificationUtils.showNotification(
+                    this,
+                    TYPE_ISSUE_CREDENTIAL,
+                    "${connectionObject?.theirLabel ?: "Organisation"} - Exchange Request",
+                    "Received a new exchange request from the organisation ${connectionObject?.theirLabel ?: ""}"
+                )
+
+                EventBus.getDefault()
+                    .post(ReceiveExchangeRequestEvent(connectionObject?.requestId ?: ""))
+            } catch (e: Exception) {
             }
         }
     }
@@ -550,7 +612,6 @@ class InitializeActivity : BaseActivity() {
             Base64.decode(issueCredential.credentialsAttach[0].data?.base64, Base64.URL_SAFE)
                 .toString(charset("UTF-8")), RawCredential::class.java
         )
-
 
         val string = body.getString("sender_verkey")
         val searchDid = WalletSearch.open(
@@ -646,7 +707,7 @@ class InitializeActivity : BaseActivity() {
 
         val didDoc =
             gson.fromJson(searchResult.records?.get(0)?.value, DidDoc::class.java)
-        var packedMessage = Crypto.packMessage(
+        val packedMessage = Crypto.packMessage(
             WalletManager.getWallet,
             "[\"$recipientVerKey\"]",
             senderVerKey,
@@ -667,10 +728,10 @@ class InitializeActivity : BaseActivity() {
         }
 //
         ApiManager.api.getService()
-            ?.postData(didDoc.service?.get(0)?.serviceEndpoint ?: "", typedBytes)
+            ?.postDataWithoutData(didDoc.service?.get(0)?.serviceEndpoint ?: "", typedBytes)
             ?.enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    llProgressBar!!.visibility = View.GONE
+                    llProgressBar.visibility = View.GONE
                 }
 
                 override fun onResponse(
@@ -678,14 +739,29 @@ class InitializeActivity : BaseActivity() {
                     response: Response<ResponseBody>
                 ) {
                     if (response.code() == 200 && response.body() != null) {
-                        storeCredential(thid, credDefId)
+                        storeCredential(thid, credDefId, recipientVerKey)
                     }
                 }
             })
     }
 
-    private fun storeCredential(thid: String, credDefId: String?) {
+    private fun storeCredential(
+        thid: String,
+        credDefId: String?,
+        recipientVerKey: String
+    ) {
 
+        val connectionSearch = SearchUtils.searchWallet(
+            CONNECTION,
+            "{\"recipient_key\":\"$recipientVerKey\"}"
+        )
+        var connection: MediatorConnectionObject? = null
+        if (connectionSearch.totalCount ?: 0 > 0) {
+            connection = WalletManager.getGson.fromJson(
+                connectionSearch.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
+            )
+        }
         val builder = GsonBuilder()
         builder.serializeNulls()
         val gson: Gson = builder.setPrettyPrinting().create()
@@ -723,32 +799,22 @@ class InitializeActivity : BaseActivity() {
             val credentialExchange =
                 gson.fromJson(searchResponse.records?.get(0)?.value, CredentialExchange::class.java)
 
-            val raw = credentialExchange.rawCredential
-            if (raw?.values == null) {
-                val score = Score()
-                score.encoded = null
-                score.raw = null
-                val valueScore = ValueScore()
-                valueScore.score = score
-                raw?.values = valueScore
-            }
-            Log.d(
-                TAG,
-                "storeCredential: \n credentialRequestMetadata: \n ${gson.toJson(credentialExchange.credentialRequestMetadata)} \n rawCredential: \n ${gson.toJson(
-                    raw
-                )} \n parsedCredDefResponse.objectJson: \n ${parsedCredDefResponse.objectJson}"
-            )
+//            Log.d(
+//                TAG,
+//                "storeCredential: \n credentialRequestMetadata: \n ${gson.toJson(credentialExchange.credentialRequestMetadata)} \n rawCredential: \n ${gson.toJson(
+//                    credentialExchange.rawCredential
+//                )} \n parsedCredDefResponse.objectJson: \n ${parsedCredDefResponse.objectJson}"
+//            )
             val uuid = UUID.randomUUID().toString()
             val credentialId = Anoncreds.proverStoreCredential(
                 WalletManager.getWallet,
                 uuid,
                 gson.toJson(credentialExchange.credentialRequestMetadata),
-                gson.toJson(raw),
+                gson.toJson(credentialExchange.rawCredential),
                 parsedCredDefResponse.objectJson,
                 null
             ).get()
 
-            Log.d(TAG, "storeCredential: $uuid \n $credentialId")
             credentialExchange.state = CREDENTIAL_CREDENTIAL_ACK
 
             WalletRecord.updateValue(
@@ -757,6 +823,46 @@ class InitializeActivity : BaseActivity() {
                 "${searchResponse.records?.get(0)?.id}",
                 gson.toJson(credentialExchange)
             )
+
+            WalletRecord.delete(
+                WalletManager.getWallet,
+                MESSAGE_RECORDS,
+                thid
+            ).get()
+
+            WalletRecord.delete(
+                WalletManager.getWallet,
+                CREDENTIAL_EXCHANGE_V10,
+                "${searchResponse.records?.get(0)?.id}"
+            ).get()
+
+            val walletModel = WalletModel()
+            walletModel.connection = connection
+            walletModel.credentialId = credentialId
+            walletModel.rawCredential = credentialExchange.rawCredential
+            walletModel.credentialProposalDict = credentialExchange.credentialProposalDict
+
+            val walletModelTag = "{" +
+                    "\"connection_id\":\"${connection?.requestId ?: ""}\"," +
+                    "\"credential_id\":\"$credentialId\"," +
+                    "\"schema_id\":\"${credentialExchange.rawCredential?.schemaId ?: ""}\"" +
+                    "}"
+
+            WalletRecord.add(
+                WalletManager.getWallet,
+                WalletRecordType.WALLET,
+                credentialId,
+                WalletManager.getGson.toJson(walletModel),
+                walletModelTag
+            ).get()
+
+            NotificationUtils.showNotification(
+                this,
+                TYPE_ISSUE_CREDENTIAL,
+                "Success",
+                "Certificate successfully added to your wallet"
+            )
+            EventBus.getDefault().post(ReceiveCertificateEvent())
         }
 
     }
@@ -788,44 +894,40 @@ class InitializeActivity : BaseActivity() {
         val connectionInvitationRecord = connectionInvitationRecords.getJSONObject(0)
         val connectionInvitationValue = JSONObject(connectionInvitationRecord.getString("value"))
 
-        val recipientKeys: JSONArray =
-            JSONArray(connectionInvitationValue.getString("recipientKeys"))
-        val recipientKey: String = recipientKeys[0].toString()
-
         //public keys
-        var publicKey: PublicKey = PublicKey()
+        val publicKey = PublicKey()
         publicKey.id = "did:sov:$myDid#1"
         publicKey.type = "Ed25519VerificationKey2018"
         publicKey.controller = "did:sov:$myDid"
         publicKey.publicKeyBase58 = key
 
-        var publicKeys: ArrayList<PublicKey> = ArrayList()
+        val publicKeys: ArrayList<PublicKey> = ArrayList()
         publicKeys.add(publicKey)
 
         //authentication
-        var authentication: Authentication = Authentication()
+        val authentication = Authentication()
         authentication.type = "Ed25519SignatureAuthentication2018"
         authentication.publicKey = "did:sov:$myDid#1"
 
-        var authentications: ArrayList<Authentication> = ArrayList()
+        val authentications: ArrayList<Authentication> = ArrayList()
         authentications.add(authentication)
 
         //service
-        var recipientsKey: ArrayList<String> = ArrayList()
+        val recipientsKey: ArrayList<String> = ArrayList()
         recipientsKey.add(key)
 
-        var service: Service = Service()
+        val service = Service()
         service.id = "did:sov:$myDid;indy"
         service.type = "IndyAgent"
         service.priority = 0
         service.recipientKeys = recipientsKey
         service.serviceEndpoint = ""
 
-        var services: ArrayList<Service> = ArrayList()
+        val services: ArrayList<Service> = ArrayList()
         services.add(service)
 
         //did doc
-        var didDoc: DidDoc = DidDoc()
+        val didDoc = DidDoc()
         didDoc.context = "https://w3id.org/did/v1"
         didDoc.id = "did:sov:$myDid"
         didDoc.publicKey = publicKeys
@@ -833,38 +935,30 @@ class InitializeActivity : BaseActivity() {
         didDoc.service = services
 
         //did
-        var did: DID = DID()
+        val did = DID()
         did.did = myDid
         did.didDoc = didDoc
 
         // transport
-        val transport: Transport = Transport()
+        val transport = Transport()
         transport.returnRoute = "all"
 
         //connection request
-        var connectionRequest: ConnectionRequest = ConnectionRequest()
+        val connectionRequest = ConnectionRequest()
         connectionRequest.type = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request"
         connectionRequest.id = requestId
         connectionRequest.label = "milan"
         connectionRequest.connection = did
         connectionRequest.transport = transport
 
-        val gson = Gson();
-        val str = gson.toJson(connectionRequest)
+        val str = WalletManager.getGson.toJson(connectionRequest)
 
-        Log.d(TAG, "packConnectionRequestMessage1: $str")
-        Log.d(
-            TAG,
-            "packConnectionRequestMessage2: ${connectionInvitationValue.getString("recipientKeys")} - $key \n ${str.toByteArray()}"
-        )
-        var packedMessage = Crypto.packMessage(
+        val packedMessage = Crypto.packMessage(
             WalletManager.getWallet,
             connectionInvitationValue.getString("recipientKeys"),
             key,
             str.toByteArray()
         ).get()
-
-        Log.d(TAG, "packed message: ${String(packedMessage)}")
 
         val typedBytes: RequestBody = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -880,7 +974,7 @@ class InitializeActivity : BaseActivity() {
         ApiManager.api.getService()?.postDetails(typedBytes)
             ?.enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    llProgressBar!!.visibility = View.GONE
+                    llProgressBar.visibility = View.GONE
                 }
 
                 override fun onResponse(
@@ -900,8 +994,8 @@ class InitializeActivity : BaseActivity() {
 
     private fun unPackOfferCredential(body: JSONObject) {
         val message = JSONObject(body.getString("message"))
-        val gson = Gson()
-        val certificateOffer = gson.fromJson(message.toString(), CertificateOffer::class.java)
+        val certificateOffer =
+            WalletManager.getGson.fromJson(message.toString(), CertificateOffer::class.java)
 
 //        showPopUp(certificateOffer)
         searchDidKey(body.getString("sender_verkey"), certificateOffer)
@@ -922,76 +1016,74 @@ class InitializeActivity : BaseActivity() {
         WalletManager.closeSearchHandle(searchDid)
 
         val didData = JSONObject(didResponse).getJSONArray("records").get(0).toString()
-        val gson = Gson()
-        val didResult = gson.fromJson(didData, DidResult::class.java)
+        val didResult = WalletManager.getGson.fromJson(didData, DidResult::class.java)
 
-        val searchConnection = WalletSearch.open(
-            WalletManager.getWallet,
+        val connectionResult = SearchUtils.searchWallet(
             CONNECTION,
-            "{\"their_did\": \"${didResult.tags!!.did}\"}",
-            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-        ).get()
-
-        val connectionResponse =
-            WalletSearch.searchFetchNextRecords(WalletManager.getWallet, searchConnection, 100)
-                .get()
-
-        Log.d(TAG, "connectionResult: $connectionResponse")
-
-        val connecction = gson.fromJson(
-            JSONObject(
-                JSONObject(connectionResponse).getJSONArray("records").get(0).toString()
-            ).getString("value"), MediatorConnectionObject::class.java
+            "{\"their_did\": \"${didResult.tags!!.did}\"}"
         )
-        WalletManager.closeSearchHandle(searchConnection)
 
-        val credentialExchangeSearch = WalletSearch.open(
-            WalletManager.getWallet,
-            WalletRecordType.CREDENTIAL_EXCHANGE_V10,
-            "{\"thread_id\": \"${certificateOffer.id}\"}",
-            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-        ).get()
-
-        val credentialExchangeResponse =
-            WalletSearch.searchFetchNextRecords(
-                WalletManager.getWallet,
-                credentialExchangeSearch,
-                100
-            ).get()
-
-        Log.d(TAG, "credentialExchangeResult: $credentialExchangeResponse")
-        WalletManager.closeSearchHandle(searchConnection)
-
-        if (JSONObject(credentialExchangeResponse).getInt("totalCount") == 0) {
-            saveCredentialExchange(
-                certificateOffer,
-                JSONObject(JSONObject(connectionResponse).getJSONArray("records").get(0).toString())
+        if (connectionResult.totalCount ?: 0 > 0) {
+            val connecction = WalletManager.getGson.fromJson(
+                connectionResult.records?.get(0)?.value, MediatorConnectionObject::class.java
             )
-        }
 
-        WalletRecord.add(
-            WalletManager.getWallet,
-            MESSAGE_RECORDS,
-            certificateOffer.id,
-            gson.toJson(certificateOffer),
-            "{\n" +
-                    "  \"type\":\"${certificateOffer.type}\",\n" +
-                    "  \"connectionId\":\"${connecction.requestId}\"\n" +
-                    "}"
-        )
+            val credentialExchangeSearch = SearchUtils.searchWallet(
+                CREDENTIAL_EXCHANGE_V10,
+                "{\"thread_id\": \"${certificateOffer.id}\"}"
+            )
+
+            if (credentialExchangeSearch.totalCount == 0) {
+                saveCredentialExchange(
+                    certificateOffer,
+                    connectionResult.records?.get(0)
+                )
+            }
+
+            val notification=Notification()
+            notification.type = TYPE_OFFER_CREDENTIAL
+            notification.certificateOffer = certificateOffer
+            notification.connection = connecction
+            notification.date = DateUtils.getIndyFormattedDate()
+
+            WalletRecord.add(
+                WalletManager.getWallet,
+                MESSAGE_RECORDS,
+                certificateOffer.id,
+                WalletManager.getGson.toJson(notification),
+                "{\n" +
+                        "  \"type\":\"$TYPE_OFFER_CREDENTIAL\",\n" +
+                        "  \"connectionId\":\"${connecction.requestId}\",\n" +
+                        "  \"stat\":\"Active\"\n" +
+                        "}"
+            )
+
+            try {
+                NotificationUtils.showNotification(
+                    this,
+                    TYPE_ISSUE_CREDENTIAL,
+                    "${connecction.theirLabel} - Offer Credential",
+                    "Received a new offer credential of the organisation ${connecction.theirLabel}"
+                )
+                EventBus.getDefault()
+                    .post(ReceiveExchangeRequestEvent(connecction?.requestId ?: ""))
+                EventBus.getDefault().post(ReceiveOfferEvent(connecction.requestId ?: ""))
+            } catch (e: Exception) {
+            }
+        }
     }
 
     private fun saveCredentialExchange(
         certificateOffer: CertificateOffer,
-        connectionRecord: JSONObject
+        connectionRecord: Record?
     ) {
-        val gson = Gson()
         val base64Sting =
             Base64.decode(certificateOffer.offersAttach!![0].data!!.base64, Base64.URL_SAFE)
                 .toString(charset("UTF-8"))
 
-        val credentialProposal = gson.fromJson(base64Sting, Base64Extracted::class.java)
-        var credentialProposalDict = CredentialProposalDict()
+        val credentialProposal =
+            WalletManager.getGson.fromJson(base64Sting, Base64Extracted::class.java)
+        val credentialProposalDict = CredentialProposalDict()
         credentialProposalDict.type =
             "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/propose-credential"
         credentialProposalDict.id = UUID.randomUUID().toString()
@@ -1000,27 +1092,28 @@ class InitializeActivity : BaseActivity() {
         credentialProposalDict.credDefId = credentialProposal.credDefId
         credentialProposalDict.credentialProposal = certificateOffer.credentialPreview
 
-        var credentialExchange = CredentialExchange()
+        val credentialExchange = CredentialExchange()
         credentialExchange.threadId = certificateOffer.id
         credentialExchange.createdAt = "2020-11-18 16:08:03.923715Z"
         credentialExchange.updatedAt = "2020-11-18 16:08:03.923715Z"
         credentialExchange.connectionId =
-            connectionRecord.getJSONObject("tags").getString("request_id")
+            connectionRecord?.tags?.get("request_id")
         credentialExchange.state = CredentialExchangeStates.CREDENTIAL_OFFER_RECEIVED
         credentialExchange.credentialProposalDict = credentialProposalDict
         credentialExchange.credentialOffer = credentialProposal
 
-        Log.d(TAG, "saveCredentialExchange: ${gson.toJson(credentialExchange)}")
+        Log.d(
+            TAG,
+            "saveCredentialExchange: ${WalletManager.getGson.toJson(credentialExchange)}"
+        )
         val uudi = UUID.randomUUID().toString()
         WalletRecord.add(
             WalletManager.getWallet,
             CREDENTIAL_EXCHANGE_V10,
             uudi,
-            gson.toJson(credentialExchange).toString(),
+            WalletManager.getGson.toJson(credentialExchange).toString(),
             "{\"thread_id\": \"${certificateOffer.id}\"}"
         )
-
-
     }
 
     private fun unPackSigMessage(body: String, isMediator: Boolean) {
@@ -1044,7 +1137,8 @@ class InitializeActivity : BaseActivity() {
             .toString(charset("UTF-8")).indexOf("{")
         Log.d(TAG, "unPackMessage: positon : $postion")
         val data =
-            Base64.decode(sigData, Base64.URL_SAFE).toString(charset("UTF-8")).substring(postion)
+            Base64.decode(sigData, Base64.URL_SAFE).toString(charset("UTF-8"))
+                .substring(postion)
 
         saveDidDoc(data, isMediator)
     }
@@ -1053,16 +1147,11 @@ class InitializeActivity : BaseActivity() {
         Log.d(TAG, "saveDidDoc: $data")
         val didData = JSONObject(data)
         val didDoc = didData.getString("DIDDoc")
-        val did = didData.getString("DID")
+        val theirDid = didData.getString("DID")
 
         val didDocUuid = UUID.randomUUID().toString()
 
-        val tagJson = "{\"did\": \"$did\"}"
-
-        Log.d(TAG, "saveDidDoc: wallet handle : " + WalletManager.getWallet!!.walletHandle)
-        Log.d(TAG, "saveDidDoc: wallet tags json : $tagJson")
-        Log.d(TAG, "saveDidDoc: wallet value : $didData")
-        Log.d(TAG, "saveDidDoc: wallet UUID : $didDocUuid")
+        val tagJson = "{\"did\": \"$theirDid\"}"
 
         WalletRecord.add(
             WalletManager.getWallet,
@@ -1074,30 +1163,26 @@ class InitializeActivity : BaseActivity() {
 
         val publicKey = JSONObject(didDoc).getJSONArray("publicKey").getJSONObject(0)
             .getString("publicKeyBase58")
-        addDidKey(publicKey, did, isMediator)
+        addDidKey(publicKey, theirDid, isMediator)
     }
 
-    private fun addDidKey(publicKey: String, did: String, isMediator: Boolean) {
+    private fun addDidKey(publicKey: String, theirDid: String, isMediator: Boolean) {
 
         val didKeyUuid = UUID.randomUUID().toString()
 
-        val tagJson = "{\"did\": \"$did\", \"key\": \"$publicKey\"}"
-
-        Log.d(TAG, "addDidKey: wallet handle : " + WalletManager.getWallet!!.walletHandle)
-        Log.d(TAG, "addDidKey: wallet tags json : $tagJson")
-        Log.d(TAG, "addDidKey: wallet UUID : $didKeyUuid")
+        val tagJson = "{\"did\": \"$theirDid\", \"key\": \"$publicKey\"}"
 
         WalletRecord.add(
             WalletManager.getWallet,
             if (isMediator) MEDIATOR_DID_KEY else DID_KEY,
             didKeyUuid,
-            "$publicKey",
+            publicKey,
             tagJson
         )
-        updateRecord(publicKey, did, isMediator)
+        updateRecord(publicKey, theirDid, isMediator)
     }
 
-    private fun updateRecord(publicKey: String, did: String, isMediator: Boolean) {
+    private fun updateRecord(publicKey: String, theirDid: String, isMediator: Boolean) {
 
         val search = WalletSearch.open(
             WalletManager.getWallet,
@@ -1114,21 +1199,20 @@ class InitializeActivity : BaseActivity() {
         val data = JSONObject(connection)
         Log.d(TAG, "getMediatorConfig: $connection")
 
-        var connectionRecords: JSONArray = JSONArray(data.get("records").toString())
-        val gson = Gson()
+        val connectionRecords = JSONArray(data.get("records").toString())
 
         val mediatorConnectionObject: MediatorConnectionObject =
-            gson.fromJson(
+            WalletManager.getGson.fromJson(
                 connectionRecords.getJSONObject(0).getString("value"),
                 MediatorConnectionObject::class.java
             )
-        mediatorConnectionObject.theirDid = did
+        mediatorConnectionObject.theirDid = theirDid
         mediatorConnectionObject.state = CONNECTION_RESPONSE
 
-        var connectionUuid =
+        val connectionUuid =
             connectionRecords.getJSONObject(0).getString("id")
 
-        val value = gson.toJson(mediatorConnectionObject)
+        val value = WalletManager.getGson.toJson(mediatorConnectionObject)
 
         WalletRecord.updateValue(
             WalletManager.getWallet,
@@ -1137,10 +1221,10 @@ class InitializeActivity : BaseActivity() {
             value
         )
 
-        var requestId = mediatorConnectionObject.requestId
-        var myDid = mediatorConnectionObject.myDid
-        var invitationKey = mediatorConnectionObject.invitationKey
-        updateTag(requestId, myDid, invitationKey, connectionUuid, did, publicKey, isMediator)
+        val requestId = mediatorConnectionObject.requestId
+        val myDid = mediatorConnectionObject.myDid
+        val invitationKey = mediatorConnectionObject.invitationKey
+        updateTag(requestId, myDid, invitationKey, connectionUuid, theirDid, publicKey, isMediator)
     }
 
     private fun updateTag(
@@ -1169,13 +1253,33 @@ class InitializeActivity : BaseActivity() {
         if (isMediator)
             createInbox(myDid, publicKey)
         else
-            trustPing(recipient, myDid)
+            trustPing(theirDid, myDid)
     }
 
-    private fun trustPing(recipient: String?, myDid: String?) {
+    private fun trustPing(
+        theirDid: String?,
+        myDid: String?
+    ) {
         val metaString = Did.getDidWithMeta(WalletManager.getWallet, myDid).get()
         val metaObject = JSONObject(metaString)
         val publicKey = metaObject.getString("verkey")
+
+        val didDocSearch = SearchUtils.searchWallet(
+            DID_DOC,
+            "{\"did\":\"$theirDid\"}"
+        )
+
+        var serviceEndPoint = ""
+        var recipient = ""
+        if (didDocSearch.totalCount ?: 0 > 0) {
+            val didDoc = WalletManager.getGson.fromJson(
+                didDocSearch.records?.get(0)?.value,
+                DidDoc::class.java
+            )
+
+            serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
+            recipient = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
+        }
 
         val data = "{\n" +
                 "  \"@type\": \"https://didcomm.org/trust_ping/1.0/ping\",\n" +
@@ -1184,7 +1288,7 @@ class InitializeActivity : BaseActivity() {
                 "  \"response_requested\": true\n" +
                 "}\n"
 
-        var packedMessage = Crypto.packMessage(
+        val packedMessage = Crypto.packMessage(
             WalletManager.getWallet,
             "[\"$recipient\"]",
             publicKey,
@@ -1205,19 +1309,17 @@ class InitializeActivity : BaseActivity() {
         }
 
         ApiManager.api.getService()
-            ?.postData("https://demo-aries-agent.igrant.io/", typedBytes)
+            ?.postDataWithoutData(serviceEndPoint, typedBytes)
             ?.enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    llProgressBar!!.visibility = View.GONE
+                    llProgressBar.visibility = View.GONE
                 }
 
                 override fun onResponse(
                     call: Call<ResponseBody>,
                     response: Response<ResponseBody>
                 ) {
-                    if (response.code() == 200 && response.body() != null) {
 
-                    }
                 }
             })
     }
@@ -1240,7 +1342,7 @@ class InitializeActivity : BaseActivity() {
                 "    }\n" +
                 "}\n"
 
-        var packedMessage = Crypto.packMessage(
+        val packedMessage = Crypto.packMessage(
             WalletManager.getWallet,
             "[\"$publicKey\"]",
             key,
@@ -1263,7 +1365,7 @@ class InitializeActivity : BaseActivity() {
         ApiManager.api.getService()?.postDetails(typedBytes)
             ?.enqueue(object : Callback<ResponseBody> {
                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    llProgressBar!!.visibility = View.GONE
+                    llProgressBar.visibility = View.GONE
                 }
 
                 override fun onResponse(
@@ -1277,7 +1379,8 @@ class InitializeActivity : BaseActivity() {
                         Log.d(TAG, "onResponse: $str")
 
                         val unpacked =
-                            Crypto.unpackMessage(WalletManager.getWallet, str.toByteArray()).get()
+                            Crypto.unpackMessage(WalletManager.getWallet, str.toByteArray())
+                                .get()
                         Log.d(TAG, "packConnectionRequestMessage: ${String(unpacked)}")
 
                         val message = JSONObject(String(unpacked)).getString("message")
@@ -1303,7 +1406,7 @@ class InitializeActivity : BaseActivity() {
                 mediatorConnectionObject.inboxKey = inboxKey
                 mediatorConnectionObject.state = CONNECTION_ACTIVE
 
-                var connectionUuid =
+                val connectionUuid =
                     searchResponse.records?.get(0)?.id
 
                 val value = WalletManager.getGson.toJson(mediatorConnectionObject)
@@ -1325,8 +1428,8 @@ class InitializeActivity : BaseActivity() {
 
     private fun saveConnectionRecord(invitation: Invitation?, isMediator: Boolean) {
 
-        val gson = Gson()
-        val value = gson.toJson(setUpMediatorConnectionObject(invitation, null, null))
+        val value =
+            WalletManager.getGson.toJson(setUpMediatorConnectionObject(invitation, null, null))
         val connectionUuid = UUID.randomUUID().toString()
 
         val connectionTag = ConnectionTags()
@@ -1334,7 +1437,7 @@ class InitializeActivity : BaseActivity() {
         connectionTag.state = CONNECTION_INVITATION
 
         val tagJson =
-            gson.toJson(connectionTag)
+            WalletManager.getGson.toJson(connectionTag)
 
         WalletRecord.add(
             WalletManager.getWallet,
@@ -1352,8 +1455,7 @@ class InitializeActivity : BaseActivity() {
         invitation: Invitation?,
         isMediator: Boolean
     ) {
-        val gson = Gson()
-        val tagJson = gson.toJson(ConnectionId(connectionUuid))
+        val tagJson = WalletManager.getGson.toJson(ConnectionId(connectionUuid))
         val connectionInvitationUuid = UUID.randomUUID().toString()
 
         Log.d(TAG, "saveRecord2: wallet value : $tagJson")
@@ -1363,7 +1465,7 @@ class InitializeActivity : BaseActivity() {
             WalletManager.getWallet,
             if (isMediator) MEDIATOR_CONNECTION_INVITATION else WalletRecordType.CONNECTION_INVITATION,
             connectionInvitationUuid,
-            gson.toJson(invitation),
+            WalletManager.getGson.toJson(invitation),
             tagJson
         )
 
@@ -1375,16 +1477,21 @@ class InitializeActivity : BaseActivity() {
         invitation: Invitation?,
         isMediator: Boolean
     ) {
-        val gson = Gson()
 
         val myDidResult =
             Did.createAndStoreMyDid(WalletManager.getWallet, "{}").get()
         val myDid = myDidResult.did
-        val key = Did.keyForLocalDid(WalletManager.getWallet, myDid).get()
+//        val key = Did.keyForLocalDid(WalletManager.getWallet, myDid).get()
 
         Log.d(TAG, "DIDIDIDIDID:\n \n \n $myDid \n \n")
         val requestId = UUID.randomUUID().toString()
-        val value = gson.toJson(setUpMediatorConnectionObject(invitation, requestId, myDid))
+        val value = WalletManager.getGson.toJson(
+            setUpMediatorConnectionObject(
+                invitation,
+                requestId,
+                myDid
+            )
+        )
 
         WalletRecord.updateValue(
             WalletManager.getWallet,
@@ -1411,8 +1518,16 @@ class InitializeActivity : BaseActivity() {
         isMediator: Boolean,
         serviceEndpoint: String?
     ) {
-        val gson = Gson()
-        val tagJson = gson.toJson(UpdateInvitationKey(requestId, myDid, recipient, null))
+        val tagJson =
+            WalletManager.getGson.toJson(
+                UpdateInvitationKey(
+                    requestId,
+                    myDid,
+                    recipient,
+                    null,
+                    null
+                )
+            )
         WalletRecord.updateTags(
             WalletManager.getWallet,
             if (isMediator) MEDIATOR_CONNECTION else CONNECTION,
@@ -1430,7 +1545,7 @@ class InitializeActivity : BaseActivity() {
         recipient: String?,
         serviceEndpoint: String?
     ) {
-        var messageUuid = UUID.randomUUID().toString()
+        val messageUuid = UUID.randomUUID().toString()
 
         val metaString = Did.getDidWithMeta(WalletManager.getWallet, myDid).get()
         val metaObject = JSONObject(metaString)
@@ -1460,22 +1575,22 @@ class InitializeActivity : BaseActivity() {
         val connectionData = JSONObject(connection)
         Log.d(TAG, "getMediatorConfig: $connection")
 
-        var connectionRecords: JSONArray = JSONArray(connectionData.get("records").toString())
-        val gson = Gson()
-        var connectionRecord =
+        val connectionRecords = JSONArray(connectionData.get("records").toString())
+        val connectionRecord =
             JSONObject(connectionRecords.getJSONObject(0).getString("value"))
-        var connectionDid = connectionRecord.getString("my_did")
+        val connectionDid = connectionRecord.getString("my_did")
 
-        val connectionMetaString = Did.getDidWithMeta(WalletManager.getWallet, connectionDid).get()
+        val connectionMetaString =
+            Did.getDidWithMeta(WalletManager.getWallet, connectionDid).get()
         val connectionMetaObject = JSONObject(connectionMetaString)
         val connectedKey = connectionMetaObject.getString("verkey")
 
         WalletSearchTask(object : SearchHandler {
             override fun taskCompleted(searchResponse: SearchResponse) {
                 val didDoc = searchResponse.records?.get(0)?.value
-                val didDocObj = gson.fromJson(didDoc, DidDoc::class.java)
+                val didDocObj = WalletManager.getGson.fromJson(didDoc, DidDoc::class.java)
 
-                var packedMessage = Crypto.packMessage(
+                val packedMessage = Crypto.packMessage(
                     WalletManager.getWallet,
                     "[\"${didDocObj.publicKey!![0].publicKeyBase58}\"]",
                     connectedKey,
@@ -1529,32 +1644,32 @@ class InitializeActivity : BaseActivity() {
         recipient: String?
     ) {
         //public keys
-        var publicKey: PublicKey = PublicKey()
+        val publicKey = PublicKey()
         publicKey.id = "did:sov:$myDid#1"
         publicKey.type = "Ed25519VerificationKey2018"
         publicKey.controller = "did:sov:$myDid"
         publicKey.publicKeyBase58 = newVKey
 
-        var publicKeys: ArrayList<PublicKey> = ArrayList()
+        val publicKeys: ArrayList<PublicKey> = ArrayList()
         publicKeys.add(publicKey)
 
         //authentication
-        var authentication: Authentication = Authentication()
+        val authentication = Authentication()
         authentication.type = "Ed25519SignatureAuthentication2018"
         authentication.publicKey = "did:sov:$myDid#1"
 
-        var authentications: ArrayList<Authentication> = ArrayList()
+        val authentications: ArrayList<Authentication> = ArrayList()
         authentications.add(authentication)
 
         //service
-        var recipientsKey: ArrayList<String> = ArrayList()
+        val recipientsKey: ArrayList<String> = ArrayList()
         recipientsKey.add(newVKey)
 
         //service
-        var routis: ArrayList<String> = ArrayList()
+        val routis: ArrayList<String> = ArrayList()
         routis.add(routingKey)
 
-        var service: Service = Service()
+        val service = Service()
         service.id = "did:sov:$myDid;indy"
         service.type = "IndyAgent"
         service.priority = 0
@@ -1562,11 +1677,11 @@ class InitializeActivity : BaseActivity() {
         service.routingKeys = routis
         service.serviceEndpoint = "https://mediator.igrant.io"
 
-        var services: ArrayList<Service> = ArrayList()
+        val services: ArrayList<Service> = ArrayList()
         services.add(service)
 
         //did doc
-        var didDoc: DidDoc = DidDoc()
+        val didDoc = DidDoc()
         didDoc.context = "https://w3id.org/did/v1"
         didDoc.id = "did:sov:$myDid"
         didDoc.publicKey = publicKeys
@@ -1574,26 +1689,25 @@ class InitializeActivity : BaseActivity() {
         didDoc.service = services
 
         //did
-        var did: DID = DID()
+        val did = DID()
         did.did = myDid
         did.didDoc = didDoc
 
 //         transport
-//        val transport: Transport = Transport()
-//        transport.returnRoute = "all"
+        val transport = Transport()
+        transport.returnRoute = "all"
 
         //connection request
-        var connectionRequest: ConnectionRequest = ConnectionRequest()
+        val connectionRequest = ConnectionRequest()
         connectionRequest.type = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request"
         connectionRequest.id = UUID.randomUUID().toString()
-        connectionRequest.label = "Mobile agent 0018"
+        connectionRequest.label = DeviceUtils.getDeviceName() ?: ""
         connectionRequest.connection = did
-//        connectionRequest.transport = transport
+        connectionRequest.transport = transport
 
-        val gson = Gson();
-        val data = gson.toJson(connectionRequest)
+        val data = WalletManager.getGson.toJson(connectionRequest)
 
-        var packedMessage = Crypto.packMessage(
+        val packedMessage = Crypto.packMessage(
             WalletManager.getWallet,
             "[\"$recipient\"]",
             newVKey,
@@ -1614,17 +1728,17 @@ class InitializeActivity : BaseActivity() {
         }
 
         ApiManager.api.getService()?.postData(serviceEndpoint ?: "", typedBytes)
-            ?.enqueue(object : Callback<ResponseBody> {
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+            ?.enqueue(object : Callback<ConfigPostResponse> {
+                override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
                     llProgressBar.visibility = View.GONE
                 }
 
                 override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>
+                    call: Call<ConfigPostResponse>,
+                    response: Response<ConfigPostResponse>
                 ) {
                     if (response.code() == 200 && response.body() != null) {
-
+                        unPackSigMessage(WalletManager.getGson.toJson(response.body()), false)
                     }
                 }
             })
@@ -1635,7 +1749,7 @@ class InitializeActivity : BaseActivity() {
         requestId: String?,
         did: String?
     ): MediatorConnectionObject {
-        var connectionObject = MediatorConnectionObject()
+        val connectionObject = MediatorConnectionObject()
         connectionObject.theirLabel = invitation?.label ?: ""
         connectionObject.theirImageUrl = invitation?.imageUrl ?: ""
         connectionObject.theirDid = ""
@@ -1656,5 +1770,12 @@ class InitializeActivity : BaseActivity() {
         connectionObject.state = if (did != null) CONNECTION_REQUEST else CONNECTION_INVITATION
 
         return connectionObject
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        WalletManager.closeWallet
+        PoolManager.getPool?.close()
+        PoolManager.removePool
     }
 }

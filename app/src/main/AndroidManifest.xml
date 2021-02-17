@@ -10,6 +10,7 @@
     <uses-feature android:name="android.hardware.camera.flash" android:required="false" />
 
     <application
+        android:name=".MyApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -30,6 +31,33 @@
         <activity android:name=".qrcode.QrCodeActivity"/>
 
         <activity android:name=".activty.OfferCertificateActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.ExchangeDataActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.RequestActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.ProposeAndExchangeDataActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.ConnectionDetailActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.CertificateDetailActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.ConnectionListActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.SettingsActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.LedgerNetworkListActivity"
+            android:theme="@style/AppTheme.NoActionBar"/>
+
+        <activity android:name=".activty.LanguageSelectionActivity"
             android:theme="@style/AppTheme.NoActionBar"/>
     </application>
 

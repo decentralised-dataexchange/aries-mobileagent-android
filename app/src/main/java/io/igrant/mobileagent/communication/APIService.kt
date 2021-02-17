@@ -25,7 +25,10 @@ interface APIService {
     fun cloudConnection(@Body bytes:RequestBody): Call<ResponseBody>
 
     @POST
-    fun postData(@Url url:String, @Body bytes:RequestBody): Call<ResponseBody>
+    fun postData(@Url url:String, @Body bytes:RequestBody): Call<ConfigPostResponse>
+
+    @POST
+    fun postDataWithoutData(@Url url:String, @Body bytes:RequestBody): Call<ResponseBody>
 
     @GET
     fun getGenesis(@Url url:String): Call<ResponseBody>

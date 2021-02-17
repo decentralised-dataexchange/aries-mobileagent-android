@@ -3,8 +3,7 @@ package io.igrant.mobileagent.utils
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import io.igrant.mobileagent.R
-import io.igrant.mobileagent.fragment.ConnectionListFragment
-import io.igrant.mobileagent.fragment.ConnectionMessagesFragment
+import io.igrant.mobileagent.fragment.WalletFragment
 
 object NavigationUtils {
 
@@ -22,14 +21,12 @@ object NavigationUtils {
         transaction.commit()
     }
 
-    fun showConnectionListFragment(fragmentManager: FragmentManager?) {
-        val connectionFragment: ConnectionListFragment = ConnectionListFragment.newInstance()
-        showFragment(connectionFragment, fragmentManager!!, true)
+    fun showWalletFragment(fragmentManager: FragmentManager?,addToBackStack: Boolean) {
+        val walletFragment: WalletFragment = WalletFragment.newInstance()
+        showFragment(walletFragment, fragmentManager!!, false)
     }
 
-    fun showConnectionMessagesFragment(fragmentManager: FragmentManager?,connection:String) {
-        val connectionFragment: ConnectionMessagesFragment = ConnectionMessagesFragment.newInstance(connection)
-        showFragment(connectionFragment, fragmentManager!!, true)
+    fun popBack(fragmentManager: FragmentManager) {
+        fragmentManager.popBackStack()
     }
-
 }

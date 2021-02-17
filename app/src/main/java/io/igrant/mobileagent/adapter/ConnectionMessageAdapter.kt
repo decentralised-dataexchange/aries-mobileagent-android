@@ -1,26 +1,26 @@
 package io.igrant.mobileagent.adapter
 
-import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.TextView
+import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
-import com.google.gson.Gson
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.listeners.ConnectionMessageListener
-import io.igrant.mobileagent.models.certificateOffer.CertificateOffer
-import io.igrant.mobileagent.models.credentialExchange.RawCredential
-import io.igrant.mobileagent.models.walletSearch.Record
+import io.igrant.mobileagent.models.connection.Certificate
 
 class ConnectionMessageAdapter(
-    val mList: ArrayList<Record>,
+    val mList: ArrayList<Certificate>,
     val mListener: ConnectionMessageListener
 ) :
     RecyclerView.Adapter<ConnectionMessageAdapter.ViewHolder>() {
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         var tvName: TextView = itemView.findViewById<View>(R.id.tvName) as TextView
         var tvVersion: TextView = itemView.findViewById<View>(R.id.tvVersion) as TextView
+        var cvOffer: CardView = itemView.findViewById<View>(R.id.cvOffer) as CardView
+        var ivAdd: ImageView = itemView.findViewById<View>(R.id.ivAdd) as ImageView
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ViewHolder {
@@ -39,20 +39,15 @@ class ConnectionMessageAdapter(
     }
 
     override fun onBindViewHolder(holder: ViewHolder, position: Int) {
-        val gson = Gson()
-        val message = gson.fromJson(mList[position].value, CertificateOffer::class.java)
+        holder.tvName.text = mList[position].schemaName
 
-        var schema = gson.fromJson(
-            Base64.decode(message.offersAttach?.get(0)?.data?.base64, Base64.URL_SAFE)
-                .toString(charset("UTF-8")), RawCredential::class.java
-        ).schemaId
-        var lst = schema?.split(":")
-        holder.tvName.text = lst?.get(2) ?: ""
+        holder.tvVersion.text = holder.tvVersion.context.resources.getString(R.string.txt_version_detail,mList[position].schemaVersion)
 
-        holder.tvVersion.text = "Version : ${lst?.get(3) ?: ""}"
+        holder.ivAdd.visibility = if (mList[position].record != null) View.VISIBLE else View.GONE
 
-        holder.tvName.setOnClickListener {
-            mListener.onConnectionMessageClick(message)
+        holder.cvOffer.setOnClickListener {
+            if (mList[position].record != null)
+                mListener.onConnectionMessageClick(mList[position].record!!,mList[position].schemaName?:"")
         }
     }
 }
