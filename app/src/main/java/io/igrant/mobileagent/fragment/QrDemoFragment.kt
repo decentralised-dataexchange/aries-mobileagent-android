@@ -19,6 +19,7 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.zxing.WriterException
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.qrcode.QrCodeActivity
+import io.igrant.mobileagent.utils.PackingUtils
 import io.igrant.mobileagent.utils.PermissionUtils
 import org.hyperledger.indy.sdk.IndyException
 import org.hyperledger.indy.sdk.crypto.Crypto
@@ -112,12 +113,10 @@ class QrDemoFragment : Fragment() {
                     .toString()
                 wallet = Wallet.openWallet(WALLET_CONFIG, WALLET_CREDENTIALS).get()
 
-                var packedMessage = Crypto.packMessage(
-                    wallet,
-                    receivers.toString(),
-                    key,
-                    etMessage!!.text.toString().toByteArray()
-                ).get()
+                var packedMessage = PackingUtils.packMessage(receivers.toString(),
+                    key?:"",
+                    etMessage!!.text.toString())
+
                 var cryptoMessage: String = String(packedMessage)
                 Log.d("milna", "initListener: $cryptoMessage")
 

@@ -29,15 +29,13 @@ import io.igrant.mobileagent.models.certificateOffer.CertificateOffer
 import io.igrant.mobileagent.models.certificateOffer.OfferAttach
 import io.igrant.mobileagent.models.certificateOffer.OfferData
 import io.igrant.mobileagent.models.certificateOffer.RequestOffer
+import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.credentialExchange.CredentialExchange
 import io.igrant.mobileagent.models.credentialExchange.CredentialRequest
 import io.igrant.mobileagent.models.credentialExchange.CredentialRequestMetadata
 import io.igrant.mobileagent.models.credentialExchange.Thread
 import io.igrant.mobileagent.models.walletSearch.Record
-import io.igrant.mobileagent.utils.CredentialExchangeStates
-import io.igrant.mobileagent.utils.MessageTypes
-import io.igrant.mobileagent.utils.SearchUtils
-import io.igrant.mobileagent.utils.WalletRecordType
+import io.igrant.mobileagent.utils.*
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
@@ -391,20 +389,22 @@ class OfferCertificateActivity : BaseActivity() {
                 val metaObject = JSONObject(metaString)
                 val publicKey = metaObject.getString("verkey")
 
-                //get prover did
-                val searchResponse = SearchUtils.searchWallet(
-                    WalletRecordType.DID_KEY,
-                    "{\n" +
-                            "  \"did\":\"${connectionObject.theirDid}\"\n" +
-                            "}"
-                )
+                val didDocObject =
+                    SearchUtils.searchWallet(
+                        WalletRecordType.DID_DOC,
+                        "{\n" +
+                                "  \"did\":\"${connectionObject.theirDid}\"\n" +
+                                "}"
+                    )
 
-                val packedMessage = Crypto.packMessage(
-                    WalletManager.getWallet,
-                    "[\"${searchResponse.records?.get(0)?.value ?: ""}\"]",
-                    publicKey,
-                    WalletManager.getGson.toJson(certificateOffer).toByteArray()
-                ).get()
+                val didDoc =
+                    WalletManager.getGson.fromJson(
+                        didDocObject.records?.get(0)?.value,
+                        DidDoc::class.java
+                    )
+
+                val packedMessage = PackingUtils.packMessage(didDoc,publicKey,
+                    WalletManager.getGson.toJson(certificateOffer))
 
                 typedBytes = object : RequestBody() {
                     override fun contentType(): MediaType? {

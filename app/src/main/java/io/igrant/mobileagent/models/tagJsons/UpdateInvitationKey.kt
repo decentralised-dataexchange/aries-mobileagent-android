@@ -3,7 +3,13 @@ package io.igrant.mobileagent.models.tagJsons
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 
-class UpdateInvitationKey(requestId:String?, myDid:String?, invitationKeys: String?, theirDid:String?, recipientKeys: String?) {
+class UpdateInvitationKey(
+    requestId: String?,
+    myDid: String?,
+    invitationKeys: String?,
+    theirDid: String?,
+    recipientKeys: String?
+) {
 
     @SerializedName("their_did")
     @Expose
@@ -29,4 +35,11 @@ class UpdateInvitationKey(requestId:String?, myDid:String?, invitationKeys: Stri
     @Expose
     var orgId: String? = ""
 
+    @SerializedName("state")
+    @Expose
+    var state: String? = ""
+
+    @SerializedName("my_key")
+    @Expose
+    var myKey: String? = ""
 }

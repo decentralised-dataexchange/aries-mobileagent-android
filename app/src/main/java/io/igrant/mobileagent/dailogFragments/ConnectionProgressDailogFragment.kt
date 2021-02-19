@@ -22,7 +22,6 @@ import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.agentConfig.Invitation
 import io.igrant.mobileagent.models.connection.Connection
-import io.igrant.mobileagent.tasks.GetConnectionDetailTask
 import io.igrant.mobileagent.tasks.SaveConnectionTask
 import io.igrant.mobileagent.tasks.SaveDidDocTask
 import io.igrant.mobileagent.utils.PackingUtils
@@ -66,6 +65,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
     var myKey = ""
     var isIGrantEnabled = false
     var orgId = ""
+    var location = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -93,12 +93,18 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
         Glide
             .with(ivLogo.context)
-            .load(invitation?.image_url ?:invitation?.imageUrl ?: "")
+            .load(invitation?.image_url ?: invitation?.imageUrl ?: "")
             .centerCrop()
             .placeholder(R.drawable.images)
             .into(ivLogo)
 
+        val myDidResult =
+            Did.createAndStoreMyDid(WalletManager.getWallet, "{}").get()
+        myDid = myDidResult.did
+        myKey = myDidResult.verkey
+
         checkIfConnectionExisting()
+
         initListener(view)
     }
 
@@ -106,11 +112,6 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
      * Function to check whether the connection is existing or not
      */
     private fun checkIfConnectionExisting() {
-
-        val myDidResult =
-            Did.createAndStoreMyDid(WalletManager.getWallet, "{}").get()
-        myDid = myDidResult.did
-        myKey = myDidResult.verkey
 
         val queryFeatureData = "{\n" +
                 "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/discover-features/1.0/query\",\n" +
@@ -122,21 +123,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
                 "    }\n" +
                 "}"
 
-        val queryFeaturePacked =
-            if (invitation.routingKeys != null && invitation.routingKeys?.size ?: 0 > 0) {
-                PackingUtils.packMessage(
-                    "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
-                    WalletManager.getGson.toJson(invitation.routingKeys),
-                    myKey,
-                    queryFeatureData
-                )
-            } else {
-                PackingUtils.packMessage(
-                    "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
-                    myKey,
-                    queryFeatureData
-                )
-            }
+        val queryFeaturePacked = PackingUtils.packMessage(invitation, myKey, queryFeatureData)
 
         val queryFeaturePackedBytes = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -184,29 +171,21 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
                                 isIGrantEnabled = true
                             }
                         }
-
-                        getOrganizationDetailsIfNeeded()
                     }
+                    getOrganizationDetailsIfNeeded()
                 }
             })
-
     }
 
     private fun getOrganizationDetailsIfNeeded() {
         if (isIGrantEnabled) {
-
             requestId = UUID.randomUUID().toString()
 
             val orgData =
                 "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"$requestId\" , \"~transport\": {" +
                         "\"return_route\": \"all\"}\n}"
 
-            val orgDetailPacked = Crypto.packMessage(
-                WalletManager.getWallet,
-                "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
-                myKey,
-                orgData.toByteArray()
-            ).get()
+            val orgDetailPacked = PackingUtils.packMessage(invitation, myKey, orgData)
 
             val orgDetailTypedArray = object : RequestBody() {
                 override fun contentType(): MediaType? {
@@ -246,16 +225,13 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
                                         .toByteArray()
                                 ).get()
 
-                            Log.d(
-                                "milan",
-                                "onResponse: ${JSONObject(String(unpack)).getString("message")}"
-                            )
                             val connectionData = WalletManager.getGson.fromJson(
                                 JSONObject(String(unpack)).getString("message"),
                                 Connection::class.java
                             )
 
                             orgId = connectionData.orgId ?: ""
+                            location = connectionData.location?:""
 
                             var connectionListSearch =
                                 SearchUtils.searchWallet(
@@ -298,12 +274,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
                 "  \"theirdid\": \"${theirDid ?: ""}\"\n" +
                 "}\n"
 
-        val orgDetailPacked = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"${invitation.recipientKeys?.get(0) ?: ""}\"]",
-            myKey,
-            data.toByteArray()
-        ).get()
+        val orgDetailPacked = PackingUtils.packMessage(invitation, myKey, data)
 
         val orgDetailTypedArray = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -337,12 +308,10 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
                             )
 
                         if (connectionListSearch.totalCount ?: 0 > 0) {
-
                             val connectionObject = WalletManager.getGson.fromJson(
                                 connectionListSearch.records?.get(0)?.value,
                                 MediatorConnectionObject::class.java
                             )
-
                             onSuccessListener.onExistingConnection(connectionObject.requestId ?: "")
                         }
                         dismiss()
@@ -412,30 +381,31 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
                                                             }
 
                                                             override fun onSaveDidComplete(
-                                                                typedBytes: RequestBody,
+                                                                typedBytes: RequestBody?,
                                                                 serviceEndPoint: String
                                                             ) {
-                                                                ApiManager.api.getService()
-                                                                    ?.postDataWithoutData(
-                                                                        serviceEndPoint,
-                                                                        typedBytes
-                                                                    )
-                                                                    ?.enqueue(object :
-                                                                        Callback<ResponseBody> {
-                                                                        override fun onFailure(
-                                                                            call: Call<ResponseBody>,
-                                                                            t: Throwable
-                                                                        ) {
+                                                                if (typedBytes != null)
+                                                                    ApiManager.api.getService()
+                                                                        ?.postDataWithoutData(
+                                                                            serviceEndPoint,
+                                                                            typedBytes
+                                                                        )
+                                                                        ?.enqueue(object :
+                                                                            Callback<ResponseBody> {
+                                                                            override fun onFailure(
+                                                                                call: Call<ResponseBody>,
+                                                                                t: Throwable
+                                                                            ) {
 
-                                                                        }
+                                                                            }
 
-                                                                        override fun onResponse(
-                                                                            call: Call<ResponseBody>,
-                                                                            response: Response<ResponseBody>
-                                                                        ) {
+                                                                            override fun onResponse(
+                                                                                call: Call<ResponseBody>,
+                                                                                response: Response<ResponseBody>
+                                                                            ) {
 
-                                                                        }
-                                                                    })
+                                                                            }
+                                                                        })
                                                             }
                                                         },
                                                         WalletManager.getGson.toJson(
@@ -449,7 +419,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
                             }
                         })
                 }
-            }, invitation).execute(myDid, myKey, orgId, requestId)
+            }, invitation).execute(myDid, myKey, orgId, requestId,location)
         }
     }
 
@@ -460,7 +430,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
         llSuccess.visibility = View.VISIBLE
         Handler(Looper.getMainLooper()).postDelayed({
 
-            GetConnectionDetailTask().execute(event.connectionId)
+//            GetConnectionDetailTask().execute(event.connectionId)
             onSuccessListener.onSuccess(proposal, orgId)
             llSuccess.visibility = View.GONE
             dialog?.dismiss()

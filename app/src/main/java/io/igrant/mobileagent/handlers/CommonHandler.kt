@@ -10,7 +10,7 @@ interface CommonHandler {
         connectionRequest: RequestBody
     ){
     }
-    fun onSaveDidComplete(typedBytes:RequestBody,serviceEndPoint:String){
+    fun onSaveDidComplete(typedBytes:RequestBody?,serviceEndPoint:String){
     }
     fun taskStarted()
 }

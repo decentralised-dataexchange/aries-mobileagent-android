@@ -24,6 +24,7 @@
                 android:layout_height="120dp"
                 android:fitsSystemWindows="true"
                 android:scaleType="centerCrop"
+                android:src="@drawable/default_cover_image"
                 app:layout_collapseMode="parallax" />
 
             <LinearLayout

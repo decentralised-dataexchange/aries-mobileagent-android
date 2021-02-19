@@ -10,6 +10,7 @@ import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.connection.Connection
 import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.wallet.WalletModel
+import io.igrant.mobileagent.utils.PackingUtils
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
 import okhttp3.MediaType
@@ -64,13 +65,10 @@ class SaveConnectionDetailInCertificateTask() : AsyncTask<String, Void, Void>() 
                 val metaObject = JSONObject(metaString)
                 val key = metaObject.getString("verkey")
 
-                val orgDetailPacked = Crypto.packMessage(
-                    WalletManager.getWallet,
-                    WalletManager.getGson.toJson(disDoc.service?.get(0)?.recipientKeys ?: ""),
-                    key,
-                    orgData.toByteArray()
-                ).get()
-
+                val orgDetailPacked = PackingUtils.packMessage(
+                    disDoc, key,
+                    orgData
+                )
 
                 val orgDetailTypedArray = object : RequestBody() {
                     override fun contentType(): MediaType? {
@@ -134,14 +132,9 @@ class SaveConnectionDetailInCertificateTask() : AsyncTask<String, Void, Void>() 
 
                                     EventBus.getDefault().post(ReceiveCertificateEvent())
                                 }
-
-
                             }
-
                         }
-
                     })
-
             }
         }
 

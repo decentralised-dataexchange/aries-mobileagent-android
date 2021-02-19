@@ -2,7 +2,6 @@ package io.igrant.mobileagent.activty
 
 import android.content.DialogInterface
 import android.os.Bundle
-import android.util.Log
 import android.view.MenuItem
 import android.widget.ImageView
 import android.widget.TextView
@@ -13,30 +12,15 @@ import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.CertificateAttributeAdapter
-import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.indy.WalletManager
-import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.connection.Connection
-import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.wallet.WalletModel
-import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.TextUtils
 import io.igrant.mobileagent.utils.WalletRecordType
-import okhttp3.MediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.RequestBody
-import okio.BufferedSink
 import org.greenrobot.eventbus.EventBus
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
-import org.hyperledger.indy.sdk.crypto.Crypto
-import org.hyperledger.indy.sdk.did.Did
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
-import org.json.JSONObject
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
-import java.io.IOException
 
 class CertificateDetailActivity : BaseActivity() {
 
@@ -75,82 +59,7 @@ class CertificateDetailActivity : BaseActivity() {
     }
 
     private fun getConnectionDetail() {
-//        val orgData =
-//            "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"${wallet?.connection?.requestId ?: ""}\" , \"~transport\": {" +
-//                    "\"return_route\": \"all\"}\n}"
-//
-//
-//        val didDoc =
-//            SearchUtils.searchWallet(
-//                WalletRecordType.DID_DOC,
-//                "{\"did\":\"${wallet?.connection?.theirDid}\"}"
-//            )
-//
-//        if (didDoc.totalCount ?: 0 > 0) {
-//            val didDocObj = WalletManager.getGson.fromJson(
-//                didDoc.records?.get(0)?.value,
-//                DidDoc::class.java
-//            )
-//
-//            val serviceEndPoint = didDocObj.service?.get(0)?.serviceEndpoint ?: ""
-//            val publicKey = didDocObj.publicKey?.get(0)?.publicKeyBase58
-//
-//            val metaString =
-//                Did.getDidWithMeta(WalletManager.getWallet, wallet?.connection?.myDid).get()
-//            val metaObject = JSONObject(metaString)
-//            val key = metaObject.getString("verkey")
-//
-//            val orgDetailPacked = Crypto.packMessage(
-//                WalletManager.getWallet,
-//                "[\"${publicKey ?: ""}\"]",
-//                key,
-//                orgData.toByteArray()
-//            ).get()
-//
-//            val orgDetailTypedArray = object : RequestBody() {
-//                override fun contentType(): MediaType? {
-//                    return "application/ssi-agent-wire".toMediaTypeOrNull()
-//                }
-//
-//                @Throws(IOException::class)
-//                override fun writeTo(sink: BufferedSink) {
-//                    sink.write(orgDetailPacked)
-//                }
-//            }
-//            ApiManager.api.getService()?.postData(serviceEndPoint, orgDetailTypedArray)
-//                ?.enqueue(object :
-//                    Callback<ConfigPostResponse> {
-//                    override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
-//
-//                    }
-//
-//                    override fun onResponse(
-//                        call: Call<ConfigPostResponse>,
-//                        response: Response<ConfigPostResponse>
-//                    ) {
-//                        if (response.code() == 200 && response.body() != null) {
-//                            val unpack =
-//                                Crypto.unpackMessage(
-//                                    WalletManager.getWallet,
-//                                    WalletManager.getGson.toJson(response.body()).toString()
-//                                        .toByteArray()
-//                                ).get()
-//
-//                            Log.d(
-//                                "milan",
-//                                "onResponse: ${JSONObject(String(unpack)).getString("message")}"
-//                            )
-//                            val connectionData = WalletManager.getGson.fromJson(
-//                                JSONObject(String(unpack)).getString("message"),
-//                                Connection::class.java
-//                            )
-                            initDataValues(wallet?.organization)
-//                        }
-//
-//                    }
-//
-//                })
-//        }
+        initDataValues(wallet?.organization)
     }
 
     private fun initDataValues(connectionData: Connection?) {
@@ -165,11 +74,16 @@ class CertificateDetailActivity : BaseActivity() {
             .with(ivCoverUrl.context)
             .load(connectionData?.coverImageUrl)
             .centerCrop()
-//            .placeholder(R.drawable.images)
+            .placeholder(R.drawable.default_cover_image)
             .into(ivCoverUrl)
 
         tvDescription.text = connectionData?.description
-        TextUtils.makeTextViewResizable(tvDescription, 3, resources.getString(R.string.txt_read_more), true);
+        TextUtils.makeTextViewResizable(
+            tvDescription,
+            3,
+            resources.getString(R.string.txt_read_more),
+            true
+        );
         tvName.text = connectionData?.name
         tvLocation.text = connectionData?.location
     }
