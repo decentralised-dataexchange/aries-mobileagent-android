@@ -368,14 +368,6 @@ class ConnectionDetailActivity : BaseActivity() {
                         OfferCertificateActivity.EXTRA_CERTIFICATE_PREVIEW,
                         record
                     )
-                    intent.putExtra(
-                        OfferCertificateActivity.EXTRA_CERTIFICATE_NAME,
-                        name
-                    )
-                    intent.putExtra(
-                        OfferCertificateActivity.EXTRA_CONNECTION_ID,
-                        mConnectionId
-                    )
                     startActivity(intent)
                     Handler(Looper.getMainLooper()).postDelayed({
                         finish()

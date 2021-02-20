@@ -118,11 +118,18 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         setContentView(R.layout.activity_initialize)
         initViews()
         initListener()
-//        initToolbar()
-        initLibIndy()
+        loadLibraryLogic()
         try {
             EventBus.getDefault().register(this)
         } catch (e: Exception) {
+        }
+    }
+
+    private fun loadLibraryLogic() {
+        if (PoolManager.getPool == null) {
+            initLibIndy()
+        } else {
+            getMediatorConfig()
         }
     }
 
@@ -144,13 +151,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             )
         }
     }
-
-//    private fun initToolbar() {
-//        val toolbar: Toolbar = findViewById(R.id.toolbar)
-//        setSupportActionBar(toolbar)
-//        supportActionBar!!.title = ""
-////        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
-//    }
 
     private fun initLibIndy() {
         LoadLibIndyTask(object : CommonHandler {
@@ -201,37 +201,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         llProgressBar.visibility = View.VISIBLE
         vDot = findViewById(R.id.vDot)
     }
-
-//    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-//        menuInflater.inflate(R.menu.menu_settings, menu)
-//        return true
-//    }
-
-//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-//        return when (item.itemId) {
-//            android.R.id.home -> {
-//                onBackPressed()
-//                true
-//            }
-//            R.id.action_settings->{
-//                val intent = Intent(
-//                    this,
-//                    SettingsActivity::class.java
-//                )
-//                startActivity(intent)
-//                true
-//            }
-////            R.id.action_add_data -> {
-////                val intent = Intent(
-////                    this,
-////                    ConnectionListActivity::class.java
-////                )
-////                startActivity(intent)
-////                true
-////            }
-//            else -> super.onOptionsItemSelected(item)
-//        }
-//    }
 
     private fun getMediatorConfig() {
         try {
@@ -648,21 +617,37 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                     "{\n" +
                             "  \"type\":\"$TYPE_REQUEST_PRESENTATION\",\n" +
                             "  \"connectionId\":\"${connectionObject?.requestId}\",\n" +
+                            "  \"certificateId\":\"${JSONObject(jsonObject.getString("message")).getString("@id")}\",\n"+
                             "  \"stat\":\"Active\"\n" +
                             "}"
                 )
 
                 try {
-                    NotificationUtils.showNotification(
-                        this,
-                        TYPE_ISSUE_CREDENTIAL,
-                        resources.getString(R.string.txt_recieved_exchange_request),
-                        "Received a new exchange request from the organisation ${connectionObject?.theirLabel ?: ""}"
+                    val searchResponse = SearchUtils.searchWallet(
+                        MESSAGE_RECORDS,
+                        "{\"certificateId\":\"${JSONObject(jsonObject.getString("message")).getString("@id")}\"}"
                     )
+                    if (searchResponse.totalCount ?: 0 > 0) {
 
-                    EventBus.getDefault()
-                        .post(ReceiveExchangeRequestEvent())
+                        //go to intialize activity then start the offer certificate activity
+                        val intent =
+                            Intent(this@InitializeActivity, ExchangeDataActivity::class.java)
+                        intent.putExtra(
+                            ExchangeDataActivity.EXTRA_PRESENTATION_RECORD,
+                            searchResponse.records!![0]
+                        )
 
+                        NotificationUtils.showNotification(
+                            intent,
+                            this,
+                            TYPE_ISSUE_CREDENTIAL,
+                            resources.getString(R.string.txt_recieved_exchange_request),
+                            "Received a new exchange request from the organisation ${connectionObject?.theirLabel ?: ""}"
+                        )
+
+                        EventBus.getDefault()
+                            .post(ReceiveExchangeRequestEvent())
+                    }
                     setNotificationIcon()
                 } catch (e: Exception) {
                 }
@@ -854,12 +839,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                         CredentialExchange::class.java
                     )
 
-                //            Log.d(
-                //                TAG,
-                //                "storeCredential: \n credentialRequestMetadata: \n ${gson.toJson(credentialExchange.credentialRequestMetadata)} \n rawCredential: \n ${gson.toJson(
-                //                    credentialExchange.rawCredential
-                //                )} \n parsedCredDefResponse.objectJson: \n ${parsedCredDefResponse.objectJson}"
-                //            )
                 val uuid = UUID.randomUUID().toString()
                 val credentialId = Anoncreds.proverStoreCredential(
                     WalletManager.getWallet,
@@ -911,7 +890,9 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                     walletModelTag
                 ).get()
 
+                val intent = Intent(this,InitializeActivity::class.java)
                 NotificationUtils.showNotification(
+                    intent,
                     this,
                     TYPE_ISSUE_CREDENTIAL,
                     "Received Data",
@@ -1123,21 +1104,40 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                     "{\n" +
                             "  \"type\":\"$TYPE_OFFER_CREDENTIAL\",\n" +
                             "  \"connectionId\":\"${connecction.requestId}\",\n" +
+                            "  \"certificateId\":\"${certificateOffer.id}\",\n" +
                             "  \"stat\":\"Active\"\n" +
                             "}"
                 )
 
                 try {
-                    NotificationUtils.showNotification(
-                        this,
-                        TYPE_ISSUE_CREDENTIAL,
-                        resources.getString(R.string.txt_received_offer),
-                        resources.getString(R.string.txt_received_offer_credential_desc)
-//                    "Received a new offer credential of the organisation ${connecction.theirLabel}"
+
+                    val searchResponse = SearchUtils.searchWallet(
+                        MESSAGE_RECORDS,
+                        "{\"certificateId\":\"${certificateOffer.id}\"}"
                     )
-                    EventBus.getDefault()
-                        .post(ReceiveExchangeRequestEvent())
-                    EventBus.getDefault().post(ReceiveOfferEvent(connecction.requestId ?: ""))
+                    if (searchResponse.totalCount ?: 0 > 0) {
+
+                        //go to intialize activity then start the offer certificate activity
+                        val intent =
+                            Intent(this@InitializeActivity, OfferCertificateActivity::class.java)
+                        intent.putExtra(
+                            OfferCertificateActivity.EXTRA_CERTIFICATE_PREVIEW,
+                            searchResponse.records!![0]
+                        )
+
+                        NotificationUtils.showNotification(
+                            intent,
+                            this,
+                            TYPE_ISSUE_CREDENTIAL,
+                            resources.getString(R.string.txt_received_offer),
+                            resources.getString(R.string.txt_received_offer_credential_desc)
+//                    "Received a new offer credential of the organisation ${connecction.theirLabel}"
+                        )
+                        EventBus.getDefault()
+                            .post(ReceiveExchangeRequestEvent())
+                        EventBus.getDefault().post(ReceiveOfferEvent(connecction.requestId ?: ""))
+
+                    }
 
                     setNotificationIcon()
                 } catch (e: Exception) {

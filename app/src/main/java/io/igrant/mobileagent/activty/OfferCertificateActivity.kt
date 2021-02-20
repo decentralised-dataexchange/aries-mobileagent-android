@@ -1,6 +1,7 @@
 package io.igrant.mobileagent.activty
 
 import android.content.DialogInterface
+import android.content.Intent
 import android.os.AsyncTask
 import android.os.Bundle
 import android.util.Base64
@@ -15,12 +16,14 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.snackbar.Snackbar
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.CertificateAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.events.ReceiveOfferEvent
+import io.igrant.mobileagent.handlers.CommonHandler
+import io.igrant.mobileagent.handlers.PoolHandler
+import io.igrant.mobileagent.indy.LedgerNetworkType
 import io.igrant.mobileagent.indy.PoolManager
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
@@ -35,6 +38,9 @@ import io.igrant.mobileagent.models.credentialExchange.CredentialRequest
 import io.igrant.mobileagent.models.credentialExchange.CredentialRequestMetadata
 import io.igrant.mobileagent.models.credentialExchange.Thread
 import io.igrant.mobileagent.models.walletSearch.Record
+import io.igrant.mobileagent.tasks.LoadLibIndyTask
+import io.igrant.mobileagent.tasks.OpenWalletTask
+import io.igrant.mobileagent.tasks.PoolTask
 import io.igrant.mobileagent.utils.*
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -43,7 +49,6 @@ import okhttp3.ResponseBody
 import okio.BufferedSink
 import org.greenrobot.eventbus.EventBus
 import org.hyperledger.indy.sdk.anoncreds.Anoncreds
-import org.hyperledger.indy.sdk.crypto.Crypto
 import org.hyperledger.indy.sdk.did.Did
 import org.hyperledger.indy.sdk.ledger.Ledger
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
@@ -58,6 +63,7 @@ import kotlin.collections.ArrayList
 
 class OfferCertificateActivity : BaseActivity() {
 
+    private var goToHome: Boolean = false
     private var name: String = ""
     private lateinit var mConnectionId: String
     private var mCertificateOffer: CertificateOffer? = null
@@ -65,7 +71,6 @@ class OfferCertificateActivity : BaseActivity() {
 
     private lateinit var toolbar: Toolbar
 
-    //    private lateinit var btReject: Button
     private lateinit var btAccept: Button
     private lateinit var tvHead: TextView
     private lateinit var rvAttributes: RecyclerView
@@ -76,21 +81,79 @@ class OfferCertificateActivity : BaseActivity() {
     companion object {
         const val EXTRA_CERTIFICATE_PREVIEW =
             "io.igrant.mobileagent.activty.OfferCertificateActivity.certificate"
-        const val EXTRA_CERTIFICATE_NAME =
-            "io.igrant.mobileagent.activty.OfferCertificateActivity.name"
-        const val EXTRA_CONNECTION_ID =
-            "io.igrant.mobileagent.activty.OfferCertificateActivity.connectionId"
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_offer_certificate)
         initViews()
+        checkPool()
         initListener()
         getIntentData()
         initValues()
         setUpToolbar()
         setUpAdapter()
+    }
+
+    private fun checkPool() {
+        if (PoolManager.getPool == null) {
+            goToHome = true
+            llProgressBar.visibility = View.VISIBLE
+            initLibIndy()
+        }
+    }
+
+    private fun initLibIndy() {
+        LoadLibIndyTask(object : CommonHandler {
+            override fun taskCompleted() {
+                loadPool()
+            }
+
+            override fun taskStarted() {
+
+            }
+        }, applicationContext).execute()
+    }
+
+    private fun openWallet() {
+        OpenWalletTask(object : CommonHandler {
+            override fun taskCompleted() {
+                llProgressBar.visibility = View.GONE
+                checkExistanceOfRecord()
+            }
+
+            override fun taskStarted() {
+
+            }
+        }).execute()
+    }
+
+    private fun checkExistanceOfRecord() {
+
+        try {
+            val searchResponse = SearchUtils.searchWallet(
+                WalletRecordType.MESSAGE_RECORDS,
+                "{\"certificateId\":\"${record?.id}\"}"
+            )
+            if (searchResponse.totalCount ?: 0 == 0) {
+                onBackPressed()
+            }
+        } catch (e: Exception) {
+        }
+
+    }
+
+    private fun loadPool() {
+        PoolTask(object : PoolHandler {
+            override fun taskCompleted(pool: Pool) {
+                PoolManager.setPool(pool)
+                openWallet()
+            }
+
+            override fun taskStarted() {
+
+            }
+        }, LedgerNetworkType.getSelectedNetwork(this)).execute()
     }
 
     private fun initValues() {
@@ -105,13 +168,17 @@ class OfferCertificateActivity : BaseActivity() {
             RequestCertificateTask(object : RequestCertificateHandler {
                 override fun taskCompleted(requestBody: RequestBody?, endPoint: String?) {
 
-                    if (requestBody==null){
-                        Toast.makeText(this@OfferCertificateActivity,resources.getString(R.string.err_ledger_missmatch),Toast.LENGTH_SHORT).show()
+                    if (requestBody == null) {
+                        Toast.makeText(
+                            this@OfferCertificateActivity,
+                            resources.getString(R.string.err_ledger_missmatch),
+                            Toast.LENGTH_SHORT
+                        ).show()
                         llProgressBar.visibility = View.GONE
                         btAccept.isEnabled = true
-                    }else {
+                    } else {
                         ApiManager.api.getService()
-                            ?.postDataWithoutData(endPoint?:"", requestBody)
+                            ?.postDataWithoutData(endPoint ?: "", requestBody)
                             ?.enqueue(object : Callback<ResponseBody> {
                                 override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
                                     llProgressBar.visibility = View.GONE
@@ -171,6 +238,14 @@ class OfferCertificateActivity : BaseActivity() {
                 }
             }, mCertificateOffer!!, mConnectionId).execute()
         }
+    }
+
+    override fun onBackPressed() {
+        if (goToHome) {
+            val intent = Intent(this@OfferCertificateActivity, InitializeActivity::class.java)
+            startActivity(intent)
+        }
+        super.onBackPressed()
     }
 
     private fun setUpAdapter() {
@@ -263,10 +338,12 @@ class OfferCertificateActivity : BaseActivity() {
 
     private fun getIntentData() {
         record = intent.extras!!.get(EXTRA_CERTIFICATE_PREVIEW) as Record
-        name = intent.extras!!.getString(EXTRA_CERTIFICATE_NAME, "")
+
         val notification = WalletManager.getGson.fromJson(record!!.value, Notification::class.java)
+        name = notification.presentation?.presentationRequest?.name ?: ""
         mCertificateOffer = notification.certificateOffer
-        mConnectionId = intent.extras!!.get(EXTRA_CONNECTION_ID) as String
+        mConnectionId = notification.connection?.requestId ?: ""
+        checkExistanceOfRecord()
     }
 
     class RequestCertificateTask(
@@ -276,7 +353,7 @@ class OfferCertificateActivity : BaseActivity() {
     ) :
         AsyncTask<Void, Void, Void>() {
 
-        private var serviceEndPoint: String?= null
+        private var serviceEndPoint: String? = null
         private var typedBytes: RequestBody? = null
 
         override fun doInBackground(vararg p0: Void?): Void? {
@@ -403,8 +480,10 @@ class OfferCertificateActivity : BaseActivity() {
                         DidDoc::class.java
                     )
 
-                val packedMessage = PackingUtils.packMessage(didDoc,publicKey,
-                    WalletManager.getGson.toJson(certificateOffer))
+                val packedMessage = PackingUtils.packMessage(
+                    didDoc, publicKey,
+                    WalletManager.getGson.toJson(certificateOffer)
+                )
 
                 typedBytes = object : RequestBody() {
                     override fun contentType(): MediaType? {
