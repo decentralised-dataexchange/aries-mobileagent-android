@@ -59,7 +59,6 @@ class WalletCertificatesAdapter(
         } catch (e: Exception) {
         }
         holder.cvItem.setOnClickListener {
-            if (certificate.organization!=null)
             listener.onItemClick(certificate)
         }
 

@@ -14,6 +14,7 @@ import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.CertificateAttributeAdapter
 import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.indy.WalletManager
+import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.connection.Connection
 import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.utils.TextUtils
@@ -59,7 +60,23 @@ class CertificateDetailActivity : BaseActivity() {
     }
 
     private fun getConnectionDetail() {
-        initDataValues(wallet?.organization)
+        if (wallet?.organization == null) {
+            initDataValues(wallet?.organization)
+        } else {
+            initDataValueWithConnection(wallet?.connection)
+        }
+    }
+
+    private fun initDataValueWithConnection(connectionData: MediatorConnectionObject?) {
+        Glide
+            .with(ivLogo.context)
+            .load(connectionData?.theirImageUrl)
+            .centerCrop()
+            .placeholder(R.drawable.images)
+            .into(ivLogo)
+
+        tvName.text = connectionData?.theirLabel
+        tvLocation.text = connectionData?.location ?: "Nil"
     }
 
     private fun initDataValues(connectionData: Connection?) {
