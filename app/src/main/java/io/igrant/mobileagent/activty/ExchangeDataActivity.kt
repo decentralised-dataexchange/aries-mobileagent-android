@@ -17,7 +17,6 @@ import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.ExchangeRequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
-import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.handlers.CommonHandler
 import io.igrant.mobileagent.handlers.PoolHandler
@@ -40,7 +39,6 @@ import io.igrant.mobileagent.utils.WalletRecordType
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.greenrobot.eventbus.EventBus
-import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
 import org.hyperledger.indy.sdk.pool.Pool
@@ -49,14 +47,11 @@ import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 
 class ExchangeDataActivity : BaseActivity() {
 
-    private var goToHome: Boolean=false
+    private var goToHome: Boolean = false
     private var connection: MediatorConnectionObject? = null
     private lateinit var mConnectionId: String
     private var record: Record? = null
@@ -190,22 +185,52 @@ class ExchangeDataActivity : BaseActivity() {
                 credentialValue.revealed = true
 
                 requestedAttributes[key] = credentialValue
+                if (value.name != null && value.name != "") {
+                    val data = try {
 
-                val data =
-                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-                        .getJSONObject("attrs").getString(value.name ?: "")
+                        JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                            .getJSONObject("attrs").getString(value.name ?: "")
+                    } catch (e: Exception) {
+                        ""
+                    }
+                    val attributes = ExchangeAttributes()
+                    attributes.name = value.name
+                    attributes.value = data
+                    attributes.credDefId =
+                        JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                            .getString("cred_def_id")
+                    attributes.referent =
+                        JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                            .getString("referent")
 
-                val attributes = ExchangeAttributes()
-                attributes.name = value.name
-                attributes.value = data
-                attributes.credDefId =
-                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-                        .getString("cred_def_id")
-                attributes.referent =
-                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-                        .getString("referent")
+                    attributelist.add(attributes)
 
-                attributelist.add(attributes)
+                } else {
+                    for (name in value.names ?: ArrayList()) {
+                        val data = try {
+                            JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                                .getJSONObject("attrs").getString(name)
+                        } catch (e: Exception) {
+                            ""
+                        }
+
+                        if (data != null && data != "") {
+                            val attributes = ExchangeAttributes()
+                            attributes.name = name
+                            attributes.value = data
+                            attributes.credDefId =
+                                JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                                    .getString("cred_def_id")
+                            attributes.referent =
+                                JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                                    .getString("referent")
+
+                            attributelist.add(attributes)
+                            break
+                        }
+                    }
+                }
+
             } else {
                 isInsufficientData = true
             }
@@ -324,10 +349,10 @@ class ExchangeDataActivity : BaseActivity() {
                         serviceEndPoint: String?,
                         typedBytes: RequestBody?
                     ) {
-                        if (typedBytes!=null) {
+                        if (typedBytes != null) {
                             ApiManager.api.getService()
                                 ?.postDataWithoutData(
-                                    serviceEndPoint?:"",
+                                    serviceEndPoint ?: "",
                                     typedBytes
                                 )
                                 ?.enqueue(object : Callback<ResponseBody> {
@@ -381,8 +406,12 @@ class ExchangeDataActivity : BaseActivity() {
                                         }
                                     }
                                 })
-                        }else{
-                            Toast.makeText(this@ExchangeDataActivity,resources.getString(R.string.err_ledger_missmatch),Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(
+                                this@ExchangeDataActivity,
+                                resources.getString(R.string.err_ledger_missmatch),
+                                Toast.LENGTH_SHORT
+                            ).show()
                             llProgressBar.visibility = View.GONE
                             btAccept.isEnabled = true
                         }

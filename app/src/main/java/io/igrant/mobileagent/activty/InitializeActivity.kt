@@ -281,7 +281,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
     }
 
     private fun initFragment() {
-        NavigationUtils.showWalletFragment(supportFragmentManager, false)
+        if (supportFragmentManager != null)
+            NavigationUtils.showWalletFragment(supportFragmentManager, false)
     }
 
     private fun deleteReadMessage(inboxItemId: String, myDid: String) {
@@ -617,7 +618,9 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                     "{\n" +
                             "  \"type\":\"$TYPE_REQUEST_PRESENTATION\",\n" +
                             "  \"connectionId\":\"${connectionObject?.requestId}\",\n" +
-                            "  \"certificateId\":\"${JSONObject(jsonObject.getString("message")).getString("@id")}\",\n"+
+                            "  \"certificateId\":\"${JSONObject(jsonObject.getString("message")).getString(
+                                "@id"
+                            )}\",\n" +
                             "  \"stat\":\"Active\"\n" +
                             "}"
                 )
@@ -625,7 +628,9 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 try {
                     val searchResponse = SearchUtils.searchWallet(
                         MESSAGE_RECORDS,
-                        "{\"certificateId\":\"${JSONObject(jsonObject.getString("message")).getString("@id")}\"}"
+                        "{\"certificateId\":\"${JSONObject(jsonObject.getString("message")).getString(
+                            "@id"
+                        )}\"}"
                     )
                     if (searchResponse.totalCount ?: 0 > 0) {
 
@@ -890,7 +895,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                     walletModelTag
                 ).get()
 
-                val intent = Intent(this,InitializeActivity::class.java)
+                val intent = Intent(this, InitializeActivity::class.java)
                 NotificationUtils.showNotification(
                     intent,
                     this,
