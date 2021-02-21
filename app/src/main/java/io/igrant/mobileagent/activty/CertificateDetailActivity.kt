@@ -60,7 +60,7 @@ class CertificateDetailActivity : BaseActivity() {
     }
 
     private fun getConnectionDetail() {
-        if (wallet?.organization == null) {
+        if (wallet?.organization != null) {
             initDataValues(wallet?.organization)
         } else {
             initDataValueWithConnection(wallet?.connection)
