@@ -8,12 +8,8 @@ import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.agentConfig.Invitation
 import io.igrant.mobileagent.models.connectionRequest.*
 import io.igrant.mobileagent.models.tagJsons.ConnectionId
-import io.igrant.mobileagent.models.tagJsons.ConnectionTags
 import io.igrant.mobileagent.models.tagJsons.UpdateInvitationKey
-import io.igrant.mobileagent.utils.ConnectionStates
-import io.igrant.mobileagent.utils.DeviceUtils
-import io.igrant.mobileagent.utils.SearchUtils
-import io.igrant.mobileagent.utils.WalletRecordType
+import io.igrant.mobileagent.utils.*
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.MEDIATOR_DID_DOC
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -41,6 +37,7 @@ class SaveConnectionTask(
         val key = p0[1] ?: ""
         val orgId = p0[2] ?: ""
         val requestId = p0[3] ?: ""
+        val location = p0[4] ?: ""
 
         val connectionValue =
             WalletManager.getGson.toJson(
@@ -52,12 +49,13 @@ class SaveConnectionTask(
             )
         val connectionUuid = UUID.randomUUID().toString()
 
-        val connectionTag = ConnectionTags()
-        connectionTag.invitationKey = invitation.recipientKeys!![0]
-        connectionTag.state = ConnectionStates.CONNECTION_INVITATION
+        var invitationKey = UpdateInvitationKey(requestId, myDid, invitation.recipientKeys!![0], "", "")
+        invitationKey.state = ConnectionStates.CONNECTION_INVITATION
+        invitationKey.myKey = key
+        invitationKey.orgId= orgId
 
         val connectionTagJson =
-            WalletManager.getGson.toJson(connectionTag)
+            WalletManager.getGson.toJson(invitationKey)
 
         WalletRecord.add(
             WalletManager.getWallet,
@@ -85,6 +83,7 @@ class SaveConnectionTask(
             myDid
         )
         connectionObject.orgId = orgId
+        connectionObject.location = location
         val value = WalletManager.getGson.toJson(
             connectionObject
         )
@@ -94,26 +93,6 @@ class SaveConnectionTask(
             WalletRecordType.CONNECTION,
             connectionUuid,
             value
-        )
-
-        var invitationKey = UpdateInvitationKey(
-            requestId,
-            myDid,
-            invitation.recipientKeys!![0],
-            null,
-            null
-        )
-        invitationKey.orgId = orgId
-        val tagJson =
-            WalletManager.getGson.toJson(
-                invitationKey
-            )
-
-        WalletRecord.updateTags(
-            WalletManager.getWallet,
-            WalletRecordType.CONNECTION,
-            connectionUuid,
-            tagJson
         )
 
         val messageUuid = UUID.randomUUID().toString()
@@ -150,12 +129,7 @@ class SaveConnectionTask(
             DidDoc::class.java
         )
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"${didDocObj.publicKey!![0].publicKeyBase58}\"]",
-            connectedKey,
-            data.toByteArray()
-        ).get()
+        val packedMessage = PackingUtils.packMessage("[\"${didDocObj.publicKey!![0].publicKeyBase58}\"]",connectedKey,data)
 
         typedBytes = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -232,14 +206,8 @@ class SaveConnectionTask(
 
         val connectionRequestData = WalletManager.getGson.toJson(connectionRequest)
 
-        val connectionRequestPackedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"${invitation.recipientKeys?.get(0)}\"]",
-            key,
-            connectionRequestData.toByteArray()
-        ).get()
-
-        Log.d(TAG, "packed message: ${String(packedMessage)}")
+        val connectionRequestPackedMessage =
+            PackingUtils.packMessage(invitation, key, connectionRequestData)
 
         connectionRequestTypedBytes = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -274,7 +242,7 @@ class SaveConnectionTask(
     ): MediatorConnectionObject {
         val connectionObject = MediatorConnectionObject()
         connectionObject.theirLabel = invitation?.label ?: ""
-        connectionObject.theirImageUrl = invitation?.image_url ?:invitation?.imageUrl ?: ""
+        connectionObject.theirImageUrl = invitation?.image_url ?: invitation?.imageUrl ?: ""
         connectionObject.theirDid = ""
         connectionObject.inboxId = ""
         connectionObject.inboxKey = ""

@@ -166,13 +166,13 @@ class ConnectionListActivity : BaseActivity(),
         }
 
         if (invitation != null) {
-            if (ConnectionUtils.checkIfConnectionAvailable(invitation.recipientKeys!![0])) {
-                Toast.makeText(
-                    this,
-                    resources.getString(R.string.err_connection_already_added),
-                    Toast.LENGTH_SHORT
-                ).show()
-            } else {
+//            if (ConnectionUtils.checkIfConnectionAvailable(invitation.recipientKeys!![0])) {
+//                Toast.makeText(
+//                    this,
+//                    resources.getString(R.string.err_connection_already_added),
+//                    Toast.LENGTH_SHORT
+//                ).show()
+//            } else {
                 Handler(Looper.getMainLooper()).postDelayed({
                     val connectionSuccessDialogFragment: ConnectionProgressDailogFragment =
                         ConnectionProgressDailogFragment.newInstance(
@@ -185,7 +185,7 @@ class ConnectionListActivity : BaseActivity(),
                         "fragment_edit_name"
                     )
                 }, 200)
-            }
+//            }
         } else {
             Toast.makeText(this, resources.getString(R.string.err_unexpected), Toast.LENGTH_SHORT)
                 .show()

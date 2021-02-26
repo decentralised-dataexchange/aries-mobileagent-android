@@ -50,6 +50,39 @@ object NotificationUtils {
 
 
     }
+
+    fun showNotification(intent:Intent,context:Context,type:String,title:String,desc:String){
+
+        val pendingIntent: PendingIntent =
+            PendingIntent.getActivity(context, 0, intent, PendingIntent.FLAG_CANCEL_CURRENT)
+
+        val mNotificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        val builder = NotificationCompat.Builder(
+            context,
+            context.resources.getString(R.string.default_notification_channel_id)
+        )
+            .setSmallIcon(R.drawable.notification)
+            .setContentTitle(title)
+            .setContentIntent(pendingIntent)
+            .setStyle(
+                NotificationCompat.InboxStyle()
+                    .setSummaryText(desc)
+            )
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                getChannelIdForParu(type,context),
+                getChannelName(type,context),
+                NotificationManager.IMPORTANCE_HIGH
+            )
+            mNotificationManager.createNotificationChannel(channel)
+            builder.setChannelId(getChannelIdForParu(type,context))
+        }
+        mNotificationManager.notify(SystemClock.uptimeMillis().toInt(), builder.build())
+    }
     private fun getChannelName(type: String, context: Context): String {
         when (type) {
             MessageTypes.TYPE_ISSUE_CREDENTIAL -> {

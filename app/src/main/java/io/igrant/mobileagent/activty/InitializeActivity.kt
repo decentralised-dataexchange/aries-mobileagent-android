@@ -118,11 +118,18 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         setContentView(R.layout.activity_initialize)
         initViews()
         initListener()
-//        initToolbar()
-        initLibIndy()
+        loadLibraryLogic()
         try {
             EventBus.getDefault().register(this)
         } catch (e: Exception) {
+        }
+    }
+
+    private fun loadLibraryLogic() {
+        if (PoolManager.getPool == null) {
+            initLibIndy()
+        } else {
+            getMediatorConfig()
         }
     }
 
@@ -144,13 +151,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             )
         }
     }
-
-//    private fun initToolbar() {
-//        val toolbar: Toolbar = findViewById(R.id.toolbar)
-//        setSupportActionBar(toolbar)
-//        supportActionBar!!.title = ""
-////        supportActionBar!!.setDisplayHomeAsUpEnabled(true)
-//    }
 
     private fun initLibIndy() {
         LoadLibIndyTask(object : CommonHandler {
@@ -201,37 +201,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         llProgressBar.visibility = View.VISIBLE
         vDot = findViewById(R.id.vDot)
     }
-
-//    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-//        menuInflater.inflate(R.menu.menu_settings, menu)
-//        return true
-//    }
-
-//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-//        return when (item.itemId) {
-//            android.R.id.home -> {
-//                onBackPressed()
-//                true
-//            }
-//            R.id.action_settings->{
-//                val intent = Intent(
-//                    this,
-//                    SettingsActivity::class.java
-//                )
-//                startActivity(intent)
-//                true
-//            }
-////            R.id.action_add_data -> {
-////                val intent = Intent(
-////                    this,
-////                    ConnectionListActivity::class.java
-////                )
-////                startActivity(intent)
-////                true
-////            }
-//            else -> super.onOptionsItemSelected(item)
-//        }
-//    }
 
     private fun getMediatorConfig() {
         try {
@@ -312,7 +281,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
     }
 
     private fun initFragment() {
-        NavigationUtils.showWalletFragment(supportFragmentManager, false)
+        if (supportFragmentManager != null)
+            NavigationUtils.showWalletFragment(supportFragmentManager, false)
     }
 
     private fun deleteReadMessage(inboxItemId: String, myDid: String) {
@@ -351,12 +321,11 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         Log.d(TAG, "did doc 2: $didDoc")
         val test = gson.fromJson(didDoc, DidDoc::class.java)
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
+        val packedMessage = PackingUtils.packMessage(
             "[\"${test.publicKey!![0].publicKeyBase58}\"]",
             key,
-            data.toByteArray()
-        ).get()
+            data
+        )
 
         val typedBytes: RequestBody = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -417,12 +386,11 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         Log.d(TAG, "did doc 2: $didDoc")
         val test = gson.fromJson(didDoc, DidDoc::class.java)
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
+        val packedMessage = PackingUtils.packMessage(
             "[\"${test.publicKey?.get(0)?.publicKeyBase58}\"]",
             key,
-            data.toByteArray()
-        ).get()
+            data
+        )
 
         Timer().scheduleAtFixedRate(object : TimerTask() {
             override fun run() {
@@ -518,7 +486,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             "{\"recipient_key\":\"$recipientVerKey\"}"
         )
 
-        if (connectionSearch.totalCount?:0>0) {
+        if (connectionSearch.totalCount ?: 0 > 0) {
             val mediatorConnectionObject: MediatorConnectionObject =
                 WalletManager.getGson.fromJson(
                     connectionSearch.records?.get(0)?.value,
@@ -540,8 +508,9 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             )
 
             EventBus.getDefault().post(ConnectionSuccessEvent(connectionUuid ?: ""))
-        }else{
-            Toast.makeText(this,resources.getString(R.string.err_unexpected),Toast.LENGTH_SHORT).show()
+        } else {
+            Toast.makeText(this, resources.getString(R.string.err_unexpected), Toast.LENGTH_SHORT)
+                .show()
         }
     }
 
@@ -571,7 +540,21 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
     }
 
     private fun unPackRequestPresentation(jsonObject: JSONObject) {
-        val connectionObject = ConnectionUtils.getConnection(jsonObject.getString("sender_verkey"))
+
+        val recipientKey = jsonObject.getString("recipient_verkey")
+
+        val connectionSearch = SearchUtils.searchWallet(
+            CONNECTION,
+            "{\"my_key\":\"$recipientKey\"}"
+        )
+
+        val connectionObject: MediatorConnectionObject =
+            WalletManager.getGson.fromJson(
+                connectionSearch.records?.get(0)?.value,
+                MediatorConnectionObject::class.java
+            )
+
+//        val connectionObject = ConnectionUtils.getConnection(jsonObject.getString("sender_verkey"))
 
         if (connectionObject != null) {
             val p = SearchUtils.searchWallet(
@@ -601,8 +584,13 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 presentationExchange.presentationRequest = presentationRequest
                 presentationExchange.role = "prover"
                 presentationExchange.state = PresentationExchangeStates.REQUEST_RECEIVED
-                presentationExchange.comment =
-                    JSONObject(jsonObject.getString("message")).getString("comment")
+
+                try {
+                    presentationExchange.comment =
+                        JSONObject(jsonObject.getString("message")).getString("comment")
+                } catch (e: Exception) {
+                    presentationExchange.comment = ""
+                }
 
                 val id = UUID.randomUUID().toString()
                 val tag =
@@ -630,21 +618,41 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                     "{\n" +
                             "  \"type\":\"$TYPE_REQUEST_PRESENTATION\",\n" +
                             "  \"connectionId\":\"${connectionObject?.requestId}\",\n" +
+                            "  \"certificateId\":\"${JSONObject(jsonObject.getString("message")).getString(
+                                "@id"
+                            )}\",\n" +
                             "  \"stat\":\"Active\"\n" +
                             "}"
                 )
 
                 try {
-                    NotificationUtils.showNotification(
-                        this,
-                        TYPE_ISSUE_CREDENTIAL,
-                        resources.getString(R.string.txt_recieved_exchange_request),
-                        "Received a new exchange request from the organisation ${connectionObject?.theirLabel ?: ""}"
+                    val searchResponse = SearchUtils.searchWallet(
+                        MESSAGE_RECORDS,
+                        "{\"certificateId\":\"${JSONObject(jsonObject.getString("message")).getString(
+                            "@id"
+                        )}\"}"
                     )
+                    if (searchResponse.totalCount ?: 0 > 0) {
 
-                    EventBus.getDefault()
-                        .post(ReceiveExchangeRequestEvent())
+                        //go to intialize activity then start the offer certificate activity
+                        val intent =
+                            Intent(this@InitializeActivity, ExchangeDataActivity::class.java)
+                        intent.putExtra(
+                            ExchangeDataActivity.EXTRA_PRESENTATION_RECORD,
+                            searchResponse.records!![0]
+                        )
 
+                        NotificationUtils.showNotification(
+                            intent,
+                            this,
+                            TYPE_ISSUE_CREDENTIAL,
+                            resources.getString(R.string.txt_recieved_exchange_request),
+                            "Received a new exchange request from the organisation ${connectionObject?.theirLabel ?: ""}"
+                        )
+
+                        EventBus.getDefault()
+                            .post(ReceiveExchangeRequestEvent())
+                    }
                     setNotificationIcon()
                 } catch (e: Exception) {
                 }
@@ -661,27 +669,24 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 .toString(charset("UTF-8")), RawCredential::class.java
         )
 
-        val string = body.getString("sender_verkey")
-        val searchDid = WalletSearch.open(
-            WalletManager.getWallet,
-            DID_KEY,
-            "{\"key\": \"${string}\"}",
-            "{ \"retrieveRecords\": true, \"retrieveTotalCount\": true, \"retrieveType\": false, \"retrieveValue\": true, \"retrieveTags\": true }"
-        ).get()
+        val recipientKey = body.getString("recipient_verkey")
 
-        val didResponse =
-            WalletSearch.searchFetchNextRecords(WalletManager.getWallet, searchDid, 100).get()
+        val connectionSearch = SearchUtils.searchWallet(
+            CONNECTION,
+            "{\"my_key\":\"$recipientKey\"}"
+        )
 
-        Log.d(TAG, "searchDid: $didResponse")
-        WalletManager.closeSearchHandle(searchDid)
+        if (connectionSearch.totalCount ?: 0 > 0) {
+            val connectionObject: MediatorConnectionObject =
+                WalletManager.getGson.fromJson(
+                    connectionSearch.records?.get(0)?.value,
+                    MediatorConnectionObject::class.java
+                )
 
-        if (JSONObject(didResponse).getInt("totalCount")>0){
-            val didData = JSONObject(didResponse).getJSONArray("records").get(0).toString()
-
-            val didResult = gson.fromJson(didData, DidResult::class.java)
-
-        val credentialExchangeSearch = SearchUtils.searchWallet(CREDENTIAL_EXCHANGE_V10,
-            "{\"thread_id\": \"${issueCredential.thread?.thid ?: ""}\"}")
+            val credentialExchangeSearch = SearchUtils.searchWallet(
+                CREDENTIAL_EXCHANGE_V10,
+                "{\"thread_id\": \"${issueCredential.thread?.thid ?: ""}\"}"
+            )
 
             if (credentialExchangeSearch.totalCount ?: 0 > 0) {
                 val credentialExchange =
@@ -701,7 +706,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
                 sendAcknoledge(
                     issueCredential.thread?.thid ?: "",
-                    didResult.tags!!.did,
+                    connectionObject.theirDid,
                     body.getString("sender_verkey"),
                     body.getString("recipient_verkey"),
                     credentialExchange.credentialOffer?.credDefId
@@ -737,19 +742,17 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         val didResponse =
             WalletSearch.searchFetchNextRecords(WalletManager.getWallet, searchDid, 100).get()
 
-        Log.d(TAG, "searchDid: $didResponse")
         WalletManager.closeSearchHandle(searchDid)
 
         val searchResult = gson.fromJson(didResponse, SearchResponse::class.java)
 
         val didDoc =
             gson.fromJson(searchResult.records?.get(0)?.value, DidDoc::class.java)
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"$recipientVerKey\"]",
-            senderVerKey,
-            data.toByteArray()
-        ).get()
+
+        val packedMessage = PackingUtils.packMessage(
+            didDoc, senderVerKey,
+            data
+        )
 
         Log.d(TAG, "packed message: ${String(packedMessage)}")
 
@@ -775,22 +778,22 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                     call: Call<ResponseBody>,
                     response: Response<ResponseBody>
                 ) {
-                    if (response.code() == 200 && response.body() != null) {
-                        storeCredential(thid, credDefId, recipientVerKey)
-                    }
+//
                 }
             })
+
+        storeCredential(thid, credDefId, senderVerKey)
     }
 
     private fun storeCredential(
         thid: String,
         credDefId: String?,
-        recipientVerKey: String
+        senderVerKey: String
     ) {
 
         val connectionSearch = SearchUtils.searchWallet(
             CONNECTION,
-            "{\"recipient_key\":\"$recipientVerKey\"}"
+            "{\"my_key\":\"$senderVerKey\"}"
         )
         var connection: MediatorConnectionObject? = null
         if (connectionSearch.totalCount ?: 0 > 0) {
@@ -832,17 +835,15 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             WalletManager.closeSearchHandle(credentialExchangeSearch)
 
 
-            val searchResponse = gson.fromJson(credentialExchangeResponse, SearchResponse::class.java)
+            val searchResponse =
+                gson.fromJson(credentialExchangeResponse, SearchResponse::class.java)
             if (searchResponse.totalCount ?: 0 > 0) {
                 val credentialExchange =
-                    gson.fromJson(searchResponse.records?.get(0)?.value, CredentialExchange::class.java)
+                    gson.fromJson(
+                        searchResponse.records?.get(0)?.value,
+                        CredentialExchange::class.java
+                    )
 
-    //            Log.d(
-    //                TAG,
-    //                "storeCredential: \n credentialRequestMetadata: \n ${gson.toJson(credentialExchange.credentialRequestMetadata)} \n rawCredential: \n ${gson.toJson(
-    //                    credentialExchange.rawCredential
-    //                )} \n parsedCredDefResponse.objectJson: \n ${parsedCredDefResponse.objectJson}"
-    //            )
                 val uuid = UUID.randomUUID().toString()
                 val credentialId = Anoncreds.proverStoreCredential(
                     WalletManager.getWallet,
@@ -894,7 +895,9 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                     walletModelTag
                 ).get()
 
+                val intent = Intent(this, InitializeActivity::class.java)
                 NotificationUtils.showNotification(
+                    intent,
                     this,
                     TYPE_ISSUE_CREDENTIAL,
                     "Received Data",
@@ -910,7 +913,11 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 )
             }
         } catch (e: Exception) {
-            Toast.makeText(this@InitializeActivity,resources.getString(R.string.err_ledger_missmatch),Toast.LENGTH_SHORT).show()
+            Toast.makeText(
+                this@InitializeActivity,
+                resources.getString(R.string.err_ledger_missmatch),
+                Toast.LENGTH_SHORT
+            ).show()
         }
 
     }
@@ -1001,12 +1008,11 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         val str = WalletManager.getGson.toJson(connectionRequest)
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
+        val packedMessage = PackingUtils.packMessage(
             connectionInvitationValue.getString("recipientKeys"),
             key,
-            str.toByteArray()
-        ).get()
+            str
+        )
 
         val typedBytes: RequestBody = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -1063,7 +1069,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         Log.d(TAG, "searchDid: $didResponse")
         WalletManager.closeSearchHandle(searchDid)
 
-        if (JSONObject(didResponse).getInt("totalCount")>0){
+        if (JSONObject(didResponse).getInt("totalCount") > 0) {
             val didData = JSONObject(didResponse).getJSONArray("records").get(0).toString()
             val didResult = WalletManager.getGson.fromJson(didData, DidResult::class.java)
 
@@ -1103,21 +1109,40 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                     "{\n" +
                             "  \"type\":\"$TYPE_OFFER_CREDENTIAL\",\n" +
                             "  \"connectionId\":\"${connecction.requestId}\",\n" +
+                            "  \"certificateId\":\"${certificateOffer.id}\",\n" +
                             "  \"stat\":\"Active\"\n" +
                             "}"
                 )
 
                 try {
-                    NotificationUtils.showNotification(
-                        this,
-                        TYPE_ISSUE_CREDENTIAL,
-                        resources.getString(R.string.txt_received_offer),
-                        resources.getString(R.string.txt_received_offer_credential_desc)
-//                    "Received a new offer credential of the organisation ${connecction.theirLabel}"
+
+                    val searchResponse = SearchUtils.searchWallet(
+                        MESSAGE_RECORDS,
+                        "{\"certificateId\":\"${certificateOffer.id}\"}"
                     )
-                    EventBus.getDefault()
-                        .post(ReceiveExchangeRequestEvent())
-                    EventBus.getDefault().post(ReceiveOfferEvent(connecction.requestId ?: ""))
+                    if (searchResponse.totalCount ?: 0 > 0) {
+
+                        //go to intialize activity then start the offer certificate activity
+                        val intent =
+                            Intent(this@InitializeActivity, OfferCertificateActivity::class.java)
+                        intent.putExtra(
+                            OfferCertificateActivity.EXTRA_CERTIFICATE_PREVIEW,
+                            searchResponse.records!![0]
+                        )
+
+                        NotificationUtils.showNotification(
+                            intent,
+                            this,
+                            TYPE_ISSUE_CREDENTIAL,
+                            resources.getString(R.string.txt_received_offer),
+                            resources.getString(R.string.txt_received_offer_credential_desc)
+//                    "Received a new offer credential of the organisation ${connecction.theirLabel}"
+                        )
+                        EventBus.getDefault()
+                            .post(ReceiveExchangeRequestEvent())
+                        EventBus.getDefault().post(ReceiveOfferEvent(connecction.requestId ?: ""))
+
+                    }
 
                     setNotificationIcon()
                 } catch (e: Exception) {
@@ -1333,49 +1358,47 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
             serviceEndPoint = didDoc.service?.get(0)?.serviceEndpoint ?: ""
             recipient = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
-        }
 
-        val data = "{\n" +
-                "  \"@type\": \"https://didcomm.org/trust_ping/1.0/ping\",\n" +
-                "  \"@id\": \"${UUID.randomUUID()}\",\n" +
-                "  \"comment\": \"ping\",\n" +
-                "  \"response_requested\": true\n" +
-                "}\n"
+            val data = "{\n" +
+                    "  \"@type\": \"https://didcomm.org/trust_ping/1.0/ping\",\n" +
+                    "  \"@id\": \"${UUID.randomUUID()}\",\n" +
+                    "  \"comment\": \"ping\",\n" +
+                    "  \"response_requested\": true\n" +
+                    "}\n"
 
-        val packedMessage = Crypto.packMessage(
-            WalletManager.getWallet,
-            "[\"$recipient\"]",
-            publicKey,
-            data.toByteArray()
-        ).get()
+            val packedMessage = PackingUtils.packMessage(
+                didDoc, publicKey,
+                data
+            )
 
-        Log.d(TAG, "packed message: ${String(packedMessage)}")
+            Log.d(TAG, "packed message: ${String(packedMessage)}")
 
-        val typedBytes: RequestBody = object : RequestBody() {
-            override fun contentType(): MediaType? {
-                return "application/ssi-agent-wire".toMediaTypeOrNull()
-            }
-
-            @Throws(IOException::class)
-            override fun writeTo(sink: BufferedSink) {
-                sink.write(packedMessage)
-            }
-        }
-
-        ApiManager.api.getService()
-            ?.postDataWithoutData(serviceEndPoint, typedBytes)
-            ?.enqueue(object : Callback<ResponseBody> {
-                override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
-                    llProgressBar.visibility = View.GONE
+            val typedBytes: RequestBody = object : RequestBody() {
+                override fun contentType(): MediaType? {
+                    return "application/ssi-agent-wire".toMediaTypeOrNull()
                 }
 
-                override fun onResponse(
-                    call: Call<ResponseBody>,
-                    response: Response<ResponseBody>
-                ) {
-
+                @Throws(IOException::class)
+                override fun writeTo(sink: BufferedSink) {
+                    sink.write(packedMessage)
                 }
-            })
+            }
+
+            ApiManager.api.getService()
+                ?.postDataWithoutData(serviceEndPoint, typedBytes)
+                ?.enqueue(object : Callback<ResponseBody> {
+                    override fun onFailure(call: Call<ResponseBody>, t: Throwable) {
+                        llProgressBar.visibility = View.GONE
+                    }
+
+                    override fun onResponse(
+                        call: Call<ResponseBody>,
+                        response: Response<ResponseBody>
+                    ) {
+
+                    }
+                })
+        }
     }
 
     private fun createInbox(
@@ -1811,7 +1834,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
     ): MediatorConnectionObject {
         val connectionObject = MediatorConnectionObject()
         connectionObject.theirLabel = invitation?.label ?: ""
-        connectionObject.theirImageUrl = invitation?.image_url ?:invitation?.imageUrl ?: ""
+        connectionObject.theirImageUrl = invitation?.image_url ?: invitation?.imageUrl ?: ""
         connectionObject.theirDid = ""
         connectionObject.inboxId = ""
         connectionObject.inboxKey = ""

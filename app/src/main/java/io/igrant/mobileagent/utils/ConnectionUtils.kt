@@ -7,6 +7,10 @@ import io.igrant.mobileagent.models.walletSearch.SearchResponse
 import org.hyperledger.indy.sdk.non_secrets.WalletSearch
 
 object ConnectionUtils {
+
+    /**
+     * to check whether the connection already existing with the invitation key
+     */
     fun checkIfConnectionAvailable(invitationKey: String): Boolean {
         val gson = Gson()
         val search = WalletSearch.open(

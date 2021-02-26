@@ -20,6 +20,7 @@ import io.igrant.mobileagent.activty.ConnectionListActivity
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_INVITATION
 import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_PROPOSAL
+import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_QR_ID
 import io.igrant.mobileagent.adapter.WalletCertificatesAdapter
 import io.igrant.mobileagent.communication.ApiManager
 import io.igrant.mobileagent.events.ReceiveCertificateEvent
@@ -210,7 +211,7 @@ class WalletFragment : BaseFragment() {
                             Uri.parse(data.getString("invitation_url")).getQueryParameter("c_i")
                                 ?: ""
                         val proofRequest = data.getJSONObject("proof_request")
-                        saveConnectionAndExchangeData(invitation, proofRequest)
+                        saveConnectionAndExchangeData(invitation, proofRequest,"")
                     } else {
                         Toast.makeText(
                             context,
@@ -219,6 +220,10 @@ class WalletFragment : BaseFragment() {
                         ).show()
                     }
                 } else {
+
+                    val bits: List<String> = uri.toString().split("/")
+
+                    val lastOne = bits[bits.size - 1]
 
                     llProgressBar.visibility = View.VISIBLE
 
@@ -240,6 +245,7 @@ class WalletFragment : BaseFragment() {
                             llProgressBar.visibility = View.GONE
                             if (response.code() == 200 && response.body() != null) {
                                 if (response.body()!!.dataExchangeUrl != null) {
+                                    //split with / and take the last element - to get qr_id
                                     val uri: Uri = try {
                                         Uri.parse(response.body()!!.dataExchangeUrl)
                                     } catch (e: Exception) {
@@ -259,7 +265,7 @@ class WalletFragment : BaseFragment() {
                                                     .getQueryParameter("c_i")
                                                     ?: ""
                                             val proofRequest = data.getJSONObject("proof_request")
-                                            saveConnectionAndExchangeData(invitation, proofRequest)
+                                            saveConnectionAndExchangeData(invitation, proofRequest,lastOne)
                                         } else {
                                             Toast.makeText(
                                                 context,
@@ -298,7 +304,8 @@ class WalletFragment : BaseFragment() {
 
     private fun saveConnectionAndExchangeData(
         data: String,
-        proofRequest: JSONObject
+        proofRequest: JSONObject,
+        qrId: String
     ) {
         var invitation: Invitation? = null
         try {
@@ -312,7 +319,7 @@ class WalletFragment : BaseFragment() {
         } catch (e: Exception) {
         }
         if (invitation != null)
-            sendProposal(proofRequest, invitation)
+            sendProposal(proofRequest, invitation,qrId)
         else
             Toast.makeText(
                 context,
@@ -323,11 +330,13 @@ class WalletFragment : BaseFragment() {
 
     private fun sendProposal(
         proofRequest: JSONObject,
-        invitation: Invitation
+        invitation: Invitation,
+        qrId: String
     ) {
         val intent = Intent(requireContext(), ProposeAndExchangeDataActivity::class.java)
         intent.putExtra(EXTRA_PRESENTATION_PROPOSAL, proofRequest.toString())
         intent.putExtra(EXTRA_PRESENTATION_INVITATION, invitation)
+        intent.putExtra(EXTRA_PRESENTATION_QR_ID, qrId)
         startActivity(intent)
     }
 

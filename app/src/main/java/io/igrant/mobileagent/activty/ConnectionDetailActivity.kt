@@ -30,7 +30,6 @@ import io.igrant.mobileagent.models.connection.Connection
 import io.igrant.mobileagent.models.connection.ConnectionCerListResponse
 import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.credentialExchange.RawCredential
-import io.igrant.mobileagent.models.wallet.WalletModel
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.utils.*
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
@@ -76,19 +75,12 @@ class ConnectionDetailActivity : BaseActivity() {
         getIntentData()
         setUpToolbar()
         initListener()
-        getConnectionDetail()
+        checkIfIgrantSupportedConnection()
         setUpAdapter()
         setUpConnectionMessagesList()
     }
 
-    private fun getConnectionDetail() {
-        val orgData =
-            "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
-                    "\"return_route\": \"all\"}\n}"
-
-        val cerData =
-            "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/list-data-certificate-types\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
-                    "\"return_route\": \"all\"}\n}"
+    private fun checkIfIgrantSupportedConnection() {
 
         val connection = SearchUtils.searchWallet(CONNECTION, "{\"request_id\":\"$mConnectionId\"}")
 
@@ -98,124 +90,140 @@ class ConnectionDetailActivity : BaseActivity() {
                 MediatorConnectionObject::class.java
             )
 
-            val didDoc =
-                SearchUtils.searchWallet(DID_DOC, "{\"did\":\"${connectionObject.theirDid}\"}")
-
-            if (didDoc.totalCount ?: 0 > 0) {
-                val didDocObj = WalletManager.getGson.fromJson(
-                    didDoc.records?.get(0)?.value,
-                    DidDoc::class.java
-                )
-
-                val serviceEndPoint = didDocObj.service?.get(0)?.serviceEndpoint ?: ""
-                val publicKey = didDocObj.publicKey?.get(0)?.publicKeyBase58
-
-                val metaString =
-                    Did.getDidWithMeta(WalletManager.getWallet, connectionObject.myDid).get()
-                val metaObject = JSONObject(metaString)
-                val key = metaObject.getString("verkey")
-
-                val orgDetailPacked = Crypto.packMessage(
-                    WalletManager.getWallet,
-                    "[\"${publicKey ?: ""}\"]",
-                    key,
-                    orgData.toByteArray()
-                ).get()
-
-                val orgDetailTypedArray = object : RequestBody() {
-                    override fun contentType(): MediaType? {
-                        return "application/ssi-agent-wire".toMediaTypeOrNull()
-                    }
-
-                    @Throws(IOException::class)
-                    override fun writeTo(sink: BufferedSink) {
-                        sink.write(orgDetailPacked)
-                    }
-                }
-                ApiManager.api.getService()?.postData(serviceEndPoint, orgDetailTypedArray)
-                    ?.enqueue(object :
-                        Callback<ConfigPostResponse> {
-                        override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
-                            Log.d("https", "onFailure: ")
-                        }
-
-                        override fun onResponse(
-                            call: Call<ConfigPostResponse>,
-                            response: Response<ConfigPostResponse>
-                        ) {
-                            if (response.code() == 200 && response.body() != null) {
-                                val unpack =
-                                    Crypto.unpackMessage(
-                                        WalletManager.getWallet,
-                                        WalletManager.getGson.toJson(response.body()).toString()
-                                            .toByteArray()
-                                    ).get()
-
-                                Log.d(
-                                    "milan",
-                                    "onResponse: ${JSONObject(String(unpack)).getString("message")}"
-                                )
-                                val connectionData = WalletManager.getGson.fromJson(
-                                    JSONObject(String(unpack)).getString("message"),
-                                    Connection::class.java
-                                )
-                                initDataValues(connectionData)
-                            }
-
-                        }
-
-                    })
-
-                val orgCerListPacked = Crypto.packMessage(
-                    WalletManager.getWallet,
-                    "[\"${publicKey ?: ""}\"]",
-                    key,
-                    cerData.toByteArray()
-                ).get()
-
-                val orgCerListTypedArray = object : RequestBody() {
-                    override fun contentType(): MediaType? {
-                        return "application/ssi-agent-wire".toMediaTypeOrNull()
-                    }
-
-                    @Throws(IOException::class)
-                    override fun writeTo(sink: BufferedSink) {
-                        sink.write(orgCerListPacked)
-                    }
-                }
-                ApiManager.api.getService()?.postData(serviceEndPoint, orgCerListTypedArray)
-                    ?.enqueue(object :
-                        Callback<ConfigPostResponse> {
-                        override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
-                            Log.d("https", "onFailure: ")
-                        }
-
-                        override fun onResponse(
-                            call: Call<ConfigPostResponse>,
-                            response: Response<ConfigPostResponse>
-                        ) {
-                            if (response.code() == 200 && response.body() != null) {
-                                val unpack =
-                                    Crypto.unpackMessage(
-                                        WalletManager.getWallet,
-                                        WalletManager.getGson.toJson(response.body()).toString()
-                                            .toByteArray()
-                                    ).get()
-
-                                Log.d(
-                                    "milan",
-                                    "onResponse: ${JSONObject(String(unpack)).getString("message")}"
-                                )
-                                val certificateList = WalletManager.getGson.fromJson(
-                                    JSONObject(String(unpack)).getString("message"),
-                                    ConnectionCerListResponse::class.java
-                                )
-                                connectionCertList = certificateList
-                                initList()
-                            }
-                        }
-                    })
+            if (connectionObject.isIGrantEnabled == true) {
+                getConnectionDetail(connectionObject)
+            } else {
+                setDefaultValues(connectionObject)
             }
+        }
+    }
+
+    private fun setDefaultValues(connectionObject: MediatorConnectionObject) {
+        Glide
+            .with(ivLogo.context)
+            .load(connectionObject.theirImageUrl ?: "")
+            .centerCrop()
+            .placeholder(R.drawable.images)
+            .into(ivLogo)
+
+        tvName.text = connectionObject.theirLabel ?: ""
+        tvLocation.text = connectionObject.location ?: ""
+    }
+
+    private fun getConnectionDetail(connectionObject: MediatorConnectionObject) {
+        val orgData =
+            "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
+                    "\"return_route\": \"all\"}\n}"
+
+        val cerData =
+            "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/list-data-certificate-types\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
+                    "\"return_route\": \"all\"}\n}"
+
+        val didDoc =
+            SearchUtils.searchWallet(DID_DOC, "{\"did\":\"${connectionObject.theirDid}\"}")
+
+        if (didDoc.totalCount ?: 0 > 0) {
+            val didDocObj = WalletManager.getGson.fromJson(
+                didDoc.records?.get(0)?.value,
+                DidDoc::class.java
+            )
+
+            val serviceEndPoint = didDocObj.service?.get(0)?.serviceEndpoint ?: ""
+//                val publicKey = didDocObj.publicKey?.get(0)?.publicKeyBase58
+
+            val metaString =
+                Did.getDidWithMeta(WalletManager.getWallet, connectionObject.myDid).get()
+            val metaObject = JSONObject(metaString)
+            val key = metaObject.getString("verkey")
+
+            val orgDetailPacked = PackingUtils.packMessage(didDocObj, key, orgData)
+
+            val orgDetailTypedArray = object : RequestBody() {
+                override fun contentType(): MediaType? {
+                    return "application/ssi-agent-wire".toMediaTypeOrNull()
+                }
+
+                @Throws(IOException::class)
+                override fun writeTo(sink: BufferedSink) {
+                    sink.write(orgDetailPacked)
+                }
+            }
+            ApiManager.api.getService()?.postData(serviceEndPoint, orgDetailTypedArray)
+                ?.enqueue(object :
+                    Callback<ConfigPostResponse> {
+                    override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
+                        Log.d("https", "onFailure: ")
+                    }
+
+                    override fun onResponse(
+                        call: Call<ConfigPostResponse>,
+                        response: Response<ConfigPostResponse>
+                    ) {
+                        if (response.code() == 200 && response.body() != null) {
+                            val unpack =
+                                Crypto.unpackMessage(
+                                    WalletManager.getWallet,
+                                    WalletManager.getGson.toJson(response.body()).toString()
+                                        .toByteArray()
+                                ).get()
+
+                            Log.d(
+                                "milan",
+                                "onResponse: ${JSONObject(String(unpack)).getString("message")}"
+                            )
+                            val connectionData = WalletManager.getGson.fromJson(
+                                JSONObject(String(unpack)).getString("message"),
+                                Connection::class.java
+                            )
+                            initDataValues(connectionData)
+                        }
+                    }
+                })
+
+            val orgCerListPacked = PackingUtils.packMessage(didDocObj, key, cerData)
+
+            val orgCerListTypedArray = object : RequestBody() {
+                override fun contentType(): MediaType? {
+                    return "application/ssi-agent-wire".toMediaTypeOrNull()
+                }
+
+                @Throws(IOException::class)
+                override fun writeTo(sink: BufferedSink) {
+                    sink.write(orgCerListPacked)
+                }
+            }
+            ApiManager.api.getService()?.postData(serviceEndPoint, orgCerListTypedArray)
+                ?.enqueue(object :
+                    Callback<ConfigPostResponse> {
+                    override fun onFailure(call: Call<ConfigPostResponse>, t: Throwable) {
+                        Log.d("https", "onFailure: ")
+                    }
+
+                    override fun onResponse(
+                        call: Call<ConfigPostResponse>,
+                        response: Response<ConfigPostResponse>
+                    ) {
+                        if (response.code() == 200 && response.body() != null) {
+                            val unpack =
+                                Crypto.unpackMessage(
+                                    WalletManager.getWallet,
+                                    WalletManager.getGson.toJson(response.body()).toString()
+                                        .toByteArray()
+                                ).get()
+
+                            Log.d(
+                                "milan",
+                                "onResponse: ${JSONObject(String(unpack)).getString("message")}"
+                            )
+                            val certificateList = WalletManager.getGson.fromJson(
+                                JSONObject(String(unpack)).getString("message"),
+                                ConnectionCerListResponse::class.java
+                            )
+                            connectionCertList = certificateList
+                            initList()
+                        }
+                    }
+                })
         }
     }
 
@@ -259,16 +267,16 @@ class ConnectionDetailActivity : BaseActivity() {
 //                } catch (e: Exception) {
 //                }
 //            } else {
-                var attributeList: ArrayList<Attributes> = ArrayList()
-                var attribute: Attributes
-                for (string in certificate.schemaAttributes) {
-                    attribute = Attributes()
-                    attribute.name = string
-                    attribute.value = ""
+            var attributeList: ArrayList<Attributes> = ArrayList()
+            var attribute: Attributes
+            for (string in certificate.schemaAttributes) {
+                attribute = Attributes()
+                attribute.name = string
+                attribute.value = ""
 
-                    attributeList.add(attribute)
-                }
-                tempCer.attributeList = attributeList
+                attributeList.add(attribute)
+            }
+            tempCer.attributeList = attributeList
 //            }
 
             tempList.add(tempCer)
@@ -292,11 +300,16 @@ class ConnectionDetailActivity : BaseActivity() {
             .with(ivCoverUrl.context)
             .load(connectionData?.coverImageUrl)
             .centerCrop()
-//            .placeholder(R.drawable.images)
+            .placeholder(R.drawable.default_cover_image)
             .into(ivCoverUrl)
 
         tvDescription.text = connectionData?.description
-        TextUtils.makeTextViewResizable(tvDescription, 3, resources.getString(R.string.txt_read_more), true);
+        TextUtils.makeTextViewResizable(
+            tvDescription,
+            3,
+            resources.getString(R.string.txt_read_more),
+            true
+        );
         tvName.text = connectionData?.name
         tvLocation.text = connectionData?.location
     }
@@ -354,14 +367,6 @@ class ConnectionDetailActivity : BaseActivity() {
                     intent.putExtra(
                         OfferCertificateActivity.EXTRA_CERTIFICATE_PREVIEW,
                         record
-                    )
-                    intent.putExtra(
-                        OfferCertificateActivity.EXTRA_CERTIFICATE_NAME,
-                        name
-                    )
-                    intent.putExtra(
-                        OfferCertificateActivity.EXTRA_CONNECTION_ID,
-                        mConnectionId
                     )
                     startActivity(intent)
                     Handler(Looper.getMainLooper()).postDelayed({

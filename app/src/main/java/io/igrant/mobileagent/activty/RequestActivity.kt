@@ -39,7 +39,6 @@ class RequestActivity : BaseActivity() {
     private lateinit var rvRequests: RecyclerView
     private lateinit var llErrorMessage: LinearLayout
     private lateinit var llProgressBar: LinearLayout
-//    private lateinit var fabScan: FloatingActionButton
 
     private lateinit var adapter: RequestListAdapter
     private var connectionMessageList: ArrayList<Record> = ArrayList()
@@ -55,7 +54,6 @@ class RequestActivity : BaseActivity() {
         } catch (e: Exception) {
         }
         initToolbar()
-        initListener()
         setUpAdapter()
         setUpConnectionMessagesList()
     }
@@ -82,107 +80,7 @@ class RequestActivity : BaseActivity() {
         rvRequests = findViewById(R.id.rvRequests)
         llErrorMessage = findViewById(R.id.llErrorMessage)
         llProgressBar = findViewById(R.id.llProgressBar)
-//        fabScan = findViewById(R.id.fabScan)
     }
-
-    private fun initListener() {
-//        fabScan.setOnClickListener {
-//            if (PermissionUtils.hasPermissions(
-//                    this,
-//                    true,
-//                    PICK_IMAGE_REQUEST,
-//                    PERMISSIONS
-//                )
-//            ) {
-//                val i = Intent(this, QrCodeActivity::class.java)
-//                startActivityForResult(
-//                    i,
-//                    REQUEST_CODE_SCAN_INVITATION
-//                )
-//            }
-//        }
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-//        if (requestCode == REQUEST_CODE_SCAN_INVITATION) {
-//            if (data == null) return
-//
-//            try {
-//                val uri: Uri =
-//                    Uri.parse(data.getStringExtra("com.blikoon.qrcodescanner.got_qr_scan_relult"))
-//                val v: String = uri.getQueryParameter("qr_p") ?: ""
-//                if (v != "") {
-//                    val json =
-//                        Base64.decode(
-//                            v,
-//                            Base64.URL_SAFE
-//                        ).toString(charset("UTF-8"))
-//                    val data = JSONObject(json)
-//                    if (data.getString("invitation_url") != "") {
-//                        val invitation: String =
-//                            Uri.parse(data.getString("invitation_url")).getQueryParameter("c_i")
-//                                ?: ""
-//                        val proofRequest = data.getJSONObject("proof_request")
-//                        saveConnectionAndExchangeData(invitation, proofRequest)
-//                    } else {
-//                        Toast.makeText(
-//                            this,
-//                            resources.getString(R.string.err_unexpected),
-//                            Toast.LENGTH_SHORT
-//                        ).show()
-//                    }
-//                } else {
-//                    Toast.makeText(
-//                        this,
-//                        resources.getString(R.string.err_unexpected),
-//                        Toast.LENGTH_SHORT
-//                    ).show()
-//                }
-//            } catch (e: Exception) {
-//                Toast.makeText(
-//                    this,
-//                    resources.getString(R.string.err_unexpected),
-//                    Toast.LENGTH_SHORT
-//                ).show()
-//            }
-//        }
-        super.onActivityResult(requestCode, resultCode, data)
-    }
-
-//    private fun saveConnectionAndExchangeData(
-//        data: String,
-//        proofRequest: JSONObject
-//    ) {
-//        var invitation: Invitation? = null
-//        try {
-//            val json =
-//                Base64.decode(
-//                    data,
-//                    Base64.URL_SAFE
-//                ).toString(charset("UTF-8"))
-//
-//            invitation = WalletManager.getGson.fromJson(json, Invitation::class.java)
-//        } catch (e: Exception) {
-//        }
-//        if (invitation != null)
-//            sendProposal(proofRequest, invitation)
-//        else
-//            Toast.makeText(
-//                this,
-//                resources.getString(R.string.err_unexpected),
-//                Toast.LENGTH_SHORT
-//            ).show()
-//    }
-
-//    private fun sendProposal(
-//        proofRequest: JSONObject,
-//        invitation: Invitation
-//    ) {
-//        val intent = Intent(this, ProposeAndExchangeDataActivity::class.java)
-//        intent.putExtra(EXTRA_PRESENTATION_PROPOSAL, proofRequest.toString())
-//        intent.putExtra(EXTRA_PRESENTATION_INVITATION, invitation)
-//        startActivity(intent)
-//    }
 
     private fun setUpAdapter() {
         adapter = RequestListAdapter(connectionMessageList, object : ConnectionMessageListener {
@@ -196,7 +94,6 @@ class RequestActivity : BaseActivity() {
                         ExchangeDataActivity.EXTRA_PRESENTATION_RECORD,
                         record
                     )
-
                     startActivity(intent)
                 }else{
                     val intent =
@@ -204,14 +101,6 @@ class RequestActivity : BaseActivity() {
                     intent.putExtra(
                         OfferCertificateActivity.EXTRA_CERTIFICATE_PREVIEW,
                         record
-                    )
-                    intent.putExtra(
-                        OfferCertificateActivity.EXTRA_CERTIFICATE_NAME,
-                        name
-                    )
-                    intent.putExtra(
-                        OfferCertificateActivity.EXTRA_CONNECTION_ID,
-                        message.connection?.requestId?:""
                     )
                     startActivity(intent)
                 }
@@ -263,11 +152,5 @@ class RequestActivity : BaseActivity() {
 
     companion object {
         private const val TAG = "InitializeActivity"
-//        private const val PICK_IMAGE_REQUEST = 101
-//        val PERMISSIONS =
-//            arrayOf(Manifest.permission.CAMERA)
-//        private const val REQUEST_CODE_SCAN_INVITATION = 202
-//
-//        var deviceId = ""
     }
 }

@@ -1,6 +1,7 @@
 package io.igrant.mobileagent.activty
 
 import android.content.DialogInterface
+import android.content.Intent
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
@@ -16,9 +17,11 @@ import androidx.recyclerview.widget.RecyclerView
 import io.igrant.mobileagent.R
 import io.igrant.mobileagent.adapter.ExchangeRequestAttributeAdapter
 import io.igrant.mobileagent.communication.ApiManager
-import io.igrant.mobileagent.events.ReceiveCertificateEvent
 import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent
 import io.igrant.mobileagent.handlers.CommonHandler
+import io.igrant.mobileagent.handlers.PoolHandler
+import io.igrant.mobileagent.indy.LedgerNetworkType
+import io.igrant.mobileagent.indy.PoolManager
 import io.igrant.mobileagent.indy.WalletManager
 import io.igrant.mobileagent.models.MediatorConnectionObject
 import io.igrant.mobileagent.models.Notification
@@ -27,27 +30,28 @@ import io.igrant.mobileagent.models.presentationExchange.ExchangeAttributes
 import io.igrant.mobileagent.models.presentationExchange.PresentationExchange
 import io.igrant.mobileagent.models.walletSearch.Record
 import io.igrant.mobileagent.tasks.ExchangeDataTask
+import io.igrant.mobileagent.tasks.LoadLibIndyTask
+import io.igrant.mobileagent.tasks.OpenWalletTask
+import io.igrant.mobileagent.tasks.PoolTask
 import io.igrant.mobileagent.utils.MessageTypes
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import org.greenrobot.eventbus.EventBus
-import org.hyperledger.indy.sdk.anoncreds.Anoncreds
 import org.hyperledger.indy.sdk.anoncreds.CredentialsSearchForProofReq
 import org.hyperledger.indy.sdk.non_secrets.WalletRecord
+import org.hyperledger.indy.sdk.pool.Pool
 import org.json.JSONArray
 import org.json.JSONObject
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
-import java.util.*
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
 
 
 class ExchangeDataActivity : BaseActivity() {
 
+    private var goToHome: Boolean = false
     private var connection: MediatorConnectionObject? = null
     private lateinit var mConnectionId: String
     private var record: Record? = null
@@ -58,7 +62,6 @@ class ExchangeDataActivity : BaseActivity() {
     private lateinit var tvDesc: TextView
     private lateinit var tvHead: TextView
 
-    //    private lateinit var btReject: Button
     private lateinit var btAccept: Button
     private lateinit var rvAttributes: RecyclerView
     private lateinit var llProgressBar: LinearLayout
@@ -81,10 +84,66 @@ class ExchangeDataActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_exchange_data)
         initViews()
+        checkPool()
         initListener()
         getIntentData()
         setUpToolbar()
         initValues()
+    }
+
+    private fun checkPool() {
+        if (PoolManager.getPool == null) {
+            goToHome = true
+            llProgressBar.visibility = View.VISIBLE
+            initLibIndy()
+        }
+    }
+
+    private fun initLibIndy() {
+        LoadLibIndyTask(object : CommonHandler {
+            override fun taskCompleted() {
+                loadPool()
+            }
+
+            override fun taskStarted() {
+
+            }
+        }, applicationContext).execute()
+    }
+
+    private fun openWallet() {
+        OpenWalletTask(object : CommonHandler {
+            override fun taskCompleted() {
+                llProgressBar.visibility = View.GONE
+            }
+
+            override fun taskStarted() {
+
+            }
+        }).execute()
+    }
+
+    private fun loadPool() {
+        PoolTask(object : PoolHandler {
+            override fun taskCompleted(pool: Pool) {
+                PoolManager.setPool(pool)
+                openWallet()
+            }
+
+            override fun taskStarted() {
+
+            }
+        }, LedgerNetworkType.getSelectedNetwork(this)).execute()
+    }
+
+    private fun checkExistanceOfRecord() {
+        val searchResponse = SearchUtils.searchWallet(
+            WalletRecordType.MESSAGE_RECORDS,
+            "{\"certificateId\":\"${record?.id}\"}"
+        )
+        if (searchResponse.totalCount ?: 0 == 0) {
+            onBackPressed()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -126,22 +185,52 @@ class ExchangeDataActivity : BaseActivity() {
                 credentialValue.revealed = true
 
                 requestedAttributes[key] = credentialValue
+                if (value.name != null && value.name != "") {
+                    val data = try {
 
-                val data =
-                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-                        .getJSONObject("attrs").getString(value.name ?: "")
+                        JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                            .getJSONObject("attrs").getString(value.name ?: "")
+                    } catch (e: Exception) {
+                        ""
+                    }
+                    val attributes = ExchangeAttributes()
+                    attributes.name = value.name
+                    attributes.value = data
+                    attributes.credDefId =
+                        JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                            .getString("cred_def_id")
+                    attributes.referent =
+                        JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                            .getString("referent")
 
-                val attributes = ExchangeAttributes()
-                attributes.name = value.name
-                attributes.value = data
-                attributes.credDefId =
-                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-                        .getString("cred_def_id")
-                attributes.referent =
-                    JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
-                        .getString("referent")
+                    attributelist.add(attributes)
 
-                attributelist.add(attributes)
+                } else {
+                    for (name in value.names ?: ArrayList()) {
+                        val data = try {
+                            JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                                .getJSONObject("attrs").getString(name)
+                        } catch (e: Exception) {
+                            ""
+                        }
+
+                        if (data != null && data != "") {
+                            val attributes = ExchangeAttributes()
+                            attributes.name = name
+                            attributes.value = data
+                            attributes.credDefId =
+                                JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                                    .getString("cred_def_id")
+                            attributes.referent =
+                                JSONObject(JSONArray(searchResult)[0].toString()).getJSONObject("cred_info")
+                                    .getString("referent")
+
+                            attributelist.add(attributes)
+                            break
+                        }
+                    }
+                }
+
             } else {
                 isInsufficientData = true
             }
@@ -162,6 +251,7 @@ class ExchangeDataActivity : BaseActivity() {
         mPresentationExchange = notification.presentation
         connection = notification.connection
         mConnectionId = mPresentationExchange?.connectionId ?: ""
+        checkExistanceOfRecord()
     }
 
     private fun setUpToolbar() {
@@ -259,10 +349,10 @@ class ExchangeDataActivity : BaseActivity() {
                         serviceEndPoint: String?,
                         typedBytes: RequestBody?
                     ) {
-                        if (typedBytes!=null) {
+                        if (typedBytes != null) {
                             ApiManager.api.getService()
                                 ?.postDataWithoutData(
-                                    serviceEndPoint?:"",
+                                    serviceEndPoint ?: "",
                                     typedBytes
                                 )
                                 ?.enqueue(object : Callback<ResponseBody> {
@@ -316,8 +406,12 @@ class ExchangeDataActivity : BaseActivity() {
                                         }
                                     }
                                 })
-                        }else{
-                            Toast.makeText(this@ExchangeDataActivity,resources.getString(R.string.err_ledger_missmatch),Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(
+                                this@ExchangeDataActivity,
+                                resources.getString(R.string.err_ledger_missmatch),
+                                Toast.LENGTH_SHORT
+                            ).show()
                             llProgressBar.visibility = View.GONE
                             btAccept.isEnabled = true
                         }
@@ -331,5 +425,13 @@ class ExchangeDataActivity : BaseActivity() {
                 ).show()
             }
         }
+    }
+
+    override fun onBackPressed() {
+        if (goToHome) {
+            val intent = Intent(this@ExchangeDataActivity, InitializeActivity::class.java)
+            startActivity(intent)
+        }
+        super.onBackPressed()
     }
 }
