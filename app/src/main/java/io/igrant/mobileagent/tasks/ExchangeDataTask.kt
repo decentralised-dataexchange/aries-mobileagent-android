@@ -11,10 +11,7 @@ import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.presentationExchange.CredentialValue
 import io.igrant.mobileagent.models.presentationExchange.PresentationExchange
 import io.igrant.mobileagent.models.presentationExchange.RequestCredential
-import io.igrant.mobileagent.utils.PackingUtils
-import io.igrant.mobileagent.utils.PresentationExchangeStates
-import io.igrant.mobileagent.utils.SearchUtils
-import io.igrant.mobileagent.utils.WalletRecordType
+import io.igrant.mobileagent.utils.*
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody
@@ -175,7 +172,7 @@ class ExchangeDataTask(
             )
 
             val data = "{\n" +
-                    "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation\",\n" +
+                    "  \"@type\": \"${DidCommPrefixUtils.getType()}/present-proof/1.0/presentation\",\n" +
                     "  \"@id\": \"${UUID.randomUUID()}\",\n" +
                     "  \"~thread\": {\n" +
                     "    \"thid\": \"${mPresentationExchange?.threadId}\"\n" +

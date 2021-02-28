@@ -51,7 +51,7 @@
 //                    DidDoc::class.java
 //                )
 //                val orgData =
-//                    "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"${"$connectionId"}\" , \"~transport\": {" +
+//                    "{ \"@type\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/1.0/organization-info\", \"@id\": \"${"$connectionId"}\" , \"~transport\": {" +
 //                            "\"return_route\": \"all\"}\n}"
 //
 //                val metaString =

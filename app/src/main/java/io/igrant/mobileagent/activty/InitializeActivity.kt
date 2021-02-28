@@ -97,7 +97,7 @@ import kotlin.collections.ArrayList
 class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
     companion object {
-        private const val TAG = "InitializeActivity"
+        const val TAG = "InitializeActivity"
 
         var deviceId = ""
     }
@@ -285,11 +285,15 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             NavigationUtils.showWalletFragment(supportFragmentManager, false)
     }
 
-    private fun deleteReadMessage(inboxItemId: String, myDid: String) {
+    private fun deleteReadMessage(
+        inboxItemId: String,
+        myDid: String,
+        type: String
+    ) {
         val data = "\n" +
                 "{\n" +
                 "  \"@id\": \"${UUID.randomUUID()}\",\n" +
-                "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basic-routing/1.0/delete-inbox-items\",\n" +
+                "  \"@type\": \"${DidCommPrefixUtils.getType(type)}/basic-routing/1.0/delete-inbox-items\",\n" +
                 "  \"inboxitemids\": [\n" +
                 "    \"$inboxItemId\"\n" +
                 "  ],\n" +
@@ -357,7 +361,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         val data = "\n" +
                 "{\n" +
                 "    \"@id\": \"$uuid\",\n" +
-                "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basic-routing/1.0/get-inbox-items\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType()}/basic-routing/1.0/get-inbox-items\",\n" +
                 "    \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
                 "    }\n" +
@@ -431,16 +435,11 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         try {
             val unpacked = Crypto.unpackMessage(WalletManager.getWallet, body.toByteArray()).get()
+            Log.d(TAG, "for delete unPackPollMessage: ${String(unpacked)}")
             val messageList = JSONObject(String(unpacked)).getString("message")
             val item = JSONObject(messageList).getJSONArray("Items")
             for (i in 0 until item.length()) {
                 val o = item.getJSONObject(i).getString("Data")
-
-                deleteReadMessage(
-                    item.getJSONObject(i).getString(
-                        "@id"
-                    ), myDid
-                )
 
                 Log.d(TAG, "unPackPollMessage: item: ${item.getJSONObject(i)}")
                 val unpack =
@@ -449,6 +448,13 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
                 var type =
                     JSONObject(JSONObject(String(unpack)).getString("message")).getString("@type")
+
+                deleteReadMessage(
+                    item.getJSONObject(i).getString(
+                        "@id"
+                    ), myDid,type
+                )
+
                 val index: Int = type.lastIndexOf('/')
                 type = type.substring(index + 1, type.length)
 
@@ -724,7 +730,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
     ) {
         val gson = Gson()
         val data = "{\n" +
-                "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/ack\",\n" +
+                "  \"@type\": \"${DidCommPrefixUtils.getType()}/issue-credential/1.0/ack\",\n" +
                 "  \"@id\": \"${UUID.randomUUID()}\",\n" +
                 "  \"~thread\": {\n" +
                 "    \"thid\": \"$thid\"\n" +
@@ -1000,7 +1006,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         //connection request
         val connectionRequest = ConnectionRequest()
-        connectionRequest.type = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request"
+        connectionRequest.type = "${DidCommPrefixUtils.getType()}/connections/1.0/request"
         connectionRequest.id = requestId
         connectionRequest.label = "milan"
         connectionRequest.connection = did
@@ -1163,7 +1169,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             WalletManager.getGson.fromJson(base64Sting, Base64Extracted::class.java)
         val credentialProposalDict = CredentialProposalDict()
         credentialProposalDict.type =
-            "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/propose-credential"
+            "${DidCommPrefixUtils.getType()}/issue-credential/1.0/propose-credential"
         credentialProposalDict.id = UUID.randomUUID().toString()
         credentialProposalDict.comment = "string"
         credentialProposalDict.schemaId = credentialProposal.schemaId
@@ -1413,7 +1419,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         val data = "\n" +
                 "{\n" +
                 "    \"@id\": \"${UUID.randomUUID().toString()}\",\n" +
-                "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basic-routing/1.0/create-inbox\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType()}/basic-routing/1.0/create-inbox\",\n" +
                 "    \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
                 "    }\n" +
@@ -1633,7 +1639,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         val data = "{\n" +
                 "    \"@id\": \"$messageUuid\",\n" +
-                "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basic-routing/1.0/add-route\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType()}/basic-routing/1.0/add-route\",\n" +
                 "    \"routedestination\": \"$key\",\n" +
                 "    \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
@@ -1782,7 +1788,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         //connection request
         val connectionRequest = ConnectionRequest()
-        connectionRequest.type = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request"
+        connectionRequest.type = "${DidCommPrefixUtils.getType()}/connections/1.0/request"
         connectionRequest.id = UUID.randomUUID().toString()
         connectionRequest.label = DeviceUtils.getDeviceName() ?: ""
         connectionRequest.connection = did

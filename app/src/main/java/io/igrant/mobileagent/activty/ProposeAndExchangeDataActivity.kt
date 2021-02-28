@@ -226,13 +226,13 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     private fun sendProposal(mConnectionId: String) {
         val threadId = UUID.randomUUID().toString()
         var data = "{\n" +
-                "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/propose-presentation\",\n" +
+                "  \"@type\": \"${DidCommPrefixUtils.getType()}/present-proof/1.0/propose-presentation\",\n" +
                 "  \"@id\": \"$threadId\",\n" +
                 "  \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
                 "    },\n" +
                 "  \"presentation_proposal\": {\n" +
-                "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType()}/present-proof/1.0/presentation-preview\",\n" +
                 "    \"attributes\": [\n"
         for (attribute in attributelist) {
             data = data + "{\n" +
@@ -395,13 +395,13 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     private fun sendProposalWithOrgId(mConnectionId: String) {
         val threadId = UUID.randomUUID().toString()
         var data = "{\n" +
-                "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/propose-presentation\",\n" +
+                "  \"@type\": \"${DidCommPrefixUtils.getType()}/present-proof/1.0/propose-presentation\",\n" +
                 "  \"@id\": \"$threadId\",\n" +
                 "  \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
                 "    },\n" +
                 "  \"presentation_proposal\": {\n" +
-                "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/present-proof/1.0/presentation-preview\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType()}/present-proof/1.0/presentation-preview\",\n" +
                 "    \"attributes\": [\n"
         for (attribute in attributelist) {
             data = data + "{\n" +

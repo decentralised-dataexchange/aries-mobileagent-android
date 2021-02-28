@@ -456,7 +456,7 @@ class OfferCertificateActivity : BaseActivity() {
 
                 val certificateOffer = RequestOffer()
                 certificateOffer.type =
-                    "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/issue-credential/1.0/request-credential"
+                    "${DidCommPrefixUtils.getType()}/issue-credential/1.0/request-credential"
                 certificateOffer.id = UUID.randomUUID().toString()
                 certificateOffer.thread = thread
                 certificateOffer.offersAttach = requestAttachList

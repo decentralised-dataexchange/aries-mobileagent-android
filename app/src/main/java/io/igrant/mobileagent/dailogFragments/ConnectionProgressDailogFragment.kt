@@ -24,6 +24,7 @@ import io.igrant.mobileagent.models.agentConfig.Invitation
 import io.igrant.mobileagent.models.connection.Connection
 import io.igrant.mobileagent.tasks.SaveConnectionTask
 import io.igrant.mobileagent.tasks.SaveDidDocTask
+import io.igrant.mobileagent.utils.DidCommPrefixUtils
 import io.igrant.mobileagent.utils.PackingUtils
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
@@ -114,9 +115,9 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
     private fun checkIfConnectionExisting() {
 
         val queryFeatureData = "{\n" +
-                "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/discover-features/1.0/query\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType()}/discover-features/1.0/query\",\n" +
                 "    \"@id\": \"${UUID.randomUUID()}\",\n" +
-                "    \"query\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/*\",\n" +
+                "    \"query\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/*\",\n" +
                 "    \"comment\": \"Querying features available.\",\n" +
                 "    \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
@@ -164,7 +165,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
                         for (n in 0 until dataArray.length()) {
                             val obj = dataArray.getJSONObject(n)
                             if (obj.getString("pid").contains(
-                                    "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator",
+                                    "${DidCommPrefixUtils.getType()}/igrantio-operator",
                                     ignoreCase = true
                                 )
                             ) {
@@ -182,7 +183,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
             requestId = UUID.randomUUID().toString()
 
             val orgData =
-                "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"$requestId\" , \"~transport\": {" +
+                "{ \"@type\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/1.0/organization-info\", \"@id\": \"$requestId\" , \"~transport\": {" +
                         "\"return_route\": \"all\"}\n}"
 
             val orgDetailPacked = PackingUtils.packMessage(invitation, myKey, orgData)
@@ -269,7 +270,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
     private fun sendDidToConnection(theirDid: String?) {
         val data = "{\n" +
-                "  \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/org-multiple-connections\",\n" +
+                "  \"@type\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/1.0/org-multiple-connections\",\n" +
                 "  \"@id\": \"${UUID.randomUUID()}\",\n" +
                 "  \"theirdid\": \"${theirDid ?: ""}\"\n" +
                 "}\n"

@@ -99,7 +99,7 @@ class SaveConnectionTask(
 
         val data = "{\n" +
                 "    \"@id\": \"$messageUuid\",\n" +
-                "    \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/basic-routing/1.0/add-route\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType()}/basic-routing/1.0/add-route\",\n" +
                 "    \"routedestination\": \"$key\",\n" +
                 "    \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
@@ -198,7 +198,7 @@ class SaveConnectionTask(
 
         //connection request
         val connectionRequest = ConnectionRequest()
-        connectionRequest.type = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/connections/1.0/request"
+        connectionRequest.type = "${DidCommPrefixUtils.getType()}/connections/1.0/request"
         connectionRequest.id = UUID.randomUUID().toString()
         connectionRequest.label = DeviceUtils.getDeviceName() ?: ""
         connectionRequest.connection = did

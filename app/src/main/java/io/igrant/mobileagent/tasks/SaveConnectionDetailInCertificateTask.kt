@@ -10,6 +10,7 @@ import io.igrant.mobileagent.models.agentConfig.ConfigPostResponse
 import io.igrant.mobileagent.models.connection.Connection
 import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.wallet.WalletModel
+import io.igrant.mobileagent.utils.DidCommPrefixUtils
 import io.igrant.mobileagent.utils.PackingUtils
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType
@@ -57,7 +58,7 @@ class SaveConnectionDetailInCertificateTask() : AsyncTask<String, Void, Void>() 
                     DidDoc::class.java
                 )
                 val orgData =
-                    "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"${"$connectionId"}\" , \"~transport\": {" +
+                    "{ \"@type\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/1.0/organization-info\", \"@id\": \"${"$connectionId"}\" , \"~transport\": {" +
                             "\"return_route\": \"all\"}\n}"
 
                 val metaString =

@@ -112,11 +112,11 @@ class ConnectionDetailActivity : BaseActivity() {
 
     private fun getConnectionDetail(connectionObject: MediatorConnectionObject) {
         val orgData =
-            "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/organization-info\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
+            "{ \"@type\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/1.0/organization-info\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
                     "\"return_route\": \"all\"}\n}"
 
         val cerData =
-            "{ \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/igrantio-operator/1.0/list-data-certificate-types\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
+            "{ \"@type\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/1.0/list-data-certificate-types\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
                     "\"return_route\": \"all\"}\n}"
 
         val didDoc =

@@ -25,7 +25,7 @@ object PackingUtils {
 
         val primaryPackedString = String(primaryPacked, StandardCharsets.UTF_8)
         val forwardMessage = "{\n" +
-                "        \"@type\": \"did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward\",\n" +
+                "        \"@type\": \"${DidCommPrefixUtils.getType()}/routing/1.0/forward\",\n" +
                 "        \"@id\": \"${UUID.randomUUID()}\",\n" +
                 "        \"to\": \"$recipientKey\",\n" +
                 "        \"msg\": \"$primaryPackedString\"\n" +
@@ -45,7 +45,7 @@ object PackingUtils {
                     String(primaryPacked, Charset.defaultCharset()).replace("\\u003d", "=")
 
                 val forwardMessage: ForwardMessage = ForwardMessage()
-                forwardMessage.type = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward"
+                forwardMessage.type = "${DidCommPrefixUtils.getType()}/routing/1.0/forward"
                 forwardMessage.id = UUID.randomUUID().toString()
                 forwardMessage.to = invitation.recipientKeys?.get(0) ?: ""
                 forwardMessage.msg = WalletManager.getGson.fromJson(
@@ -82,7 +82,7 @@ object PackingUtils {
                         String(primaryPacked, Charset.defaultCharset()).replace("\\u003d", "=")
 
                     val forwardMessage: ForwardMessage = ForwardMessage()
-                    forwardMessage.type = "did:sov:BzCbsNYhMrjHiqZDTUASHg;spec/routing/1.0/forward"
+                    forwardMessage.type = "${DidCommPrefixUtils.getType()}/routing/1.0/forward"
                     forwardMessage.id = UUID.randomUUID().toString()
                     forwardMessage.to = didDoc.service!![0].recipientKeys?.get(0) ?: ""
                     forwardMessage.msg = WalletManager.getGson.fromJson(
