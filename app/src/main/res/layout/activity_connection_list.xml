@@ -102,7 +102,7 @@
         <ImageView
             android:layout_width="50dp"
             android:layout_height="50dp"
-            android:contentDescription="@string/txt_no_connections_avaialable"
+            android:contentDescription="@string/txt_no_data_avaialable_in_org"
             android:src="@drawable/ic_no_data" />
 
         <TextView
@@ -110,7 +110,7 @@
             android:layout_height="wrap_content"
             android:padding="10dp"
             android:textColor="@color/textColor"
-            android:text="@string/txt_no_connections_avaialable"
+            android:text="@string/txt_no_data_avaialable_in_org"
             android:textSize="@dimen/text_size_normal" />
 
     </LinearLayout>

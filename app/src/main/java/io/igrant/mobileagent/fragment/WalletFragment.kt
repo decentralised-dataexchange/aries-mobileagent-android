@@ -96,6 +96,9 @@ class WalletFragment : BaseFragment() {
 
         certificateList.clear()
         certificateList.addAll(walletSearch.records ?: ArrayList())
+
+        tvExchangeData.visibility = if (certificateList.size > 0) View.VISIBLE else View.GONE
+
         certificateListCopy.clear()
         certificateListCopy.addAll(walletSearch.records ?: ArrayList())
         walletCertificateAdapter =
@@ -211,7 +214,7 @@ class WalletFragment : BaseFragment() {
                             Uri.parse(data.getString("invitation_url")).getQueryParameter("c_i")
                                 ?: ""
                         val proofRequest = data.getJSONObject("proof_request")
-                        saveConnectionAndExchangeData(invitation, proofRequest,"")
+                        saveConnectionAndExchangeData(invitation, proofRequest, "")
                     } else {
                         Toast.makeText(
                             context,
@@ -265,7 +268,11 @@ class WalletFragment : BaseFragment() {
                                                     .getQueryParameter("c_i")
                                                     ?: ""
                                             val proofRequest = data.getJSONObject("proof_request")
-                                            saveConnectionAndExchangeData(invitation, proofRequest,lastOne)
+                                            saveConnectionAndExchangeData(
+                                                invitation,
+                                                proofRequest,
+                                                lastOne
+                                            )
                                         } else {
                                             Toast.makeText(
                                                 context,
@@ -319,7 +326,7 @@ class WalletFragment : BaseFragment() {
         } catch (e: Exception) {
         }
         if (invitation != null)
-            sendProposal(proofRequest, invitation,qrId)
+            sendProposal(proofRequest, invitation, qrId)
         else
             Toast.makeText(
                 context,

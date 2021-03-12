@@ -25,10 +25,6 @@
 
     <string name="txt_scan">Scan</string>
     <string name="txt_create">Opret</string>
-    <string name="txt_create_wallet">Create Wallet</string>
-    <string name="txt_share">Share</string>
-    <string name="txt_send">Send</string>
-    <string name="txt_recieve">Receive</string>
     <string name="txt_certificates">Data</string>
     <string name="txt_data_agreement">Dataaftale</string>
     <string name="txt_connections">Kontakter</string>
@@ -42,8 +38,9 @@
     <string name="txt_Add_certificate_desc">Vælg organisationen der skal forbindes til din Digitale Pung for at tilføje data. Klik ovenfor for at tilføje nye organisationer.</string>
     <string name="txt_wallet">Pung</string>
     <string name="txt_preferences">Præferencer</string>
-    <string name="txt_no_connections_avaialable">Ingen kontakter tilgængelig</string>
     <string name="txt_no_data_avaialable">Ingen data tilgængelig</string>
+    <string name="txt_no_data_available_in_home">Ingen data tilgængelig.</string>
+    <string name="txt_no_data_avaialable_in_org">Ingen kontakter tilgængelig</string>
     <string name="err_connection_already_added">Kontakten findes allerede</string>
     <string name="txt_loading_indy_library">Loader Indy biblioteket...</string>
     <string name="txt_exchange_data">Del Data</string>
@@ -54,7 +51,7 @@
     <string name="txt_creating_wallet">Konfigurerer Digital Pung ...</string>
     <string name="txt_organisations">Organisationer</string>
     <string name="txt_logo">Logo</string>
-    <string name="txt_exchange">Dele</string>
+    <string name="txt_exchange">Bekræft</string>
     <string name="title_connection_list">Vælg organisation</string>
     <string name="title_offer_detail">Dataaftale</string>
     <string name="err_insufficient_data">Utilstrækkelig data</string>

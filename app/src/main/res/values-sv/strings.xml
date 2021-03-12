@@ -24,12 +24,6 @@
 
     <string name="txt_scan">Scanna</string>
     <string name="txt_create">Skapa</string>
-
-    <string name="txt_create_wallet">Create Wallet</string>
-    <string name="txt_share">Share</string>
-    <string name="txt_send">Send</string>
-    <string name="txt_recieve">Receive</string>
-
     <string name="txt_certificates">Data</string>
     <string name="txt_data_agreement">Dataavtal</string>
     <string name="txt_connections">Kontakter</string>
@@ -44,8 +38,9 @@
     <string name="txt_Add_certificate_desc">Välj organisation som skall anslutas för att lägga till data i plånboken eller för datadelning</string>
     <string name="txt_wallet">Plånbok</string>
     <string name="txt_preferences">Preferenser</string>
-    <string name="txt_no_connections_avaialable">Inga kontakter tillgängliga</string>
     <string name="txt_no_data_avaialable">Ingen data tillgänglig</string>
+    <string name="txt_no_data_available_in_home">Ingen data tillgänglig. Klicka på \'+\' bredvid din data plånbok för att börja lägga till data i din plånbok.</string>
+    <string name="txt_no_data_avaialable_in_org">Klicka på \'+\' bredvid Organisationer för att ansluta till en organisation för att lägga till data.</string>
     <string name="err_connection_already_added">Kontakten finns redan</string>
     <string name="txt_loading_indy_library">Laddar Indy-biblioteket...</string>
     <string name="txt_exchange_data">Dela data</string>
@@ -56,7 +51,7 @@
     <string name="txt_creating_wallet">Konfigurerar plånbok...</string>
     <string name="txt_organisations">Organisationer</string>
     <string name="txt_logo">Logotype</string>
-    <string name="txt_exchange">Dela</string>
+    <string name="txt_exchange">Bekräfta</string>
     <string name="title_connection_list">Välj organisation</string>
     <string name="title_offer_detail">Dataavtal</string>
 

@@ -40,10 +40,10 @@ class LedgerNetworkListActivity : BaseActivity() {
         ledger.type = LedgerNetworkType.IGRANT_SANDBOX
         list.add(ledger)
 
-        ledger = LedgerItem()
-        ledger.name = "iGrant.io Sandbox Old"
-        ledger.type = LedgerNetworkType.IGRANT_SANDBOX_OLD
-        list.add(ledger)
+//        ledger = LedgerItem()
+//        ledger.name = "iGrant.io Sandbox Old"
+//        ledger.type = LedgerNetworkType.IGRANT_SANDBOX_OLD
+//        list.add(ledger)
 
         ledger = LedgerItem()
         ledger.name = "Sovrin Builder"

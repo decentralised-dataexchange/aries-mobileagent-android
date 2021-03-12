@@ -1,0 +1,102 @@
+<resources>
+    <string name="app_name">digikukkaro</string>
+    <string name="action_settings">Settings</string>
+    <!-- Strings used for fragments for navigation -->
+    <string name="first_fragment_label">First Fragment</string>
+    <string name="second_fragment_label">Second Fragment</string>
+    <string name="next">Next</string>
+    <string name="previous">Previous</string>
+
+    <string name="hello_first_fragment">Hello first fragment</string>
+    <string name="hello_second_fragment">Hello second fragment. Arg: %1$s</string>
+
+    //qr code
+    <string name="qc_code_close">sulje</string>
+    <string name="qr_code_open_flash_light">avaa taskulamppu</string>
+    <string name="qr_code_close_flash_light">sulje taskulamppu </string>
+    <string name="qr_code_auto_scan_notification">asemoi QR-koodi</string>
+    <string name="qr_code_notification">viesti</string>
+    <string name="qr_code_camera_not_open">kamera ei avaudu</string>
+    <string name="qr_code_positive_button_know">OK</string>
+    <string name="qr_code_positive_button_confirm">vahvista</string>
+    <string name="qr_code_could_not_read_qr_code_from_picture">Kuvaa ei voi lukea tai avata. Yritä uudelleen.</string>
+    <string name="qr_code_could_not_read_qr_code_from_scanner">Skannauksen avaaminen ei onnistunut. Yritä uudelleen.</string>
+    <string name="qr_code_camera_not_found">Kameran aktivointi ei onnistunut. Tarkista asetukset.</string>
+
+    <string name="txt_scan">Skannaa</string>
+    <string name="txt_create">Luo</string>
+    <string name="txt_certificates">Data</string>
+    <string name="txt_data_agreement">Tietosopimus</string>
+    <string name="txt_connections">Yhteydet</string>
+    <string name="no">Ei</string>
+    <string name="yes">Kyllä</string>
+    <string name="txt_certificates_desc">Pyysit seuraavien tietojen antamista. Valitsemalla hyväksyt tietojen lisäämisen kukkaroon.</string>
+    <string name="txt_certificates_head">Covid 19 test certificates</string>
+    <string name="txt_reject">Kiellä</string>
+    <string name="txt_accept">Hyväksy</string>
+    <string name="txt_add_certificate">Lisää tieto</string>
+    <string name="txt_Add_certificate_desc">Valitse organisaatio, jonka sallit lisäävän tietoja lompakkoon. Lisää uusia organisaatioita Napsauta + Yllä</string>
+    <string name="txt_wallet">Lompakko</string>
+    <string name="txt_preferences">Valinnat</string>
+    <string name="txt_no_data_avaialable">Tietoja ei saatavilla</string>
+    <string name="txt_no_data_available_in_home">Tietoa ei saatavilla. Klikkaa + aloittaaksesi uuden tiedon lisäämisen Digikukkaroon.</string>
+    <string name="txt_no_data_avaialable_in_org">Klikkaa +Organisaatio mahdollistaaksesi organisaation lisäämän tiedon.</string>
+    <string name="err_connection_already_added">Yhteys on jo käytössä</string>
+    <string name="txt_loading_indy_library">Lataa Indy-kirjastoa...</string>
+    <string name="txt_exchange_data">Jaa tietoa</string>
+    <string name="txt_add_connection">Lisää yhteys</string>
+    <string name="txt_search">Hae...</string>
+    <string name="txt_creating_pool">Konfiguroi...</string>
+    <string name="txt_finishing">Viimeistelee...</string>
+    <string name="txt_creating_wallet">Konfiguroi kukkaroa...</string>
+    <string name="txt_organisations">organisaatiot</string>
+    <string name="txt_logo">Logo</string>
+    <string name="txt_exchange">vahvista</string>
+    <string name="title_connection_list">Valitse organisaatio</string>
+    <string name="title_offer_detail">Tietosopimus</string>
+    <string name="err_insufficient_data">Tietoa ei ole riittävästi</string>
+    <string name="txt_requests">Kysely</string>
+    <string name="txt_connection_success_message">Yhteys onnistui</string>
+    <string name="notification_channel_success_messages" translatable="false">Success messages</string>
+    <string name="notification_channel_success" translatable="false">success_messages</string>
+    <string name="default_notification_channel_id" translatable="false">NotificationChannel</string>
+    <string name="txt_org_overview">Yleiskatsaus</string>
+    <string name="txt_delete">Poista</string>
+    <string name="txt_version_detail">"Versio : %1$s"</string>
+    <string name="err_unexpected">Odottamaton virhe. Yritä uudelleen.</string>
+    <string name="txt_exchange_data_desc">Valitsemalla Jaa hyväksyt pyydettyjen tietojen jakamisen %1$s :lle</string>
+    <string name="txt_allow_connection_query">Hyväksyn <b>%1$s</b> yhteyden</string>
+    <string name="txt_language">kieli</string>
+    <string name="txt_ledger_network">Ledger-verkko</string>
+    <string name="txt_settings">Asetukset</string>
+    <string name="txt_network">Verkko</string>
+    <string name="txt_powered_by">Ylläpitää iGrant.io, Ruotsi</string>
+    <string name="txt_data_wallet">Digikukkaro</string>
+    <string name="txt_data_exchange">Tiedonjako</string>
+    <string name="txt_notification">Viestit</string>
+    <string name="txt_remove_data_card">Poista tieto tai tietokortti</string>
+    <string name="txt_exchange_successful">Tieto on jaettu onnistuneesti %1$s kanssa</string>
+    <string name="txt_exchange_successful_without_name">Tieto on jaettu onnistuneesti</string>
+    <string name="txt_certificate_delete_confirmation">Haluatko poistaa todistuksen?</string>
+    <string name="txt_confirmation">Vahvistus</string>
+    <string name="txt_exchange_request_delete_confirmation">Haluatko peruuttaa tiedonjakopyynnön?</string>
+    <string name="txt_read_more">Lue lisää</string>
+    <string name="txt_read_less">.. Lue vähemmän</string>
+    <string name="txt_no_notifications_available">Ei uusia viestejä</string>
+    <string name="txt_language_caps">KIELI</string>
+    <string name="txt_ledger_network_caps">LEDGER-verkko</string>
+    <string name="txt_data_added_success_desc">Tieto lisätty onnistuneesti kukkaroosi</string>
+    <string name="title_about_this_app">Tietoja tästä sovelluksesta</string>
+    <string name="txt_about">Yrityksestä</string>
+    <string name="txt_privacy_policy">Tietosuojakäytäntö</string>
+    <string name="txt_terms_and_conditions">Käyttöehdot</string>
+    <string name="txt_aries_interoperatable_protocols">Aries yhteensopivuusprotokollat</string>
+    <string name="txt_supported_protocols">Tuetut protokollat</string>
+    <string name="txt_received_offer_credential_desc">Vastaanottovahvistus organisaatiolta</string>
+    <string name="txt_received_offer">Vastaanottovahvistus</string>
+    <string name="txt_offer_credential_delete_confirmation">Haluatko poistaa xxxxxx?</string>
+    <string name="txt_data_request_accepted_successfully">Data offer accepted successfully.</string>
+    <string name="txt_recieved_exchange_request">Vastaanotettu tiedonjakopyyntö</string>
+    <string name="txt_remove_organization">Poista organisaatio</string>
+    <string name="err_ledger_missmatch">Virheellinen Ledger. Valitse oikea Ledger asetuksista.</string>
+</resources>
