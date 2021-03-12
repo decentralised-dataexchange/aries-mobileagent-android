@@ -361,7 +361,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         val data = "\n" +
                 "{\n" +
                 "    \"@id\": \"$uuid\",\n" +
-                "    \"@type\": \"${DidCommPrefixUtils.getType()}/basic-routing/1.0/get-inbox-items\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType(DidCommPrefixUtils.MEDIATOR)}/basic-routing/1.0/get-inbox-items\",\n" +
                 "    \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
                 "    }\n" +
@@ -431,8 +431,6 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
     }
 
     private fun unPackPollMessage(body: String, myDid: String) {
-
-
         try {
             val unpacked = Crypto.unpackMessage(WalletManager.getWallet, body.toByteArray()).get()
             Log.d(TAG, "for delete unPackPollMessage: ${String(unpacked)}")
@@ -452,7 +450,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 deleteReadMessage(
                     item.getJSONObject(i).getString(
                         "@id"
-                    ), myDid,type
+                    ), myDid, type
                 )
 
                 val index: Int = type.lastIndexOf('/')
@@ -590,7 +588,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 presentationExchange.presentationRequest = presentationRequest
                 presentationExchange.role = "prover"
                 presentationExchange.state = PresentationExchangeStates.REQUEST_RECEIVED
-
+                presentationExchange.type =
+                    JSONObject(jsonObject.getString("message")).getString("@type")
                 try {
                     presentationExchange.comment =
                         JSONObject(jsonObject.getString("message")).getString("comment")
@@ -711,29 +710,29 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 )
 
                 sendAcknoledge(
-                    issueCredential.thread?.thid ?: "",
                     connectionObject.theirDid,
                     body.getString("sender_verkey"),
                     body.getString("recipient_verkey"),
-                    credentialExchange.credentialOffer?.credDefId
+                    credentialExchange.credentialOffer?.credDefId,
+                    issueCredential
                 )
             }
         }
     }
 
     private fun sendAcknoledge(
-        thid: String,
         did: String?,
         recipientVerKey: String,
         senderVerKey: String,
-        credDefId: String?
+        credDefId: String?,
+        issueCredential: IssueCredential
     ) {
         val gson = Gson()
         val data = "{\n" +
-                "  \"@type\": \"${DidCommPrefixUtils.getType()}/issue-credential/1.0/ack\",\n" +
+                "  \"@type\": \"${DidCommPrefixUtils.getType(issueCredential.type ?: "")}/issue-credential/1.0/ack\",\n" +
                 "  \"@id\": \"${UUID.randomUUID()}\",\n" +
                 "  \"~thread\": {\n" +
-                "    \"thid\": \"$thid\"\n" +
+                "    \"thid\": \"${issueCredential.thread?.thid ?: ""}\"\n" +
                 "  },\n" +
                 "  \"status\": \"OK\"\n" +
                 "}"
@@ -757,7 +756,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         val packedMessage = PackingUtils.packMessage(
             didDoc, senderVerKey,
-            data
+            data, issueCredential.type ?: ""
         )
 
         Log.d(TAG, "packed message: ${String(packedMessage)}")
@@ -788,7 +787,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
                 }
             })
 
-        storeCredential(thid, credDefId, senderVerKey)
+        storeCredential(issueCredential.thread?.thid ?: "", credDefId, senderVerKey)
     }
 
     private fun storeCredential(
@@ -1006,7 +1005,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         //connection request
         val connectionRequest = ConnectionRequest()
-        connectionRequest.type = "${DidCommPrefixUtils.getType()}/connections/1.0/request"
+        connectionRequest.type =
+            "${DidCommPrefixUtils.getType(DidCommPrefixUtils.MEDIATOR)}/connections/1.0/request"
         connectionRequest.id = requestId
         connectionRequest.label = "milan"
         connectionRequest.connection = did
@@ -1169,7 +1169,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             WalletManager.getGson.fromJson(base64Sting, Base64Extracted::class.java)
         val credentialProposalDict = CredentialProposalDict()
         credentialProposalDict.type =
-            "${DidCommPrefixUtils.getType()}/issue-credential/1.0/propose-credential"
+            "${DidCommPrefixUtils.getType(certificateOffer.type ?: "")}/issue-credential/1.0/propose-credential"
         credentialProposalDict.id = UUID.randomUUID().toString()
         credentialProposalDict.comment = "string"
         credentialProposalDict.schemaId = credentialProposal.schemaId
@@ -1366,7 +1366,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
             recipient = didDoc.publicKey?.get(0)?.publicKeyBase58 ?: ""
 
             val data = "{\n" +
-                    "  \"@type\": \"https://didcomm.org/trust_ping/1.0/ping\",\n" +
+                    "  \"@type\": \"${DidCommPrefixUtils.getType(didDoc.service?.get(0)?.type ?: "")}/trust_ping/1.0/ping\",\n" +
                     "  \"@id\": \"${UUID.randomUUID()}\",\n" +
                     "  \"comment\": \"ping\",\n" +
                     "  \"response_requested\": true\n" +
@@ -1374,7 +1374,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
             val packedMessage = PackingUtils.packMessage(
                 didDoc, publicKey,
-                data
+                data, didDoc.service?.get(0)?.type ?: ""
             )
 
             Log.d(TAG, "packed message: ${String(packedMessage)}")
@@ -1419,7 +1419,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
         val data = "\n" +
                 "{\n" +
                 "    \"@id\": \"${UUID.randomUUID().toString()}\",\n" +
-                "    \"@type\": \"${DidCommPrefixUtils.getType()}/basic-routing/1.0/create-inbox\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType(DidCommPrefixUtils.MEDIATOR)}/basic-routing/1.0/create-inbox\",\n" +
                 "    \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
                 "    }\n" +
@@ -1639,7 +1639,7 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         val data = "{\n" +
                 "    \"@id\": \"$messageUuid\",\n" +
-                "    \"@type\": \"${DidCommPrefixUtils.getType()}/basic-routing/1.0/add-route\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType(DidCommPrefixUtils.MEDIATOR)}/basic-routing/1.0/add-route\",\n" +
                 "    \"routedestination\": \"$key\",\n" +
                 "    \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
@@ -1788,7 +1788,8 @@ class InitializeActivity : BaseActivity(), InitialActivityFunctions {
 
         //connection request
         val connectionRequest = ConnectionRequest()
-        connectionRequest.type = "${DidCommPrefixUtils.getType()}/connections/1.0/request"
+        connectionRequest.type =
+            "${DidCommPrefixUtils.getType(DidCommPrefixUtils.MEDIATOR)}/connections/1.0/request"
         connectionRequest.id = UUID.randomUUID().toString()
         connectionRequest.label = DeviceUtils.getDeviceName() ?: ""
         connectionRequest.connection = did

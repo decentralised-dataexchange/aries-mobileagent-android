@@ -10,6 +10,7 @@ import io.igrant.mobileagent.models.connectionRequest.DidDoc
 import io.igrant.mobileagent.models.tagJsons.InvitationKey
 import io.igrant.mobileagent.models.tagJsons.UpdateInvitationKey
 import io.igrant.mobileagent.utils.ConnectionStates
+import io.igrant.mobileagent.utils.DidCommPrefixUtils
 import io.igrant.mobileagent.utils.PackingUtils
 import io.igrant.mobileagent.utils.SearchUtils
 import io.igrant.mobileagent.utils.WalletRecordType.Companion.CONNECTION
@@ -145,13 +146,13 @@ class SaveDidDocTask(
             )
 
             val trustPingData = "{\n" +
-                    "  \"@type\": \"https://didcomm.org/trust_ping/1.0/ping\",\n" +
+                    "  \"@type\": \"${DidCommPrefixUtils.getType(didDoc.service?.get(0)?.type?:"")}/trust_ping/1.0/ping\",\n" +
                     "  \"@id\": \"${UUID.randomUUID()}\",\n" +
                     "  \"comment\": \"ping\",\n" +
                     "  \"response_requested\": true\n" +
                     "}\n"
 
-            val packedMessage = PackingUtils.packMessage(didDoc,publicKey2,trustPingData)
+            val packedMessage = PackingUtils.packMessage(didDoc,publicKey2,trustPingData,didDoc.service?.get(0)?.type?:"")
 
             Log.d(TAG, "packed message: ${String(packedMessage)}")
 

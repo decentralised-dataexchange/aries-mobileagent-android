@@ -115,16 +115,16 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
     private fun checkIfConnectionExisting() {
 
         val queryFeatureData = "{\n" +
-                "    \"@type\": \"${DidCommPrefixUtils.getType()}/discover-features/1.0/query\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType(DidCommPrefixUtils.MEDIATOR)}/discover-features/1.0/query\",\n" +
                 "    \"@id\": \"${UUID.randomUUID()}\",\n" +
-                "    \"query\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/*\",\n" +
+                "    \"query\": \"${DidCommPrefixUtils.getType(DidCommPrefixUtils.MEDIATOR)}/igrantio-operator/*\",\n" +
                 "    \"comment\": \"Querying features available.\",\n" +
                 "    \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
                 "    }\n" +
                 "}"
 
-        val queryFeaturePacked = PackingUtils.packMessage(invitation, myKey, queryFeatureData)
+        val queryFeaturePacked = PackingUtils.packMessage(invitation, myKey, queryFeatureData,"")
 
         val queryFeaturePackedBytes = object : RequestBody() {
             override fun contentType(): MediaType? {
@@ -165,7 +165,7 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
                         for (n in 0 until dataArray.length()) {
                             val obj = dataArray.getJSONObject(n)
                             if (obj.getString("pid").contains(
-                                    "${DidCommPrefixUtils.getType()}/igrantio-operator",
+                                    "${DidCommPrefixUtils.getType(DidCommPrefixUtils.IGRANT_OPERATOR)}/igrantio-operator",
                                     ignoreCase = true
                                 )
                             ) {
@@ -183,10 +183,10 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
             requestId = UUID.randomUUID().toString()
 
             val orgData =
-                "{ \"@type\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/1.0/organization-info\", \"@id\": \"$requestId\" , \"~transport\": {" +
+                "{ \"@type\": \"${DidCommPrefixUtils.getType(DidCommPrefixUtils.IGRANT_OPERATOR)}/igrantio-operator/1.0/organization-info\", \"@id\": \"$requestId\" , \"~transport\": {" +
                         "\"return_route\": \"all\"}\n}"
 
-            val orgDetailPacked = PackingUtils.packMessage(invitation, myKey, orgData)
+            val orgDetailPacked = PackingUtils.packMessage(invitation, myKey, orgData,"")
 
             val orgDetailTypedArray = object : RequestBody() {
                 override fun contentType(): MediaType? {
@@ -270,12 +270,12 @@ class ConnectionProgressDailogFragment : BaseDialogFragment() {
 
     private fun sendDidToConnection(theirDid: String?) {
         val data = "{\n" +
-                "  \"@type\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/1.0/org-multiple-connections\",\n" +
+                "  \"@type\": \"${DidCommPrefixUtils.getType(DidCommPrefixUtils.IGRANT_OPERATOR)}/igrantio-operator/1.0/org-multiple-connections\",\n" +
                 "  \"@id\": \"${UUID.randomUUID()}\",\n" +
                 "  \"theirdid\": \"${theirDid ?: ""}\"\n" +
                 "}\n"
 
-        val orgDetailPacked = PackingUtils.packMessage(invitation, myKey, data)
+        val orgDetailPacked = PackingUtils.packMessage(invitation, myKey, data,"")
 
         val orgDetailTypedArray = object : RequestBody() {
             override fun contentType(): MediaType? {

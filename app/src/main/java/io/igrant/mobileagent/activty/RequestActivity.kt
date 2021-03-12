@@ -13,8 +13,6 @@ import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import io.igrant.mobileagent.R
-import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_INVITATION
-import io.igrant.mobileagent.activty.ProposeAndExchangeDataActivity.Companion.EXTRA_PRESENTATION_PROPOSAL
 import io.igrant.mobileagent.adapter.RequestListAdapter
 import io.igrant.mobileagent.events.GoHomeEvent
 import io.igrant.mobileagent.events.ReceiveExchangeRequestEvent

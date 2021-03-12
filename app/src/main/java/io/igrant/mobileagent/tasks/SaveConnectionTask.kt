@@ -99,7 +99,7 @@ class SaveConnectionTask(
 
         val data = "{\n" +
                 "    \"@id\": \"$messageUuid\",\n" +
-                "    \"@type\": \"${DidCommPrefixUtils.getType()}/basic-routing/1.0/add-route\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType(DidCommPrefixUtils.MEDIATOR)}/basic-routing/1.0/add-route\",\n" +
                 "    \"routedestination\": \"$key\",\n" +
                 "    \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
@@ -198,7 +198,7 @@ class SaveConnectionTask(
 
         //connection request
         val connectionRequest = ConnectionRequest()
-        connectionRequest.type = "${DidCommPrefixUtils.getType()}/connections/1.0/request"
+        connectionRequest.type = "${DidCommPrefixUtils.getType(DidCommPrefixUtils.MEDIATOR)}/connections/1.0/request"
         connectionRequest.id = UUID.randomUUID().toString()
         connectionRequest.label = DeviceUtils.getDeviceName() ?: ""
         connectionRequest.connection = did
@@ -207,7 +207,7 @@ class SaveConnectionTask(
         val connectionRequestData = WalletManager.getGson.toJson(connectionRequest)
 
         val connectionRequestPackedMessage =
-            PackingUtils.packMessage(invitation, key, connectionRequestData)
+            PackingUtils.packMessage(invitation, key, connectionRequestData,"")
 
         connectionRequestTypedBytes = object : RequestBody() {
             override fun contentType(): MediaType? {

@@ -58,7 +58,7 @@ class SaveConnectionDetailInCertificateTask() : AsyncTask<String, Void, Void>() 
                     DidDoc::class.java
                 )
                 val orgData =
-                    "{ \"@type\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/1.0/organization-info\", \"@id\": \"${"$connectionId"}\" , \"~transport\": {" +
+                    "{ \"@type\": \"${DidCommPrefixUtils.getType(DidCommPrefixUtils.IGRANT_OPERATOR)}/igrantio-operator/1.0/organization-info\", \"@id\": \"${"$connectionId"}\" , \"~transport\": {" +
                             "\"return_route\": \"all\"}\n}"
 
                 val metaString =
@@ -68,7 +68,7 @@ class SaveConnectionDetailInCertificateTask() : AsyncTask<String, Void, Void>() 
 
                 val orgDetailPacked = PackingUtils.packMessage(
                     disDoc, key,
-                    orgData
+                    orgData,""
                 )
 
                 val orgDetailTypedArray = object : RequestBody() {

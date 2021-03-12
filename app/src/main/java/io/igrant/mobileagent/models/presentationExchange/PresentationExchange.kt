@@ -70,4 +70,8 @@ class PresentationExchange {
     @SerializedName("comment")
     @Expose
     var comment: String? = ""
+
+    @SerializedName("type")
+    @Expose
+    var type:String?=""
 }

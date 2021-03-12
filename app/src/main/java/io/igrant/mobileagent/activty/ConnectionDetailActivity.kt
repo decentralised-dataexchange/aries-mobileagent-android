@@ -112,11 +112,11 @@ class ConnectionDetailActivity : BaseActivity() {
 
     private fun getConnectionDetail(connectionObject: MediatorConnectionObject) {
         val orgData =
-            "{ \"@type\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/1.0/organization-info\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
+            "{ \"@type\": \"${DidCommPrefixUtils.getType(DidCommPrefixUtils.IGRANT_OPERATOR)}/igrantio-operator/1.0/organization-info\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
                     "\"return_route\": \"all\"}\n}"
 
         val cerData =
-            "{ \"@type\": \"${DidCommPrefixUtils.getType()}/igrantio-operator/1.0/list-data-certificate-types\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
+            "{ \"@type\": \"${DidCommPrefixUtils.getType(DidCommPrefixUtils.IGRANT_OPERATOR)}/igrantio-operator/1.0/list-data-certificate-types\", \"@id\": \"$mConnectionId\" , \"~transport\": {" +
                     "\"return_route\": \"all\"}\n}"
 
         val didDoc =
@@ -136,7 +136,7 @@ class ConnectionDetailActivity : BaseActivity() {
             val metaObject = JSONObject(metaString)
             val key = metaObject.getString("verkey")
 
-            val orgDetailPacked = PackingUtils.packMessage(didDocObj, key, orgData)
+            val orgDetailPacked = PackingUtils.packMessage(didDocObj, key, orgData,"")
 
             val orgDetailTypedArray = object : RequestBody() {
                 override fun contentType(): MediaType? {
@@ -180,7 +180,7 @@ class ConnectionDetailActivity : BaseActivity() {
                     }
                 })
 
-            val orgCerListPacked = PackingUtils.packMessage(didDocObj, key, cerData)
+            val orgCerListPacked = PackingUtils.packMessage(didDocObj, key, cerData,"")
 
             val orgCerListTypedArray = object : RequestBody() {
                 override fun contentType(): MediaType? {

@@ -226,13 +226,13 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     private fun sendProposal(mConnectionId: String) {
         val threadId = UUID.randomUUID().toString()
         var data = "{\n" +
-                "  \"@type\": \"${DidCommPrefixUtils.getType()}/present-proof/1.0/propose-presentation\",\n" +
+                "  \"@type\": \"${DidCommPrefixUtils.getType(invitation.type?:"")}/present-proof/1.0/propose-presentation\",\n" +
                 "  \"@id\": \"$threadId\",\n" +
                 "  \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
                 "    },\n" +
                 "  \"presentation_proposal\": {\n" +
-                "    \"@type\": \"${DidCommPrefixUtils.getType()}/present-proof/1.0/presentation-preview\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType(invitation.type?:"")}/present-proof/1.0/presentation-preview\",\n" +
                 "    \"attributes\": [\n"
         for (attribute in attributelist) {
             data = data + "{\n" +
@@ -291,7 +291,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                 Log.d(TAG, "sendProposal: $recipient \n $publicKey \n $data")
                 val packedMessage = PackingUtils.packMessage(
                     didDoc, publicKey,
-                    data
+                    data,invitation.type?:""
                 )
 
                 val typedBytes: RequestBody = object : RequestBody() {
@@ -349,6 +349,8 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                             presentationExchange.state = PresentationExchangeStates.REQUEST_RECEIVED
                             presentationExchange.comment =
                                 JSONObject(message).getString("comment")
+                            presentationExchange.type =
+                                JSONObject(message).getString("@type")
 
                             mPresentationExchange = presentationExchange
 
@@ -395,13 +397,13 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
     private fun sendProposalWithOrgId(mConnectionId: String) {
         val threadId = UUID.randomUUID().toString()
         var data = "{\n" +
-                "  \"@type\": \"${DidCommPrefixUtils.getType()}/present-proof/1.0/propose-presentation\",\n" +
+                "  \"@type\": \"${DidCommPrefixUtils.getType(invitation.type?:"")}/present-proof/1.0/propose-presentation\",\n" +
                 "  \"@id\": \"$threadId\",\n" +
                 "  \"~transport\": {\n" +
                 "        \"return_route\": \"all\"\n" +
                 "    },\n" +
                 "  \"presentation_proposal\": {\n" +
-                "    \"@type\": \"${DidCommPrefixUtils.getType()}/present-proof/1.0/presentation-preview\",\n" +
+                "    \"@type\": \"${DidCommPrefixUtils.getType(invitation.type?:"")}/present-proof/1.0/presentation-preview\",\n" +
                 "    \"attributes\": [\n"
         for (attribute in attributelist) {
             data = data + "{\n" +
@@ -456,7 +458,7 @@ class ProposeAndExchangeDataActivity : BaseActivity(),
                 Log.d(TAG, "sendProposal: $recipient \n $publicKey \n $data")
                 val packedMessage = PackingUtils.packMessage(
                     didDoc, publicKey,
-                    data
+                    data,invitation.type?:""
                 )
 
                 val typedBytes: RequestBody = object : RequestBody() {
